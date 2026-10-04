@@ -1,0 +1,117 @@
+import { ReactNode } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { colors } from '../theme';
+import { Panel, Txt } from '../components/ui';
+import { Settings } from '../lib/settings';
+import { setAmbientVolume } from '../lib/ambient';
+import { VOLUME_VALUES, VolumeLevel } from '../lib/prefs';
+
+type Props = {
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
+  onReset: () => void;
+};
+
+export default function SettingsScreen({ settings, onChange, onReset }: Props) {
+  const confirmReset = () =>
+    Alert.alert('Reset all records?', 'Your town and stats will be erased. This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Reset', style: 'destructive', onPress: onReset },
+    ]);
+
+  return (
+    <ScrollView contentContainerStyle={styles.wrap}>
+      <Txt style={styles.title}>SETTINGS</Txt>
+
+      <Txt style={styles.section}>SOUND</Txt>
+      <Panel style={styles.group}>
+        <Row label="Sound effects">
+          <Toggle on={settings.sfx} onPress={() => onChange({ sfx: !settings.sfx })} />
+        </Row>
+        <Row label="Music volume">
+          <Segment
+            options={[['low', 'LOW'], ['mid', 'MID'], ['high', 'HIGH']]}
+            value={settings.volume}
+            onChange={(v) => {
+              onChange({ volume: v as VolumeLevel });
+              setAmbientVolume(VOLUME_VALUES[v as VolumeLevel]);
+            }}
+          />
+        </Row>
+      </Panel>
+
+      <Txt style={styles.section}>FEEDBACK</Txt>
+      <Panel style={styles.group}>
+        <Row label="Vibration">
+          <Toggle on={settings.haptics} onPress={() => onChange({ haptics: !settings.haptics })} />
+        </Row>
+        <Row label="Warning alerts" note="Notifies you when you leave the app.">
+          <Toggle on={settings.notify} onPress={() => onChange({ notify: !settings.notify })} />
+        </Row>
+      </Panel>
+
+      <Txt style={styles.section}>DATA</Txt>
+      <Pressable onPress={confirmReset} style={styles.danger}>
+        <Txt style={styles.dangerText}>RESET ALL RECORDS</Txt>
+      </Pressable>
+
+      <Txt style={styles.section}>ABOUT</Txt>
+      <Panel style={styles.group}>
+        <Txt style={styles.about}>FOCUS TOWN v1.0.0{'\n\n'}Lo-fi music: Open Lo-Fi collection (CC0, public domain).</Txt>
+      </Panel>
+    </ScrollView>
+  );
+}
+
+function Row({ label, note, children }: { label: string; note?: string; children: ReactNode }) {
+  return (
+    <View style={styles.row}>
+      <View style={{ flex: 1, paddingRight: 8 }}>
+        <Txt style={styles.rowLabel}>{label}</Txt>
+        {note ? <Txt style={styles.note}>{note}</Txt> : null}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function Toggle({ on, onPress }: { on: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.toggle, on && styles.toggleOn]}>
+      <View style={[styles.knob, on && styles.knobOn]} />
+    </Pressable>
+  );
+}
+
+function Segment({ options, value, onChange }: { options: [string, string][]; value: string; onChange: (v: string) => void }) {
+  return (
+    <View style={styles.seg}>
+      {options.map(([v, label]) => (
+        <Pressable key={v} onPress={() => onChange(v)} style={[styles.segItem, value === v && styles.segOn]}>
+          <Txt style={[styles.segText, value === v && { color: colors.bg }]}>{label}</Txt>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: { padding: 20, paddingBottom: 40 },
+  title: { color: colors.accent, fontSize: 16, marginTop: 8 },
+  section: { color: colors.dim, fontSize: 9, marginTop: 26, marginBottom: 10 },
+  group: { gap: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  rowLabel: { fontSize: 9, lineHeight: 14 },
+  note: { fontSize: 7, color: colors.dim, marginTop: 6, lineHeight: 12 },
+  toggle: { width: 56, height: 28, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 2 },
+  toggleOn: { backgroundColor: colors.accent },
+  knob: { width: 18, height: 18, backgroundColor: colors.dim },
+  knobOn: { backgroundColor: colors.text, marginLeft: 26 },
+  seg: { flexDirection: 'row' },
+  segItem: { paddingVertical: 8, paddingHorizontal: 8, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line },
+  segOn: { backgroundColor: colors.gold },
+  segText: { fontSize: 7, color: colors.dim },
+  danger: { borderWidth: 3, borderColor: colors.danger, padding: 14, alignItems: 'center' },
+  dangerText: { color: colors.danger, fontSize: 9 },
+  about: { fontSize: 8, lineHeight: 14, color: colors.dim },
+});
