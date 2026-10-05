@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PressStart2P_400Regular, useFonts } from '@expo-google-fonts/press-start-2p';
@@ -13,7 +13,10 @@ import { syncReminders } from './src/lib/notifications';
 import { computeStats } from './src/lib/stats';
 import { computeStreak } from './src/lib/streak';
 import { PRESET_TAGS } from './src/lib/tags';
-import { EndReason } from './src/lib/useFocusSession';
+import { EndReason, GRACE_SECONDS } from './src/lib/useFocusSession';
+import { ActiveRecord, clearActive, loadActive, patchActive, saveActive } from './src/lib/activeSession';
+import { isPassAvailable, consumePass } from './src/lib/callPass';
+import CallPassPrompt from './src/components/CallPassPrompt';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import { loadSessions, saveSessions } from './src/lib/storage';
@@ -43,18 +46,40 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('setup');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [pending, setPending] = useState<{ minutes: number; ambient: AmbientId; tag: string } | null>(null);
-  const [active, setActive] = useState<{ minutes: number; startedAt: number; ambient: AmbientId; tag: string } | null>(null);
+  const [active, setActive] = useState<{ minutes: number; startedAt: number; endAt: number; ambient: AmbientId; tag: string } | null>(null);
+  const [recovery, setRecovery] = useState<{ rec: ActiveRecord; awaySeconds: number } | null>(null); // 강제 종료 후 복구 확인 중
+  const recorded = useRef<number | null>(null); // 이미 기록한 세션(startedAt)
 
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
   const [help, setHelp] = useState(false); // 설정에서 다시 연 "How to play"
 
   useEffect(() => {
-    loadSessions().then(setSessions);
-    Promise.all([loadSettings(), initAnalytics()]).then(([s]) => {
+    Promise.all([loadSessions(), loadSettings(), initAnalytics()]).then(async ([sess, s]) => {
       const fixed = TIME_VALUES.includes(s.minutes) ? s : { ...s, minutes: 25 };
       applyPrefs(fixed);
       setSettings(fixed);
+      let list = sess;
+
+      // 앱이 강제 종료됐을 때 진행 중이던 세션이 남아 있으면: 짧게 벗어났다면 이어서, 오래됐다면 통화 패스 확인 또는 실패 처리
+      const rec = await loadActive();
+      if (rec) {
+        const away = (Date.now() - (rec.leftAt ?? rec.seenAt)) / 1000;
+        if (away <= GRACE_SECONDS) {
+          patchActive({ leftAt: null, seenAt: Date.now() });
+          recorded.current = null;
+          setActive({ minutes: rec.minutes, startedAt: rec.startedAt, endAt: rec.endAt, ambient: rec.ambient, tag: rec.tag });
+        } else if (await isPassAvailable(away)) {
+          setRecovery({ rec, awaySeconds: Math.round(away) });
+        } else {
+          list = [...sess, { id: String(rec.startedAt), startedAt: rec.startedAt, minutes: rec.minutes, success: false, tag: rec.tag }];
+          saveSessions(list);
+          clearActive();
+          track('session_fail', { minutes: rec.minutes, mode: modeOf(rec.tag), reason: 'app_closed' });
+          Alert.alert('Your last session collapsed', 'The app was closed for too long during your focus session.');
+        }
+      }
+      setSessions(list);
       setLoaded(true);
       track('app_open');
     });
@@ -93,15 +118,50 @@ export default function App() {
 
   const todayBefore = computeStats(sessions).todayMinutes;
 
-  const finish = (success: boolean, reason: EndReason) => {
-    if (!active) return;
+  // 세션이 끝나는 순간 기록한다 (결과 화면에서 앱을 꺼도 기록이 남도록)
+  const record = (success: boolean, reason: EndReason) => {
+    if (!active || recorded.current === active.startedAt) return;
+    recorded.current = active.startedAt;
+    clearActive();
     track(success ? 'session_complete' : 'session_fail', { minutes: active.minutes, mode: modeOf(active.tag), reason });
     if (success && settings.dailyGoal > 0 && todayBefore < settings.dailyGoal && todayBefore + active.minutes >= settings.dailyGoal) track('goal_reached', { goal: settings.dailyGoal });
     const next = [...sessions, { id: String(active.startedAt), startedAt: active.startedAt, minutes: active.minutes, success, tag: active.tag }];
     setSessions(next);
     saveSessions(next);
+  };
+
+  const leaveResult = () => {
     setActive(null);
     setTab('town');
+  };
+
+  const startSession = (p: { minutes: number; ambient: AmbientId; tag: string }) => {
+    const startedAt = Date.now();
+    const endAt = startedAt + p.minutes * 60 * 1000;
+    saveActive({ ...p, startedAt, endAt, leftAt: null, seenAt: startedAt });
+    setActive({ ...p, startedAt, endAt });
+  };
+
+  // 강제 종료 복구 화면의 선택 처리
+  const resumeWithPass = async () => {
+    if (!recovery) return;
+    const { rec, awaySeconds } = recovery;
+    await consumePass();
+    const endAt = rec.endAt + awaySeconds * 1000;
+    patchActive({ endAt, leftAt: null, seenAt: Date.now() });
+    recorded.current = null;
+    setActive({ minutes: rec.minutes, startedAt: rec.startedAt, endAt, ambient: rec.ambient, tag: rec.tag });
+    setRecovery(null);
+  };
+  const endRecovered = () => {
+    if (!recovery) return;
+    const { rec } = recovery;
+    const next = [...sessions, { id: String(rec.startedAt), startedAt: rec.startedAt, minutes: rec.minutes, success: false, tag: rec.tag }];
+    setSessions(next);
+    saveSessions(next);
+    clearActive();
+    track('session_fail', { minutes: rec.minutes, mode: modeOf(rec.tag), reason: 'app_closed' });
+    setRecovery(null);
   };
 
   if (!fontsLoaded || !loaded) return <View style={styles.root} />;
@@ -114,6 +174,8 @@ export default function App() {
         <StatusBar style="light" />
         {showOnboarding ? (
           <OnboardingScreen onFinish={finishOnboarding} />
+        ) : recovery ? (
+          <CallPassPrompt awaySeconds={recovery.awaySeconds} onUse={resumeWithPass} onDecline={endRecovered} />
         ) : pending ? (
           <CountdownScreen
             minutes={pending.minutes}
@@ -123,12 +185,12 @@ export default function App() {
             }}
             onGo={() => {
               track('session_start', { minutes: pending.minutes, mode: modeOf(pending.tag), ambient: pending.ambient });
-              setActive({ ...pending, startedAt: Date.now() });
+              startSession(pending);
               setPending(null);
             }}
           />
         ) : active ? (
-          <TimerScreen minutes={active.minutes} ambient={active.ambient} goal={settings.dailyGoal} todayBefore={todayBefore} onDone={finish} />
+          <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
         ) : (
           <>
             <View style={styles.body}>

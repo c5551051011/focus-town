@@ -3,32 +3,48 @@ import { AppState } from 'react-native';
 import { notify } from './haptics';
 import { playSound } from './sounds';
 import { cancelReturnWarning, scheduleAwayNotifications } from './notifications';
+import { patchActive } from './activeSession';
+import { isPassAvailable, consumePass } from './callPass';
 
 export const GRACE_SECONDS = 15;
 
-export type Phase = 'running' | 'warning' | 'success' | 'collapsed';
-export type EndReason = 'completed' | 'left_app' | 'gave_up';
+export type Phase = 'running' | 'warning' | 'callPrompt' | 'success' | 'collapsed';
+export type EndReason = 'completed' | 'left_app' | 'gave_up' | 'app_closed';
 
 // 남은 시간은 종료 시각 기준으로 계산하므로 백그라운드에서도 정확하다.
 // 앱이 background로 가면 이탈. GRACE_SECONDS 안에 돌아오면 정상화, 넘기면 붕괴.
-export function useFocusSession(minutes: number) {
-  const [endAt] = useState(() => Date.now() + minutes * 60 * 1000);
+// 단, 하루 1회 "통화 패스"를 쓰면 벗어나 있던 시간만큼 타이머를 멈춘 것으로 처리한다.
+export function useFocusSession(minutes: number, initialEndAt: number) {
+  const [endAt, setEndAt] = useState(initialEndAt);
+  const endAtRef = useRef(initialEndAt);
   const leftAt = useRef<number | null>(null);
-  const [remainingMs, setRemainingMs] = useState(minutes * 60 * 1000);
+  const awayMs = useRef(0);
+  const [remainingMs, setRemainingMs] = useState(() => Math.max(0, initialEndAt - Date.now()));
   const [phase, setPhase] = useState<Phase>('running');
   const [recovered, setRecovered] = useState(false);
   const [endReason, setEndReason] = useState<EndReason | null>(null);
+  const [awaySeconds, setAwaySeconds] = useState(0);
   const phaseRef = useRef<Phase>('running');
 
   const update = (p: Phase) => {
     phaseRef.current = p;
     setPhase(p);
   };
+  const isOver = () => phaseRef.current === 'success' || phaseRef.current === 'collapsed';
 
+  const collapse = (reason: EndReason) => {
+    update('collapsed');
+    setEndReason(reason);
+    notify('error');
+    playSound('collapse');
+  };
+
+  // 1초에 두 번 남은 시간을 갱신하고, 5초마다 "앱이 떠 있음" 표시를 저장한다 (강제 종료 복구용)
   useEffect(() => {
+    let ticks = 0;
     const id = setInterval(() => {
-      if (phaseRef.current === 'success' || phaseRef.current === 'collapsed') return;
-      const left = endAt - Date.now();
+      if (isOver() || phaseRef.current === 'callPrompt') return;
+      const left = endAtRef.current - Date.now();
       if (left <= 0 && leftAt.current === null) {
         setRemainingMs(0);
         update('success');
@@ -37,37 +53,57 @@ export function useFocusSession(minutes: number) {
         playSound('success');
       } else {
         setRemainingMs(Math.max(0, left));
+        if (leftAt.current === null && ++ticks % 10 === 0) patchActive({ seenAt: Date.now() });
       }
     }, 500);
     return () => clearInterval(id);
   }, [endAt]);
 
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (phaseRef.current === 'success' || phaseRef.current === 'collapsed') return;
+    const sub = AppState.addEventListener('change', async (state) => {
+      if (isOver() || phaseRef.current === 'callPrompt') return;
       if (state === 'background') {
+        if (leftAt.current !== null) return;
         leftAt.current = Date.now();
+        patchActive({ leftAt: leftAt.current });
         update('warning');
         scheduleAwayNotifications(GRACE_SECONDS);
       } else if (state === 'active' && leftAt.current !== null) {
-        const awaySec = (Date.now() - leftAt.current) / 1000;
+        const away = Date.now() - leftAt.current;
         leftAt.current = null;
         cancelReturnWarning();
-        if (awaySec > GRACE_SECONDS) {
-          update('collapsed');
-          setEndReason('left_app');
-          notify('error');
-          playSound('collapse');
-        } else {
+        patchActive({ leftAt: null, seenAt: Date.now() });
+        if (away / 1000 <= GRACE_SECONDS) {
           update('running');
           playSound('warn');
           setRecovered(true);
           setTimeout(() => setRecovered(false), 3000);
+        } else if (await isPassAvailable(away / 1000)) {
+          awayMs.current = away;
+          setAwaySeconds(Math.round(away / 1000));
+          update('callPrompt');
+        } else {
+          collapse('left_app');
         }
       }
     });
     return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 통화 패스 사용: 벗어나 있던 시간만큼 종료 시각을 뒤로 민다
+  const acceptPass = async () => {
+    await consumePass();
+    const next = endAtRef.current + awayMs.current;
+    endAtRef.current = next;
+    setEndAt(next);
+    setRemainingMs(Math.max(0, next - Date.now()));
+    patchActive({ endAt: next });
+    update('running');
+    setRecovered(true);
+    setTimeout(() => setRecovered(false), 3000);
+  };
+  const declinePass = () => collapse('left_app');
 
   const giveUp = () => {
     update('collapsed');
@@ -75,5 +111,5 @@ export function useFocusSession(minutes: number) {
     playSound('collapse');
   };
 
-  return { phase, remainingMs, recovered, endReason, giveUp };
+  return { phase, remainingMs, recovered, endReason, awaySeconds, giveUp, acceptPass, declinePass };
 }

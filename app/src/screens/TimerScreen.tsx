@@ -10,12 +10,22 @@ import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/am
 import { buildingFor } from '../lib/buildings';
 import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
+import CallPassPrompt from '../components/CallPassPrompt';
 
-type Props = { minutes: number; ambient: AmbientId; goal: number; todayBefore: number; onDone: (success: boolean, reason: EndReason) => void };
+type Props = {
+  minutes: number;
+  endAt: number;
+  ambient: AmbientId;
+  goal: number;
+  todayBefore: number;
+  onEnded: (success: boolean, reason: EndReason) => void; // 세션이 끝난 순간(기록용)
+  onDone: () => void; // 결과 화면에서 "TO TOWN"
+};
 
-export default function TimerScreen({ minutes, ambient, goal, todayBefore, onDone }: Props) {
+export default function TimerScreen({ minutes, endAt, ambient, goal, todayBefore, onEnded, onDone }: Props) {
   useKeepAwake();
-  const { phase, remainingMs, recovered, endReason, giveUp } = useFocusSession(minutes);
+  const { phase, remainingMs, recovered, endReason, awaySeconds, giveUp, acceptPass, declinePass } = useFocusSession(minutes, endAt);
+  const [before] = useState(todayBefore); // 기록되기 전 오늘 집중 시간 (목표 달성 판정용)
   const b = buildingFor(minutes);
   const [muted, setMuted] = useState(false);
   const toggleMute = () => {
@@ -23,6 +33,12 @@ export default function TimerScreen({ minutes, ambient, goal, todayBefore, onDon
     setMuted(!muted);
   };
   const finished = phase === 'success' || phase === 'collapsed';
+
+  // 끝나는 순간 바로 기록한다 (결과 화면에서 앱을 꺼도 기록이 남도록)
+  useEffect(() => {
+    if (finished && endReason) onEnded(phase === 'success', endReason);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished]);
 
   // 배경 사운드: 세션 동안만 재생
   useEffect(() => {
@@ -46,19 +62,21 @@ export default function TimerScreen({ minutes, ambient, goal, todayBefore, onDon
 
   if (finished) {
     const ok = phase === 'success';
-    const goalHit = ok && goal > 0 && todayBefore < goal && todayBefore + minutes >= goal;
+    const goalHit = ok && goal > 0 && before < goal && before + minutes >= goal;
     return (
       <View style={styles.center}>
         <Pixel name={ok ? b.id : 'ruins'} size={160} />
         <Txt style={[styles.big, { color: ok ? colors.gold : colors.danger }]}>{ok ? 'COMPLETE!' : 'COLLAPSED'}</Txt>
         <Txt style={styles.msg}>
-          {ok ? `${b.name} added to your town.\n+${minutes} min` : 'You left the app too long.\nTry again!'}
+          {ok ? `${b.name} added to your town.\n+${minutes} min` : endReason === 'gave_up' ? 'You stopped the session.\nTry again!' : 'You left the app too long.\nTry again!'}
         </Txt>
         {goalHit && <Txt style={styles.goal}>DAILY GOAL REACHED! ({goal} MIN)</Txt>}
-        <PixelButton label="TO TOWN" onPress={() => onDone(ok, endReason ?? (ok ? 'completed' : 'left_app'))} style={styles.btn} />
+        <PixelButton label="TO TOWN" onPress={onDone} style={styles.btn} />
       </View>
     );
   }
+
+  if (phase === 'callPrompt') return <CallPassPrompt awaySeconds={awaySeconds} onUse={acceptPass} onDecline={declinePass} />;
 
   return (
     <SessionLayout
