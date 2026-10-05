@@ -7,6 +7,12 @@ import { colors } from './src/theme';
 import { Txt } from './src/components/ui';
 import { Session } from './src/lib/types';
 import { AmbientId } from './src/lib/ambient';
+import { initAnalytics, track } from './src/lib/analytics';
+import { initErrorReporting } from './src/lib/errors';
+import { PRESET_TAGS } from './src/lib/tags';
+import { EndReason } from './src/lib/useFocusSession';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import { loadSessions, saveSessions } from './src/lib/storage';
 import { DEFAULT_SETTINGS, Settings, applyPrefs, loadSettings, saveSettings } from './src/lib/settings';
 import { TIME_VALUES } from './src/lib/buildings';
@@ -16,6 +22,10 @@ import SetupScreen from './src/screens/SetupScreen';
 import TimerScreen from './src/screens/TimerScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import CountdownScreen from './src/screens/CountdownScreen';
+
+initErrorReporting();
+
+const modeOf = (tag: string) => (PRESET_TAGS.includes(tag) ? tag : 'custom'); // 직접 만든 모드 이름은 분석에 보내지 않는다
 
 type Tab = 'setup' | 'town' | 'stats' | 'settings';
 const TABS: { id: Tab; label: string }[] = [
@@ -33,13 +43,17 @@ export default function App() {
   const [active, setActive] = useState<{ minutes: number; startedAt: number; ambient: AmbientId; tag: string } | null>(null);
 
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [loaded, setLoaded] = useState(false);
+  const [help, setHelp] = useState(false); // 설정에서 다시 연 "How to play"
 
   useEffect(() => {
     loadSessions().then(setSessions);
-    loadSettings().then((s) => {
+    Promise.all([loadSettings(), initAnalytics()]).then(([s]) => {
       const fixed = TIME_VALUES.includes(s.minutes) ? s : { ...s, minutes: 25 };
       applyPrefs(fixed);
       setSettings(fixed);
+      setLoaded(true);
+      track('app_open');
     });
   }, []);
 
@@ -55,8 +69,15 @@ export default function App() {
     saveSessions([]);
   };
 
-  const finish = (success: boolean) => {
+  const finishOnboarding = (skipped: boolean) => {
+    if (!settings.onboarded) track(skipped ? 'onboarding_skipped' : 'onboarding_done');
+    updateSettings({ onboarded: true });
+    setHelp(false);
+  };
+
+  const finish = (success: boolean, reason: EndReason) => {
     if (!active) return;
+    track(success ? 'session_complete' : 'session_fail', { minutes: active.minutes, mode: modeOf(active.tag), reason });
     const next = [...sessions, { id: String(active.startedAt), startedAt: active.startedAt, minutes: active.minutes, success, tag: active.tag }];
     setSessions(next);
     saveSessions(next);
@@ -64,17 +85,25 @@ export default function App() {
     setTab('town');
   };
 
-  if (!fontsLoaded) return <View style={styles.root} />;
+  if (!fontsLoaded || !loaded) return <View style={styles.root} />;
+  const showOnboarding = !settings.onboarded || help;
 
   return (
+    <ErrorBoundary>
     <SafeAreaProvider>
       <SafeAreaView style={styles.root}>
         <StatusBar style="light" />
-        {pending ? (
+        {showOnboarding ? (
+          <OnboardingScreen onFinish={finishOnboarding} />
+        ) : pending ? (
           <CountdownScreen
             minutes={pending.minutes}
-            onCancel={() => setPending(null)}
+            onCancel={() => {
+              track('session_cancel', { minutes: pending.minutes });
+              setPending(null);
+            }}
             onGo={() => {
+              track('session_start', { minutes: pending.minutes, mode: modeOf(pending.tag), ambient: pending.ambient });
               setActive({ ...pending, startedAt: Date.now() });
               setPending(null);
             }}
@@ -95,7 +124,7 @@ export default function App() {
                 <StatsScreen sessions={sessions} />
               </View>
               <View style={tab === 'settings' ? styles.body : styles.hidden}>
-                <SettingsScreen settings={settings} onChange={updateSettings} onReset={resetRecords} />
+                <SettingsScreen settings={settings} onChange={updateSettings} onReset={resetRecords} onShowHelp={() => setHelp(true)} />
               </View>
             </View>
             <View style={styles.tabs}>
@@ -109,6 +138,7 @@ export default function App() {
         )}
       </SafeAreaView>
     </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

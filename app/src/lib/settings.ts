@@ -9,16 +9,19 @@ export type Settings = {
   sfx: boolean;
   haptics: boolean;
   notify: boolean;
+  analytics: boolean; // 익명 사용/크래시 데이터 공유
+  onboarded: boolean;
   tag: string;
   customTags: string[];
 };
-export const DEFAULT_SETTINGS: Settings = { minutes: 25, ambient: 'off', volume: 'mid', sfx: true, haptics: true, notify: true, tag: 'STUDY', customTags: [] };
+export const DEFAULT_SETTINGS: Settings = { minutes: 25, ambient: 'off', volume: 'mid', sfx: true, haptics: true, notify: true, analytics: true, onboarded: false, tag: 'STUDY', customTags: [] };
 const KEY = 'focus_town_settings_v1';
 
 export function applyPrefs(s: Settings) {
   prefs.sfx = s.sfx;
   prefs.haptics = s.haptics;
   prefs.notify = s.notify;
+  prefs.analytics = s.analytics;
   prefs.volume = VOLUME_VALUES[s.volume];
 }
 

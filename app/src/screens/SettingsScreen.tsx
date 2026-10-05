@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { colors } from '../theme';
+import { PRIVACY_URL, SUPPORT_EMAIL, TERMS_URL } from '../config';
 import { Panel, Txt } from '../components/ui';
 import { Settings } from '../lib/settings';
 import { setAmbientVolume } from '../lib/ambient';
@@ -10,9 +12,15 @@ type Props = {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onReset: () => void;
+  onShowHelp: () => void;
 };
 
-export default function SettingsScreen({ settings, onChange, onReset }: Props) {
+export default function SettingsScreen({ settings, onChange, onReset, onShowHelp }: Props) {
+  const version = Constants.expoConfig?.version ?? '1.0.0';
+  const open = (url: string) => Linking.openURL(url).catch(() => {});
+  const sendFeedback = () =>
+    open(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Focus Town feedback (v${version})`)}`);
+
   const confirmReset = () =>
     Alert.alert('Reset all records?', 'Your town and stats will be erased. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -50,6 +58,21 @@ export default function SettingsScreen({ settings, onChange, onReset }: Props) {
         </Row>
       </Panel>
 
+      <Txt style={styles.section}>PRIVACY</Txt>
+      <Panel style={styles.group}>
+        <Row label="Share crash & usage data" note="Anonymous. Helps us fix bugs and improve the app.">
+          <Toggle on={settings.analytics} onPress={() => onChange({ analytics: !settings.analytics })} />
+        </Row>
+      </Panel>
+
+      <Txt style={styles.section}>HELP</Txt>
+      <Panel style={styles.links}>
+        <LinkRow label="How to play" onPress={onShowHelp} />
+        {SUPPORT_EMAIL ? <LinkRow label="Send feedback" onPress={sendFeedback} /> : null}
+        <LinkRow label="Privacy policy" onPress={() => open(PRIVACY_URL)} />
+        <LinkRow label="Terms of service" onPress={() => open(TERMS_URL)} />
+      </Panel>
+
       <Txt style={styles.section}>DATA</Txt>
       <Pressable onPress={confirmReset} style={styles.danger}>
         <Txt style={styles.dangerText}>RESET ALL RECORDS</Txt>
@@ -57,7 +80,7 @@ export default function SettingsScreen({ settings, onChange, onReset }: Props) {
 
       <Txt style={styles.section}>ABOUT</Txt>
       <Panel style={styles.group}>
-        <Txt style={styles.about}>FOCUS TOWN v1.0.0{'\n\n'}Lo-fi music: Open Lo-Fi collection (CC0, public domain).</Txt>
+        <Txt style={styles.about}>FOCUS TOWN v{version}{'\n\n'}Lo-fi music: Open Lo-Fi collection (CC0, public domain).</Txt>
       </Panel>
     </ScrollView>
   );
@@ -72,6 +95,15 @@ function Row({ label, note, children }: { label: string; note?: string; children
       </View>
       {children}
     </View>
+  );
+}
+
+function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.linkRow}>
+      <Txt style={styles.rowLabel}>{label}</Txt>
+      <Txt style={styles.chev}>{'>'}</Txt>
+    </Pressable>
   );
 }
 
@@ -111,6 +143,9 @@ const styles = StyleSheet.create({
   segItem: { paddingVertical: 8, paddingHorizontal: 8, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line },
   segOn: { backgroundColor: colors.gold },
   segText: { fontSize: 7, color: colors.dim },
+  links: { paddingVertical: 4 },
+  linkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
+  chev: { color: colors.dim, fontSize: 10 },
   danger: { borderWidth: 3, borderColor: colors.danger, padding: 14, alignItems: 'center' },
   dangerText: { color: colors.danger, fontSize: 9 },
   about: { fontSize: 8, lineHeight: 14, color: colors.dim },

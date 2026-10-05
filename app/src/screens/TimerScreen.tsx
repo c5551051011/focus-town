@@ -8,14 +8,14 @@ import { PixelButton, Txt } from '../components/ui';
 import StopButton from '../components/StopButton';
 import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/ambient';
 import { buildingFor } from '../lib/buildings';
-import { useFocusSession } from '../lib/useFocusSession';
+import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
 
-type Props = { minutes: number; ambient: AmbientId; onDone: (success: boolean) => void };
+type Props = { minutes: number; ambient: AmbientId; onDone: (success: boolean, reason: EndReason) => void };
 
 export default function TimerScreen({ minutes, ambient, onDone }: Props) {
   useKeepAwake();
-  const { phase, remainingMs, recovered, giveUp } = useFocusSession(minutes);
+  const { phase, remainingMs, recovered, endReason, giveUp } = useFocusSession(minutes);
   const b = buildingFor(minutes);
   const [muted, setMuted] = useState(false);
   const toggleMute = () => {
@@ -53,7 +53,7 @@ export default function TimerScreen({ minutes, ambient, onDone }: Props) {
         <Txt style={styles.msg}>
           {ok ? `${b.name} added to your town.\n+${minutes} min` : 'You left the app too long.\nTry again!'}
         </Txt>
-        <PixelButton label="TO TOWN" onPress={() => onDone(ok)} style={styles.btn} />
+        <PixelButton label="TO TOWN" onPress={() => onDone(ok, endReason ?? (ok ? 'completed' : 'left_app'))} style={styles.btn} />
       </View>
     );
   }

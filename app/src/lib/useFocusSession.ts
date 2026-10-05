@@ -7,6 +7,7 @@ import { cancelReturnWarning, scheduleAwayNotifications } from './notifications'
 export const GRACE_SECONDS = 15;
 
 export type Phase = 'running' | 'warning' | 'success' | 'collapsed';
+export type EndReason = 'completed' | 'left_app' | 'gave_up';
 
 // 남은 시간은 종료 시각 기준으로 계산하므로 백그라운드에서도 정확하다.
 // 앱이 background로 가면 이탈. GRACE_SECONDS 안에 돌아오면 정상화, 넘기면 붕괴.
@@ -16,6 +17,7 @@ export function useFocusSession(minutes: number) {
   const [remainingMs, setRemainingMs] = useState(minutes * 60 * 1000);
   const [phase, setPhase] = useState<Phase>('running');
   const [recovered, setRecovered] = useState(false);
+  const [endReason, setEndReason] = useState<EndReason | null>(null);
   const phaseRef = useRef<Phase>('running');
 
   const update = (p: Phase) => {
@@ -30,6 +32,7 @@ export function useFocusSession(minutes: number) {
       if (left <= 0 && leftAt.current === null) {
         setRemainingMs(0);
         update('success');
+        setEndReason('completed');
         notify('success');
         playSound('success');
       } else {
@@ -52,6 +55,7 @@ export function useFocusSession(minutes: number) {
         cancelReturnWarning();
         if (awaySec > GRACE_SECONDS) {
           update('collapsed');
+          setEndReason('left_app');
           notify('error');
           playSound('collapse');
         } else {
@@ -67,8 +71,9 @@ export function useFocusSession(minutes: number) {
 
   const giveUp = () => {
     update('collapsed');
+    setEndReason('gave_up');
     playSound('collapse');
   };
 
-  return { phase, remainingMs, recovered, giveUp };
+  return { phase, remainingMs, recovered, endReason, giveUp };
 }
