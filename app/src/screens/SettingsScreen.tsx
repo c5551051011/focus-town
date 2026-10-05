@@ -84,6 +84,13 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
           <Item label="Music volume" indent value={VOLUME_LABEL[settings.volume]} onPress={() => setSheet('volume')} />
           <Item icon="gear" tint="#bd93f9" label="Vibration" right={<Switch on={settings.haptics} onPress={() => onChange({ haptics: !settings.haptics })} />} />
           <Item
+            icon="target"
+            tint="#8be9fd"
+            label="Progress card"
+            note="Shows the countdown outside the app (lock screen or notification shade)."
+            right={<Switch on={settings.liveProgress} onPress={() => onChange({ liveProgress: !settings.liveProgress })} />}
+          />
+          <Item
             icon="bell"
             tint="#ffb86c"
             label="Away alerts"

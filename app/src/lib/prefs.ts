@@ -7,5 +7,6 @@ export const prefs = {
   haptics: true,
   notify: true,
   analytics: true,
+  liveProgress: true,
   volume: 0.6,
 };

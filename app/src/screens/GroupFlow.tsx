@@ -14,6 +14,7 @@ import { statusMessage } from '../lib/messages';
 import { RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, respondJoin } from '../lib/rooms';
 import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
+import { startLive, stopLive } from '../lib/liveProgress';
 
 export type GroupRecord = {
   startedAt: number;
@@ -229,6 +230,14 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
     startAmbient(ambient);
     return stopAmbient;
   }, [ambient]);
+  // 앱을 벗어났을 때 보여줄 진행 카드 (서버 시각 기준의 종료 시각을 내 기기 시각으로 바꿔서 쓴다)
+  useEffect(() => {
+    if (!room.started_at || !room.ends_at) return;
+    const off = Date.parse(state.server_now) - Date.now();
+    startLive({ kind: 'group', tag: room.tag, buildingId: base.id, buildingName: base.name, startedAt: Date.parse(room.started_at) - off, endAt: Date.parse(room.ends_at) - off });
+    return () => stopLive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();

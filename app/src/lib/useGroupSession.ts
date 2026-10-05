@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { cancelReturnWarning, scheduleAwayNotifications } from './notifications';
+import { showAway, showBack } from './liveProgress';
 import { DAMAGE_START_SEC, DROP_DAMAGE_SEC, RoomResult, RoomState, clockOffset, finishRoom, getRoomState, heartbeat, msUntilEnd } from './rooms';
 
 // 그룹 방 상태를 서버와 맞추는 훅.
@@ -80,11 +81,13 @@ export function useGroupSession(roomId: string, initial: RoomState, myId: string
         leftAt.current = Date.now();
         setAway(true);
         scheduleAwayNotifications(DAMAGE_START_SEC, true);
+        showAway(Date.now() + DAMAGE_START_SEC * 1000);
       } else if (st === 'active' && leftAt.current !== null) {
         const sec = (Date.now() - leftAt.current) / 1000;
         leftAt.current = null;
         setAway(false);
         cancelReturnWarning();
+        showBack();
         damage.current = Math.min(DROP_DAMAGE_SEC, damage.current + Math.max(0, Math.floor(sec - DAMAGE_START_SEC)));
         sync();
       }

@@ -335,7 +335,7 @@ export default function App() {
               }}
             />
           ) : active ? (
-            <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} workers={workers} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
+            <TimerScreen minutes={active.minutes} endAt={active.endAt} tag={active.tag} ambient={active.ambient} workers={workers} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
           ) : overlay?.type === 'settings' ? (
             <SettingsScreen
               settings={settings}

@@ -10,12 +10,14 @@ import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/am
 import { buildingFor } from '../lib/buildings';
 import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
+import { startLive, stopLive } from '../lib/liveProgress';
 import CallPassPrompt from '../components/CallPassPrompt';
 import { Character } from '../lib/character';
 
 type Props = {
   minutes: number;
   endAt: number;
+  tag: string;
   ambient: AmbientId;
   workers: Character[];
   goal: number;
@@ -24,7 +26,7 @@ type Props = {
   onDone: () => void; // 결과 화면에서 "TO TOWN"
 };
 
-export default function TimerScreen({ minutes, endAt, ambient, workers, goal, todayBefore, onEnded, onDone }: Props) {
+export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goal, todayBefore, onEnded, onDone }: Props) {
   useKeepAwake();
   const { phase, remainingMs, recovered, endReason, awaySeconds, giveUp, acceptPass, declinePass } = useFocusSession(minutes, endAt);
   const [before] = useState(todayBefore); // 기록되기 전 오늘 집중 시간 (목표 달성 판정용)
@@ -41,6 +43,13 @@ export default function TimerScreen({ minutes, endAt, ambient, workers, goal, to
     if (finished && endReason) onEnded(phase === 'success', endReason);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
+
+  // 앱을 벗어났을 때 보여줄 진행 카드(라이브 액티비티/알림 카드). 이어하기로 들어온 경우에도 남은 시간 기준으로 띄운다.
+  useEffect(() => {
+    startLive({ kind: 'solo', tag, buildingId: b.id, buildingName: b.name, startedAt: endAt - minutes * 60000, endAt });
+    return () => stopLive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 배경 사운드: 세션 동안만 재생
   useEffect(() => {

@@ -34,7 +34,8 @@
       "expo-font",
       "expo-notifications",
       "expo-asset",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-live-activity"
     ],
     "extra": {
       "eas": {

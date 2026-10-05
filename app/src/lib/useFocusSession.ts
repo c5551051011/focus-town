@@ -5,6 +5,7 @@ import { playSound } from './sounds';
 import { cancelReturnWarning, scheduleAwayNotifications } from './notifications';
 import { patchActive } from './activeSession';
 import { isPassAvailable, consumePass } from './callPass';
+import { setLiveEnd, showAway, showBack, stopLive } from './liveProgress';
 
 export const GRACE_SECONDS = 15;
 
@@ -37,6 +38,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
     setEndReason(reason);
     notify('error');
     playSound('collapse');
+    stopLive('collapsed');
   };
 
   // 1초에 두 번 남은 시간을 갱신하고, 5초마다 "앱이 떠 있음" 표시를 저장한다 (강제 종료 복구용)
@@ -51,6 +53,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
         setEndReason('completed');
         notify('success');
         playSound('success');
+        stopLive('complete');
       } else {
         setRemainingMs(Math.max(0, left));
         if (leftAt.current === null && ++ticks % 10 === 0) patchActive({ seenAt: Date.now() });
@@ -68,6 +71,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
         patchActive({ leftAt: leftAt.current });
         update('warning');
         scheduleAwayNotifications(GRACE_SECONDS);
+        showAway(Date.now() + GRACE_SECONDS * 1000);
       } else if (state === 'active' && leftAt.current !== null) {
         const away = Date.now() - leftAt.current;
         leftAt.current = null;
@@ -75,6 +79,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
         patchActive({ leftAt: null, seenAt: Date.now() });
         if (away / 1000 <= GRACE_SECONDS) {
           update('running');
+          showBack();
           playSound('warn');
           setRecovered(true);
           setTimeout(() => setRecovered(false), 3000);
@@ -99,6 +104,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
     setEndAt(next);
     setRemainingMs(Math.max(0, next - Date.now()));
     patchActive({ endAt: next });
+    setLiveEnd(next);
     update('running');
     setRecovered(true);
     setTimeout(() => setRecovered(false), 3000);
@@ -109,6 +115,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
     update('collapsed');
     setEndReason('gave_up');
     playSound('collapse');
+    stopLive('left');
   };
 
   return { phase, remainingMs, recovered, endReason, awaySeconds, giveUp, acceptPass, declinePass };
