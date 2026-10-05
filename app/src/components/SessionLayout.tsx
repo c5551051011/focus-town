@@ -16,6 +16,7 @@ export default function SessionLayout({
   warn,
   topRight,
   workers,
+  extra,
 }: {
   building: SpriteName;
   progress: number;
@@ -25,6 +26,7 @@ export default function SessionLayout({
   warn?: boolean;
   topRight?: ReactNode;
   workers: Character[];
+  extra?: ReactNode; // 메시지 아래에 끼워 넣는 영역 (그룹: 내구성 바 등)
 }) {
   return (
     <View style={[styles.wrap, warn && styles.warn]}>
@@ -36,6 +38,7 @@ export default function SessionLayout({
           <View style={[styles.fill, { width: `${progress * 100}%` }]} />
         </View>
         <Txt style={styles.msg}>{message}</Txt>
+        {extra}
       </View>
       <View style={styles.bottom}>{bottom}</View>
     </View>

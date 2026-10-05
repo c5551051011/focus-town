@@ -3,7 +3,7 @@ import { Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-n
 import { colors } from '../theme';
 import { Pixel, SpriteName } from '../components/Pixel';
 import { Txt } from '../components/ui';
-import { buildingFor } from '../lib/buildings';
+import { buildingOf } from '../lib/buildings';
 import { Session } from '../lib/types';
 
 const SIZE = 8;
@@ -62,7 +62,7 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
   let shown = 0;
   built.forEach((s, i) => {
     if (s.startedAt < period.start) return;
-    onTile.set(SLOTS[i % SLOTS.length], buildingFor(s.minutes).id);
+    onTile.set(SLOTS[i % SLOTS.length], buildingOf(s).id);
     shown++;
   });
 

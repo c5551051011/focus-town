@@ -17,12 +17,15 @@ type Props = {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onStart: (minutes: number, ambient: AmbientId, tag: string) => void;
+  onCreateRoom: (minutes: number, tag: string) => void;
+  onJoinRoom: () => void;
 };
 
-export default function SetupScreen({ todayMinutes, settings, onChange: update, onStart }: Props) {
+export default function SetupScreen({ todayMinutes, settings, onChange: update, onStart, onCreateRoom, onJoinRoom }: Props) {
   const [soundSheet, setSoundSheet] = useState(false);
   const [tagSheet, setTagSheet] = useState(false);
   const [dialOpen, setDialOpen] = useState(false);
+  const [group, setGroup] = useState(false); // SOLO / GROUP
   const { minutes, ambient, tag, customTags } = settings;
   const b = buildingFor(minutes);
 
@@ -34,6 +37,13 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
   return (
     <View style={styles.wrap}>
       <Txt style={styles.logo}>FOCUS TOWN</Txt>
+      <View style={styles.seg}>
+        {([false, true] as const).map((g) => (
+          <Pressable key={String(g)} onPress={() => setGroup(g)} style={[styles.segItem, group === g && styles.segOn]}>
+            <Txt style={[styles.segText, group === g && { color: colors.bg }]}>{g ? 'GROUP' : 'SOLO'}</Txt>
+          </Pressable>
+        ))}
+      </View>
 
       {settings.dailyGoal > 0 && (
         <View style={styles.goalWrap}>
@@ -68,7 +78,14 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
         <Txt style={styles.soundValue}>{ambientLabel(ambient)} {'>'}</Txt>
       </Pressable>
 
-      <PixelButton label="START" onPress={start} style={styles.start} />
+      {group ? (
+        <>
+          <PixelButton label="CREATE ROOM" onPress={() => onCreateRoom(minutes, tag)} style={styles.start} />
+          <PixelButton label="JOIN WITH CODE" variant="ghost" onPress={onJoinRoom} style={{ marginTop: 10 }} />
+        </>
+      ) : (
+        <PixelButton label="START" onPress={start} style={styles.start} />
+      )}
 
       {/* 시간을 탭하면 열리는 다이얼 */}
       <Modal visible={dialOpen} transparent animationType="fade" onRequestClose={() => setDialOpen(false)}>
@@ -103,6 +120,10 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 24, justifyContent: 'center' },
+  seg: { flexDirection: 'row', alignSelf: 'center', marginTop: 14, width: 220 },
+  segItem: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
+  segOn: { backgroundColor: colors.accent },
+  segText: { fontSize: 9, color: colors.dim },
   logo: { color: colors.accent, fontSize: 16, textAlign: 'center' },
   goalWrap: { marginTop: 14, alignItems: 'center' },
   goalText: { color: colors.dim, fontSize: 8 },

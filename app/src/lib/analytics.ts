@@ -38,6 +38,10 @@ export type EventName =
   | 'session_complete'
   | 'session_fail'
   | 'goal_reached'
+  | 'group_create'
+  | 'group_join'
+  | 'group_complete'
+  | 'group_fail'
   | 'reminder_changed';
 
 export function track(event: EventName, props: Record<string, string | number | boolean> = {}): void {

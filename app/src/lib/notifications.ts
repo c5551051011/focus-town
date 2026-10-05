@@ -42,18 +42,22 @@ const REMINDER_DAYS = 7;
 const reminderId = (i: number) => `reminder-${i}`;
 
 // 이탈하면 알림 2개를 예약한다: 3초 뒤 "돌아오세요", 유예(grace)가 끝나는 시점에 "무너졌어요"
-export async function scheduleAwayNotifications(graceSeconds: number) {
+export async function scheduleAwayNotifications(graceSeconds: number, group = false) {
   if (!prefs.notify) return;
   const at = (seconds: number) => ({ type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds }) as const;
   try {
     await Notifications.scheduleNotificationAsync({
       identifier: AWAY_IDS[0],
-      content: { title: 'Your building is in danger!', body: `Come back within ${graceSeconds - 3} seconds!` },
+      content: group
+        ? { title: 'Your team is counting on you!', body: `Come back within ${graceSeconds - 3} seconds before the building takes damage.` }
+        : { title: 'Your building is in danger!', body: `Come back within ${graceSeconds - 3} seconds!` },
       trigger: at(3),
     });
     await Notifications.scheduleNotificationAsync({
       identifier: AWAY_IDS[1],
-      content: { title: 'Your building collapsed...', body: 'You were away too long. Open the app to try again.' },
+      content: group
+        ? { title: 'The team building is cracking!', body: 'Every second away now hurts your team. Come back!' }
+        : { title: 'Your building collapsed...', body: 'You were away too long. Open the app to try again.' },
       trigger: at(graceSeconds),
     });
   } catch {}

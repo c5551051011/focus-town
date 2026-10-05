@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 import { Pixel } from '../components/Pixel';
 import { Panel, Txt } from '../components/ui';
-import { BUILDINGS, buildingFor } from '../lib/buildings';
+import { BUILDINGS, buildingOf } from '../lib/buildings';
 import { computeStats } from '../lib/stats';
 import { computeStreak, dayKey } from '../lib/streak';
 import { tagColor } from '../lib/tags';
@@ -40,7 +40,7 @@ function Overview({ sessions, goal }: { sessions: Session[]; goal: number }) {
   const owned: Record<string, number> = {};
   const byTag: Record<string, number> = {};
   sessions.filter((x) => x.success).forEach((x) => {
-    const id = buildingFor(x.minutes).id;
+    const id = buildingOf(x).id;
     owned[id] = (owned[id] ?? 0) + 1;
     const t = x.tag ?? 'OTHER';
     byTag[t] = (byTag[t] ?? 0) + x.minutes;

@@ -18,6 +18,9 @@ import { ActiveRecord, clearActive, loadActive, patchActive, saveActive } from '
 import { isPassAvailable, consumePass } from './src/lib/callPass';
 import CallPassPrompt from './src/components/CallPassPrompt';
 import AuthSheet from './src/components/AuthSheet';
+import JoinCodeSheet from './src/components/JoinCodeSheet';
+import GroupFlow, { GroupRecord } from './src/screens/GroupFlow';
+import { RoomState, createRoom, getRoomState, joinRoom, myOpenRoom } from './src/lib/rooms';
 import CharacterScreen from './src/screens/CharacterScreen';
 import { deleteAccount, signOut, useAuthSession } from './src/lib/auth';
 import { fetchProfile, saveProfile } from './src/lib/profile';
@@ -60,6 +63,8 @@ export default function App() {
   const [help, setHelp] = useState(false); // 설정에서 다시 연 "How to play"
   const [editingCharacter, setEditingCharacter] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [group, setGroup] = useState<RoomState | null>(null); // 참여 중인 그룹 방
   const authSession = useAuthSession();
   const userId = authSession?.user.id ?? null;
 
@@ -120,6 +125,58 @@ export default function App() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, userId]);
+
+  // 앱을 다시 켰을 때 진행 중이던 그룹 방이 있으면 이어서 들어간다
+  useEffect(() => {
+    if (!loaded || !userId) return;
+    (async () => {
+      const open = await myOpenRoom();
+      if (!open.ok || !open.data) return;
+      const s = await getRoomState(open.data);
+      if (s.ok) setGroup(s.data);
+    })();
+  }, [loaded, userId]);
+
+  // 그룹은 계정이 필요하다: 로그인과 캐릭터가 없으면 안내하고, 서버에 프로필이 있는지 확인한 뒤 진행
+  const readyForGroup = async (): Promise<boolean> => {
+    if (!userId) {
+      Alert.alert('Sign in required', 'Group sessions need an account so friends can see your name and character.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign in', onPress: () => setAuthOpen(true) },
+      ]);
+      return false;
+    }
+    if (!settings.character) return false;
+    if (!(await saveProfile(userId, settings.character))) {
+      Alert.alert('Connection problem', 'Could not reach the server. Check your connection and try again.');
+      return false;
+    }
+    return true;
+  };
+
+  const createGroup = async (minutes: number, tag: string) => {
+    if (!(await readyForGroup())) return;
+    const r = await createRoom(minutes, tag);
+    if (!r.ok) return Alert.alert('Could not create room', r.error);
+    track('group_create', { minutes, mode: modeOf(tag) });
+    setGroup(r.data);
+  };
+
+  const joinGroup = async (code: string): Promise<string | null> => {
+    if (!(await readyForGroup())) return 'Sign in first.';
+    const r = await joinRoom(code);
+    if (!r.ok) return r.error;
+    track('group_join', {});
+    setGroup(r.data);
+    return null;
+  };
+
+  const recordGroup = (g: GroupRecord) => {
+    const next = [...sessions, { id: `g-${g.startedAt}`, startedAt: g.startedAt, minutes: g.minutes, success: g.success, tag: g.tag, group: true, building: g.building, members: g.members }];
+    setSessions(next);
+    saveSessions(next);
+    track(g.success ? 'group_complete' : 'group_fail', { minutes: g.minutes, members: g.members, durability: g.durability, reason: g.reason });
+  };
 
   const saveCharacter = (c: Character) => {
     updateSettings({ character: c });
@@ -229,6 +286,18 @@ export default function App() {
               setPending(null);
             }}
           />
+        ) : group && userId ? (
+          <GroupFlow
+            key={group.room.id}
+            initial={group}
+            myId={userId}
+            ambient={settings.ambient}
+            onRecord={recordGroup}
+            onExit={() => {
+              setGroup(null);
+              setTab('town');
+            }}
+          />
         ) : active ? (
           <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} workers={workers} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
         ) : (
@@ -236,7 +305,7 @@ export default function App() {
             <View style={styles.body}>
               {/* 탭 전환 시 다시 그리지 않도록 화면을 유지한 채 숨긴다 */}
               <View style={tab === 'setup' ? styles.body : styles.hidden}>
-                <SetupScreen todayMinutes={todayBefore} settings={settings} onChange={updateSettings} onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t })} />
+                <SetupScreen todayMinutes={todayBefore} settings={settings} onChange={updateSettings} onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t })} onCreateRoom={createGroup} onJoinRoom={() => setJoinOpen(true)} />
               </View>
               <View style={tab === 'town' ? styles.body : styles.hidden}>
                 <TownScreen sessions={sessions} />
@@ -266,6 +335,7 @@ export default function App() {
             </View>
           </>
         )}
+        <JoinCodeSheet visible={joinOpen} onClose={() => setJoinOpen(false)} onJoin={joinGroup} />
         <AuthSheet visible={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={() => setAuthOpen(false)} />
       </SafeAreaView>
     </SafeAreaProvider>
