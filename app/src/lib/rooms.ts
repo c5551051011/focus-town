@@ -40,6 +40,7 @@ export type RoomState = {
   members: RoomMember[];
   durability_now: number;
   active_count: number;
+  invites: { user_id: string; name: string; status: 'pending' | 'accepted' | 'declined' }[];
 };
 
 export type RoomResult<T = RoomState> = { ok: true; data: T } | { ok: false; error: string };
@@ -57,6 +58,7 @@ const MESSAGES: Record<string, string> = {
   NOT_A_MEMBER: 'You are not in this room.',
   NOT_ACTIVE: 'Only people in the session can do that.',
   BAD_MINUTES: 'Pick a time between 1 and 120 minutes.',
+  INVITE_NOT_FOUND: 'That invite is no longer available.',
 };
 
 function friendly(message: string | undefined): string {
@@ -76,6 +78,25 @@ async function call<T = RoomState>(fn: string, args?: Record<string, unknown>): 
     return { ok: false, error: friendly(e instanceof Error ? e.message : undefined) };
   }
 }
+
+export type Invite = {
+  room_id: string;
+  minutes: number;
+  tag: string;
+  host_name: string;
+  host_species: Character['species'];
+  host_color: Character['color'];
+  host_hat: Character['hat'];
+  started_ago_s: number;
+  free_join_left_s: number; // 0이면 전원 허용이 필요하다
+  ends_in_s: number;
+};
+
+export const createRoomWithInvites = (minutes: number, tag: string, invitees: string[]) =>
+  call('create_room_with_invites', { p_minutes: minutes, p_tag: tag, p_invitees: invitees });
+export const myInvites = () => call<Invite[]>('my_invites');
+export const acceptInvite = (room: string) => call('accept_invite', { p_room: room });
+export const declineInvite = (room: string) => call<null>('decline_invite', { p_room: room });
 
 export const createRoom = (minutes: number, tag: string) => call('create_room', { p_minutes: minutes, p_tag: tag });
 export const joinRoom = (code: string) => call('join_room', { p_code: code.trim().toUpperCase() });

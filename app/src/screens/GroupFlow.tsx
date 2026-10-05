@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useKeepAwake } from 'expo-keep-awake';
 import { colors } from '../theme';
 import Avatar from '../components/Avatar';
@@ -11,7 +11,7 @@ import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/am
 import { buildingFor, tieredBuilding } from '../lib/buildings';
 import { Character } from '../lib/character';
 import { statusMessage } from '../lib/messages';
-import { RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, respondJoin, setReady, startRoom } from '../lib/rooms';
+import { RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, respondJoin } from '../lib/rooms';
 import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
 
@@ -115,17 +115,14 @@ export default function GroupFlow({ initial, myId, ambient, onRecord, onExit }: 
     );
   }
 
-  // ── 대기실 ──
+  // ── 예전 방식(READY 대기)으로 만들어진 방: 지금은 바로 시작하는 방만 쓴다 ──
   if (room.status === 'lobby') {
     return (
-      <Lobby
-        state={state}
-        mine={mine}
-        busy={busy}
-        notice={notice}
-        onReady={() => run(async () => apply(await setReady(room.id, !mine.ready)) ? { ok: true } : { ok: false, error: 'Could not update. Try again.' })}
-        onStart={() => run(async () => { const r = await startRoom(room.id); return apply(r) ? { ok: true } : { ok: false, error: r.ok ? undefined : r.error }; })}
-        onLeave={async () => {
+      <Notice
+        title="OLD ROOM"
+        text="This room is from an older version and is waiting to start. Please leave and start a new session."
+        okLabel="LEAVE"
+        onOk={async () => {
           await leaveRoom(room.id);
           onExit();
         }}
@@ -194,45 +191,6 @@ function MemberCard({ m, sub }: { m: RoomMember; sub?: string }) {
   );
 }
 
-function Lobby({ state, mine, busy, notice, onReady, onStart, onLeave }: { state: RoomState; mine: RoomMember; busy: boolean; notice: string | null; onReady: () => void; onStart: () => void; onLeave: () => void }) {
-  const { room, members } = state;
-  const readyCount = members.filter((m) => m.ready).length;
-  const b = buildingFor(room.minutes);
-  const share = () =>
-    Share.share({ message: `Join my Focus Town room and build together!\nRoom code: ${room.code}\n${room.minutes} min · ${room.tag}` }).catch(() => {});
-  return (
-    <ScrollView contentContainerStyle={styles.lobby}>
-      <Txt style={styles.label}>ROOM CODE</Txt>
-      <Txt style={styles.code}>{room.code}</Txt>
-      <PixelButton label="SHARE CODE" variant="ghost" onPress={share} style={{ alignSelf: 'stretch', marginTop: 14 }} />
-
-      <View style={styles.infoRow}>
-        <Pixel name={b.id} size={48} />
-        <Txt style={styles.info}>{room.minutes} MIN · {room.tag}{'\n'}{b.name}</Txt>
-      </View>
-
-      <Txt style={styles.label}>PLAYERS {members.length}/{room.max_members}</Txt>
-      <View style={styles.grid}>
-        {members.map((m) => (
-          <MemberCard key={m.user_id} m={m} sub={m.ready ? 'READY' : 'WAITING'} />
-        ))}
-      </View>
-
-      <Txt style={styles.hint}>
-        The host starts when ready. People who are not ready can still join within {Math.round(room.late_join_seconds / 60)} minutes after the start; after that everyone in the session must agree.
-      </Txt>
-      {notice ? <Txt style={styles.error}>{notice}</Txt> : null}
-
-      {mine.is_host ? (
-        <PixelButton label={busy ? '...' : `START (${readyCount} READY)`} onPress={onStart} style={styles.fullBtn} />
-      ) : (
-        <PixelButton label={mine.ready ? 'NOT READY' : 'READY!'} variant={mine.ready ? 'ghost' : 'primary'} onPress={onReady} style={styles.fullBtn} />
-      )}
-      <PixelButton label="LEAVE" variant="ghost" onPress={onLeave} style={styles.fullBtn} />
-    </ScrollView>
-  );
-}
-
 function LateScreen({ state, mine, offset, remainingMs, busy, notice, onJoin, onLeave }: { state: RoomState; mine: RoomMember; offset: number; remainingMs: number; busy: boolean; notice: string | null; onJoin: () => void; onLeave: () => void }) {
   const { room, members } = state;
   const pending = mine.status === 'pending';
@@ -264,6 +222,7 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
   const crew = members.filter((m) => m.status === 'active').map(toCharacter);
   const awayNames = members.filter((m) => m.status === 'active' && m.away_s > 0 && m.user_id !== myId).map((m) => m.name);
   const damaging = members.some((m) => m.status === 'active' && m.away_s > 15);
+  const waitingFor = state.invites.filter((i) => i.status === 'pending').map((i) => i.name);
   const request = members.find((m) => m.status === 'pending' && m.my_vote === null && mine.status === 'active');
 
   useEffect(() => {
@@ -312,6 +271,7 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
           <View style={styles.durTrack}>
             <View style={[styles.durFill, { width: `${dur}%`, backgroundColor: toneColor(dur) }]} />
           </View>
+          {waitingFor.length > 0 ? <Txt style={styles.waiting}>WAITING FOR {waitingFor.join(', ')}</Txt> : null}
           {request ? (
             <View style={styles.request}>
               <Txt style={styles.requestText}>{request.name} wants to join</Txt>
@@ -394,6 +354,7 @@ const styles = StyleSheet.create({
   durLabel: { fontSize: 8, color: colors.dim },
   durTrack: { height: 14, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
   durFill: { height: '100%' },
+  waiting: { color: colors.dim, fontSize: 7, marginTop: 10, textAlign: 'center' },
   request: { marginTop: 12, padding: 10, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.gold, alignItems: 'center', gap: 10 },
   requestText: { fontSize: 8 },
   reqBtn: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 3, borderColor: colors.line, backgroundColor: colors.bg },

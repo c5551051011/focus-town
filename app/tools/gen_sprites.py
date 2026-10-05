@@ -462,3 +462,100 @@ for hid in HATS:
 lines += ["};", ""]
 open('src/lib/characterAssets.ts', 'w').write('\n'.join(lines))
 print('characters ok')
+
+
+# ───────────────────────── 설정/프로필용 아이콘 (흰색, 앱에서 tintColor로 색을 입힌다) ─────────────────────────
+import math
+from PIL import Image, ImageDraw, ImageFont
+
+def blank():
+    return [['.'] * 16 for _ in range(16)]
+
+def field(fn):
+    g = blank()
+    for y in range(16):
+        for x in range(16):
+            if fn(x - 7.5, y - 7.5):
+                g[y][x] = 'W'
+    return g
+
+ICONS = {}
+ICONS['target'] = field(lambda dx, dy: (lambda r: r <= 1.7 or 3.2 <= r <= 4.4 or 5.6 <= r <= 6.9)(math.hypot(dx, dy)))
+ICONS['user'] = field(lambda dx, dy: (math.hypot(dx, dy + 3.2) <= 3.1) or (dy >= 1.2 and dy <= 6.5 and abs(dx) <= 2.2 + (dy - 1.2) * 0.85 and (abs(dx) <= 6.3)))
+ICONS['plus'] = field(lambda dx, dy: (abs(dx) <= 1.0 and abs(dy) <= 5.5) or (abs(dy) <= 1.0 and abs(dx) <= 5.5))
+def gear(dx, dy):
+    r = math.hypot(dx, dy)
+    ring = 3.0 <= r <= 5.0
+    tooth = (r <= 7.0 and r >= 4.5) and (abs(dx) <= 1.2 or abs(dy) <= 1.2 or abs(abs(dx) - abs(dy)) <= 1.3)
+    return ring or tooth
+ICONS['gear'] = field(gear)
+shield_widths = [0, 0, 10, 12, 12, 12, 12, 12, 11, 10, 8, 6, 4, 2, 0, 0]
+g = blank()
+for y, w in enumerate(shield_widths):
+    for x in range(8 - w // 2, 8 + (w + 1) // 2):
+        if w:
+            g[y][x] = 'W'
+for y in range(4, 9):          # 방패 속 홈(선택) — 가운데를 비운다
+    g[y][7] = '.'; g[y][8] = '.'
+ICONS['shield'] = g
+bell = """
+................
+.......WW.......
+......WWWW......
+.....WWWWWW.....
+.....WWWWWW.....
+.....WWWWWW.....
+....WWWWWWWW....
+....WWWWWWWW....
+...WWWWWWWWWW...
+...WWWWWWWWWW...
+..WWWWWWWWWWWW..
+................
+......WWWW......
+.......WW.......
+................
+................
+"""
+ICONS['bell'] = [list(r) for r in bell.strip('\n').split('\n')]
+share = """
+................
+.......WW.......
+......WWWW......
+.....WWWWWW.....
+....WWWWWWWW....
+.......WW.......
+.......WW.......
+..WW...WW...WW..
+..WW...WW...WW..
+..WW........WW..
+..WW........WW..
+..WWWWWWWWWWWW..
+..WWWWWWWWWWWW..
+................
+................
+................
+"""
+ICONS['share'] = [list(r) for r in share.strip('\n').split('\n')]
+
+# 글자 아이콘: 픽셀 폰트로 한 글자를 그려서 가져온다
+def glyph(ch):
+    f = ImageFont.truetype('node_modules/@expo-google-fonts/press-start-2p/400Regular/PressStart2P_400Regular.ttf', 16)
+    im = Image.new('L', (16, 16), 0)
+    d = ImageDraw.Draw(im)
+    w = d.textlength(ch, font=f)
+    d.text(((16 - w) / 2, 0), ch, font=f, fill=255)
+    return [['W' if im.getpixel((x, y)) > 110 else '.' for x in range(16)] for y in range(16)]
+ICONS['help'] = glyph('?')
+
+for name, g in ICONS.items():
+    rows = [''.join(r) for r in g]
+    assert len(rows) == 16 and all(len(r) == 16 for r in rows), (name, len(rows), [len(r) for r in rows])
+    write_png(f'assets/pixel/icon_{name}.png', rows)
+
+# characterAssets.ts 와 같은 방식으로 아이콘 목록 파일을 만든다
+lines = ["// 자동 생성 파일 — tools/gen_sprites.py 를 실행하면 다시 만들어진다. 직접 수정하지 마세요.", "", "export const ICON_IMAGES = {"]
+for name in ICONS:
+    lines.append(f"  {name}: require('../../assets/pixel/icon_{name}.png'),")
+lines += ["} as const;", "export type IconName = keyof typeof ICON_IMAGES;", ""]
+open('src/lib/iconAssets.ts', 'w').write('\n'.join(lines))
+print('icons ok', list(ICONS))

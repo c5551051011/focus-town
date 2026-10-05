@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Follow me on Focus Town</title>
+<style>
+:root{--bg:#1e1c2a;--panel:#2a2740;--text:#f8f8f2;--dim:#a9a5c4;--accent:#ff79c6;--gold:#f1fa8c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px;text-align:center}
+main{max-width:420px}h1{color:var(--accent);font-size:1.6rem;margin:.2em 0}p{color:var(--dim)}
+.code{background:var(--panel);color:var(--gold);font:700 1.8rem/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;padding:18px;border-radius:10px;margin:18px 0}
+a.btn{display:inline-block;background:var(--accent);color:#1e1c2a;font-weight:700;text-decoration:none;padding:14px 22px;border-radius:10px;margin:6px}
+small{display:block;margin-top:22px;color:var(--dim)}
+</style></head><body><main>
+<h1>Follow me on Focus Town!</h1>
+<p>Open the app and follow your friend to focus together.</p>
+<div class="code" id="code">--------</div>
+<a class="btn" id="open" href="#">Open Focus Town</a>
+<small>No app yet? Install Focus Town, then open Profile → Add friends and paste this code.<br>앱에서 <b>ME → ADD FRIENDS</b> 검색창에 위 코드를 붙여 넣으면 친구를 찾을 수 있어요.</small>
+<script>
+  var m = location.search.match(/[?&]code=([0-9A-Fa-f]{8})/);
+  var code = m ? m[1].toUpperCase() : null;
+  if (code) {
+    document.getElementById('code').textContent = code;
+    var link = 'focustown://follow/' + code;
+    document.getElementById('open').href = link;
+    setTimeout(function () { location.href = link; }, 400); // 앱이 설치되어 있으면 바로 열린다
+  } else {
+    document.getElementById('open').style.display = 'none';
+  }
+</script>
+</main></body></html>

@@ -46,6 +46,18 @@ create table if not exists public.join_votes (
   foreign key (room_id, joiner_id) references public.room_members (room_id, user_id) on delete cascade
 );
 
+-- 방장이 친구를 초대한 기록 (초대받은 사람은 앱에서 보고 참여/거절)
+create table if not exists public.room_invites (
+  room_id uuid not null references public.rooms (id) on delete cascade,
+  from_id uuid not null references auth.users (id) on delete cascade,
+  to_id uuid not null references auth.users (id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'declined')),
+  created_at timestamptz not null default now(),
+  primary key (room_id, to_id)
+);
+create index if not exists room_invites_to_idx on public.room_invites (to_id, status);
+
+alter table public.room_invites enable row level security;
 alter table public.rooms enable row level security;
 alter table public.room_members enable row level security;
 alter table public.join_votes enable row level security;
@@ -120,7 +132,12 @@ begin
     'members', v_members,
     'durability_now', case when v_room.status in ('done', 'collapsed') then coalesce(v_room.durability, v_dur) else v_dur end,
     -- 현재 참여자 수(허용 투표 기준)
-    'active_count', (select count(*) from public.room_members where room_id = v_room.id and status = 'active')
+    'active_count', (select count(*) from public.room_members where room_id = v_room.id and status = 'active'),
+    -- 초대한 친구들의 응답 상태
+    'invites', coalesce((
+      select jsonb_agg(jsonb_build_object('user_id', i.to_id, 'name', p.name, 'status', i.status) order by i.created_at)
+        from public.room_invites i left join public.profiles p on p.id = i.to_id
+       where i.room_id = v_room.id), '[]'::jsonb)
   );
 end;
 $$;

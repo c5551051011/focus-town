@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PressStart2P_400Regular, useFonts } from '@expo-google-fonts/press-start-2p';
@@ -16,21 +16,25 @@ import { PRESET_TAGS } from './src/lib/tags';
 import { EndReason, GRACE_SECONDS } from './src/lib/useFocusSession';
 import { ActiveRecord, clearActive, loadActive, patchActive, saveActive } from './src/lib/activeSession';
 import { isPassAvailable, consumePass } from './src/lib/callPass';
-import CallPassPrompt from './src/components/CallPassPrompt';
-import AuthSheet from './src/components/AuthSheet';
-import JoinCodeSheet from './src/components/JoinCodeSheet';
-import GroupFlow, { GroupRecord } from './src/screens/GroupFlow';
-import { RoomState, createRoom, getRoomState, joinRoom, myOpenRoom } from './src/lib/rooms';
-import CharacterScreen from './src/screens/CharacterScreen';
-import { deleteAccount, signOut, useAuthSession } from './src/lib/auth';
+import { RoomState, acceptInvite, createRoomWithInvites, declineInvite, getRoomState, myOpenRoom } from './src/lib/rooms';
+import { deleteAccount, signOut } from './src/lib/auth';
 import { fetchProfile, saveProfile } from './src/lib/profile';
 import { Character } from './src/lib/character';
-import ErrorBoundary from './src/components/ErrorBoundary';
-import OnboardingScreen from './src/screens/OnboardingScreen';
+import { parseFollowCode } from './src/lib/social';
+import { useAccount, useInvites } from './src/lib/useAccount';
 import { loadSessions, saveSessions } from './src/lib/storage';
 import { DEFAULT_SETTINGS, Settings, applyPrefs, loadSettings, saveSettings } from './src/lib/settings';
 import { TIME_VALUES } from './src/lib/buildings';
+import CallPassPrompt from './src/components/CallPassPrompt';
+import AuthSheet from './src/components/AuthSheet';
+import InviteBanner from './src/components/InviteBanner';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import GroupFlow, { GroupRecord } from './src/screens/GroupFlow';
+import CharacterScreen from './src/screens/CharacterScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import { AddFriendsScreen, FollowListScreen } from './src/screens/FriendsScreens';
 import TownScreen from './src/screens/TownScreen';
 import SetupScreen from './src/screens/SetupScreen';
 import TimerScreen from './src/screens/TimerScreen';
@@ -41,19 +45,26 @@ initErrorReporting();
 
 const modeOf = (tag: string) => (PRESET_TAGS.includes(tag) ? tag : 'custom'); // 직접 만든 모드 이름은 분석에 보내지 않는다
 
-type Tab = 'setup' | 'town' | 'stats' | 'settings';
+type Tab = 'setup' | 'town' | 'stats' | 'me';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'setup', label: 'FOCUS' },
   { id: 'town', label: 'TOWN' },
   { id: 'stats', label: 'STATS' },
-  { id: 'settings', label: 'SET' },
+  { id: 'me', label: 'ME' },
 ];
+
+// 탭 위에 전체 화면으로 열리는 화면들
+type Overlay = { type: 'settings' } | { type: 'add'; query?: string } | { type: 'follow'; tab: 'following' | 'followers' } | null;
+
+type Pending = { minutes: number; ambient: AmbientId; tag: string; invitees: string[] };
 
 export default function App() {
   const [fontsLoaded] = useFonts({ PressStart2P_400Regular });
   const [tab, setTab] = useState<Tab>('setup');
+  const [overlay, setOverlay] = useState<Overlay>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [pending, setPending] = useState<{ minutes: number; ambient: AmbientId; tag: string } | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [invitees, setInvitees] = useState<string[]>([]); // 이번 세션에 초대할 친구
   const [active, setActive] = useState<{ minutes: number; startedAt: number; endAt: number; ambient: AmbientId; tag: string } | null>(null);
   const [recovery, setRecovery] = useState<{ rec: ActiveRecord; awaySeconds: number } | null>(null); // 강제 종료 후 복구 확인 중
   const recorded = useRef<number | null>(null); // 이미 기록한 세션(startedAt)
@@ -63,10 +74,13 @@ export default function App() {
   const [help, setHelp] = useState(false); // 설정에서 다시 연 "How to play"
   const [editingCharacter, setEditingCharacter] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
   const [group, setGroup] = useState<RoomState | null>(null); // 참여 중인 그룹 방
-  const authSession = useAuthSession();
-  const userId = authSession?.user.id ?? null;
+  const [joining, setJoining] = useState(false);
+
+  const account = useAccount(settings.character, loaded && settings.onboarded);
+  const { userId } = account;
+  const idle = loaded && !pending && !active && !group && !recovery && !editingCharacter && !help && settings.onboarded;
+  const inviteBox = useInvites(userId, idle);
 
   useEffect(() => {
     Promise.all([loadSessions(), loadSettings(), initAnalytics()]).then(async ([sess, s]) => {
@@ -117,11 +131,9 @@ export default function App() {
     if (!loaded || !userId) return;
     (async () => {
       const remote = await fetchProfile(userId);
-      if (remote) {
-        updateSettings({ character: remote });
-      } else if (settings.character) {
-        saveProfile(userId, settings.character);
-      }
+      if (remote) updateSettings({ character: remote });
+      else if (settings.character) await saveProfile(userId, settings.character);
+      account.refreshSocial();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, userId]);
@@ -137,58 +149,28 @@ export default function App() {
     })();
   }, [loaded, userId]);
 
-  // 그룹은 계정이 필요하다: 로그인과 캐릭터가 없으면 안내하고, 서버에 프로필이 있는지 확인한 뒤 진행
-  const readyForGroup = async (): Promise<boolean> => {
-    if (!userId) {
-      Alert.alert('Sign in required', 'Group sessions need an account so friends can see your name and character.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign in', onPress: () => setAuthOpen(true) },
-      ]);
-      return false;
-    }
-    if (!settings.character) return false;
-    if (!(await saveProfile(userId, settings.character))) {
-      Alert.alert('Connection problem', 'Could not reach the server. Check your connection and try again.');
-      return false;
-    }
-    return true;
-  };
-
-  const createGroup = async (minutes: number, tag: string) => {
-    if (!(await readyForGroup())) return;
-    const r = await createRoom(minutes, tag);
-    if (!r.ok) return Alert.alert('Could not create room', r.error);
-    track('group_create', { minutes, mode: modeOf(tag) });
-    setGroup(r.data);
-  };
-
-  const joinGroup = async (code: string): Promise<string | null> => {
-    if (!(await readyForGroup())) return 'Sign in first.';
-    const r = await joinRoom(code);
-    if (!r.ok) return r.error;
-    track('group_join', {});
-    setGroup(r.data);
-    return null;
-  };
-
-  const recordGroup = (g: GroupRecord) => {
-    const next = [...sessions, { id: `g-${g.startedAt}`, startedAt: g.startedAt, minutes: g.minutes, success: g.success, tag: g.tag, group: true, building: g.building, members: g.members }];
-    setSessions(next);
-    saveSessions(next);
-    track(g.success ? 'group_complete' : 'group_fail', { minutes: g.minutes, members: g.members, durability: g.durability, reason: g.reason });
-  };
-
-  const saveCharacter = (c: Character) => {
-    updateSettings({ character: c });
-    if (userId) saveProfile(userId, c);
-    setEditingCharacter(false);
-  };
+  // 친구 팔로우 링크(focustown://follow/CODE 또는 웹 링크)로 앱이 열리면 친구 추가 화면으로 간다
+  useEffect(() => {
+    const open = (url: string | null) => {
+      const code = url ? parseFollowCode(url) : null;
+      if (code) setOverlay({ type: 'add', query: code });
+    };
+    Linking.getInitialURL().then(open).catch(() => {});
+    const sub = Linking.addEventListener('url', (e) => open(e.url));
+    return () => sub.remove();
+  }, []);
 
   const updateSettings = (patch: Partial<Settings>) => {
     const next = { ...settings, ...patch };
     applyPrefs(next);
     setSettings(next);
     saveSettings(next);
+  };
+
+  const saveCharacter = (c: Character) => {
+    updateSettings({ character: c });
+    if (userId) saveProfile(userId, c);
+    setEditingCharacter(false);
   };
 
   const resetRecords = () => {
@@ -200,6 +182,55 @@ export default function App() {
     if (!settings.onboarded) track(skipped ? 'onboarding_skipped' : 'onboarding_done');
     updateSettings({ onboarded: true });
     setHelp(false);
+  };
+
+  // 친구/그룹 기능을 쓸 때 계정이 없으면 게스트 계정을 만든다
+  const needAccount = async (): Promise<string | null> => {
+    const r = await account.ensureAccount();
+    if ('error' in r) {
+      Alert.alert('Account unavailable', r.error);
+      return null;
+    }
+    return r.userId;
+  };
+
+  const openAddFriends = async () => {
+    if (await needAccount()) setOverlay({ type: 'add' });
+  };
+
+  // 친구를 초대해서 그룹으로 시작: 방을 만들자마자 시작한다
+  const startGroup = async (p: Pending) => {
+    const id = await needAccount();
+    if (!id || !settings.character) return setPending(null);
+    if (!(await saveProfile(id, settings.character))) {
+      setPending(null);
+      return Alert.alert('Connection problem', 'Could not reach the server. Check your connection and try again.');
+    }
+    const r = await createRoomWithInvites(p.minutes, p.tag, p.invitees);
+    setPending(null);
+    if (!r.ok) return Alert.alert('Could not start', r.error);
+    track('group_create', { minutes: p.minutes, mode: modeOf(p.tag), invited: p.invitees.length });
+    setInvitees([]);
+    setGroup(r.data);
+  };
+
+  const joinInvite = async (roomId: string) => {
+    setJoining(true);
+    const r = await acceptInvite(roomId);
+    setJoining(false);
+    if (!r.ok) {
+      inviteBox.dismiss(roomId);
+      return Alert.alert('Could not join', r.error);
+    }
+    track('group_join', {});
+    setGroup(r.data);
+  };
+
+  const recordGroup = (g: GroupRecord) => {
+    const next = [...sessions, { id: `g-${g.startedAt}`, startedAt: g.startedAt, minutes: g.minutes, success: g.success, tag: g.tag, group: true, building: g.building, members: g.members }];
+    setSessions(next);
+    saveSessions(next);
+    track(g.success ? 'group_complete' : 'group_fail', { minutes: g.minutes, members: g.members, durability: g.durability, reason: g.reason });
   };
 
   const todayBefore = computeStats(sessions).todayMinutes;
@@ -254,91 +285,145 @@ export default function App() {
   const showOnboarding = !settings.onboarded || help;
   const workers = settings.character ? [settings.character] : [];
   const needsCharacter = !showOnboarding && !settings.character;
+  const accountInfo = { email: account.email, guest: account.isGuest, signedIn: !!userId };
 
   return (
     <ErrorBoundary>
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.root}>
-        <StatusBar style="light" />
-        {showOnboarding ? (
-          <OnboardingScreen onFinish={finishOnboarding} />
-        ) : needsCharacter || editingCharacter ? (
-          <CharacterScreen
-            initial={settings.character}
-            mode={needsCharacter ? 'create' : 'edit'}
-            onSave={saveCharacter}
-            onCancel={needsCharacter ? undefined : () => setEditingCharacter(false)}
-            onSignIn={() => setAuthOpen(true)}
-          />
-        ) : recovery ? (
-          <CallPassPrompt awaySeconds={recovery.awaySeconds} onUse={resumeWithPass} onDecline={endRecovered} />
-        ) : pending ? (
-          <CountdownScreen
-            minutes={pending.minutes}
-            workers={workers}
-            onCancel={() => {
-              track('session_cancel', { minutes: pending.minutes });
-              setPending(null);
-            }}
-            onGo={() => {
-              track('session_start', { minutes: pending.minutes, mode: modeOf(pending.tag), ambient: pending.ambient });
-              startSession(pending);
-              setPending(null);
-            }}
-          />
-        ) : group && userId ? (
-          <GroupFlow
-            key={group.room.id}
-            initial={group}
-            myId={userId}
-            ambient={settings.ambient}
-            onRecord={recordGroup}
-            onExit={() => {
-              setGroup(null);
-              setTab('town');
-            }}
-          />
-        ) : active ? (
-          <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} workers={workers} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
-        ) : (
-          <>
-            <View style={styles.body}>
-              {/* 탭 전환 시 다시 그리지 않도록 화면을 유지한 채 숨긴다 */}
-              <View style={tab === 'setup' ? styles.body : styles.hidden}>
-                <SetupScreen todayMinutes={todayBefore} settings={settings} onChange={updateSettings} onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t })} onCreateRoom={createGroup} onJoinRoom={() => setJoinOpen(true)} />
-              </View>
-              <View style={tab === 'town' ? styles.body : styles.hidden}>
-                <TownScreen sessions={sessions} />
-              </View>
-              <View style={tab === 'stats' ? styles.body : styles.hidden}>
-                <StatsScreen sessions={sessions} goal={settings.dailyGoal} />
-              </View>
-              <View style={tab === 'settings' ? styles.body : styles.hidden}>
-                <SettingsScreen settings={settings} onChange={updateSettings} onReset={resetRecords} onShowHelp={() => setHelp(true)}
-                  email={authSession?.user.email ?? null}
-                  onEditCharacter={() => setEditingCharacter(true)}
-                  onSignIn={() => setAuthOpen(true)}
-                  onSignOut={signOut}
-                  onDeleteAccount={async () => {
-                    const err = await deleteAccount();
-                    if (err) Alert.alert('Could not delete account', err);
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.root}>
+          <StatusBar style="light" />
+          {showOnboarding ? (
+            <OnboardingScreen onFinish={finishOnboarding} />
+          ) : needsCharacter || editingCharacter ? (
+            <CharacterScreen
+              initial={settings.character}
+              mode={needsCharacter ? 'create' : 'edit'}
+              onSave={saveCharacter}
+              onCancel={needsCharacter ? undefined : () => setEditingCharacter(false)}
+              onSignIn={() => setAuthOpen(true)}
+            />
+          ) : recovery ? (
+            <CallPassPrompt awaySeconds={recovery.awaySeconds} onUse={resumeWithPass} onDecline={endRecovered} />
+          ) : pending ? (
+            <CountdownScreen
+              minutes={pending.minutes}
+              workers={workers}
+              onCancel={() => {
+                track('session_cancel', { minutes: pending.minutes });
+                setPending(null);
+              }}
+              onGo={() => {
+                if (pending.invitees.length > 0) {
+                  startGroup(pending);
+                } else {
+                  track('session_start', { minutes: pending.minutes, mode: modeOf(pending.tag), ambient: pending.ambient });
+                  startSession(pending);
+                  setPending(null);
+                }
+              }}
+            />
+          ) : group && userId ? (
+            <GroupFlow
+              key={group.room.id}
+              initial={group}
+              myId={userId}
+              ambient={settings.ambient}
+              onRecord={recordGroup}
+              onExit={() => {
+                setGroup(null);
+                setTab('town');
+              }}
+            />
+          ) : active ? (
+            <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} workers={workers} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
+          ) : overlay?.type === 'settings' ? (
+            <SettingsScreen
+              settings={settings}
+              onChange={updateSettings}
+              onBack={() => setOverlay(null)}
+              onReset={resetRecords}
+              onShowHelp={() => {
+                setOverlay(null);
+                setHelp(true);
+              }}
+              account={accountInfo}
+              onSignIn={() => setAuthOpen(true)}
+              onSignOut={signOut}
+              onDeleteAccount={async () => {
+                const err = await deleteAccount();
+                if (err) Alert.alert('Could not delete account', err);
+              }}
+            />
+          ) : overlay?.type === 'add' ? (
+            <AddFriendsScreen
+              social={account.social}
+              initialQuery={overlay.query}
+              onBack={() => setOverlay(null)}
+              onChanged={account.refreshSocial}
+            />
+          ) : overlay?.type === 'follow' ? (
+            <FollowListScreen social={account.social} initialTab={overlay.tab} onBack={() => setOverlay(null)} onChanged={account.refreshSocial} />
+          ) : (
+            <>
+              {inviteBox.invite ? (
+                <InviteBanner
+                  invite={inviteBox.invite}
+                  busy={joining}
+                  onJoin={() => joinInvite(inviteBox.invite!.room_id)}
+                  onDismiss={() => {
+                    declineInvite(inviteBox.invite!.room_id);
+                    inviteBox.dismiss(inviteBox.invite!.room_id);
                   }}
                 />
+              ) : null}
+              <View style={styles.body}>
+                {/* 탭 전환 시 다시 그리지 않도록 화면을 유지한 채 숨긴다 */}
+                <View style={tab === 'setup' ? styles.body : styles.hidden}>
+                  <SetupScreen
+                    todayMinutes={todayBefore}
+                    settings={settings}
+                    onChange={updateSettings}
+                    friends={account.friends}
+                    invitees={invitees}
+                    onInviteesChange={setInvitees}
+                    onAddFriends={openAddFriends}
+                    onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t, invitees })}
+                  />
+                </View>
+                <View style={tab === 'town' ? styles.body : styles.hidden}>
+                  <TownScreen sessions={sessions} />
+                </View>
+                <View style={tab === 'stats' ? styles.body : styles.hidden}>
+                  <StatsScreen sessions={sessions} goal={settings.dailyGoal} />
+                </View>
+                <View style={tab === 'me' ? styles.body : styles.hidden}>
+                  <ProfileScreen
+                    character={settings.character}
+                    social={account.social}
+                    hasAccount={!!userId}
+                    sessions={sessions}
+                    onEditCharacter={() => setEditingCharacter(true)}
+                    onOpenSettings={() => setOverlay({ type: 'settings' })}
+                    onAddFriends={openAddFriends}
+                    onOpenFollow={(t) => setOverlay({ type: 'follow', tab: t })}
+                    onSetupAccount={async () => {
+                      if (await needAccount()) account.refreshSocial();
+                    }}
+                  />
+                </View>
               </View>
-            </View>
-            <View style={styles.tabs}>
-              {TABS.map((t) => (
-                <Pressable key={t.id} style={[styles.tab, tab === t.id && styles.tabOn]} onPress={() => setTab(t.id)}>
-                  <Txt style={[styles.tabText, tab === t.id && { color: colors.accent }]}>{t.label}</Txt>
-                </Pressable>
-              ))}
-            </View>
-          </>
-        )}
-        <JoinCodeSheet visible={joinOpen} onClose={() => setJoinOpen(false)} onJoin={joinGroup} />
-        <AuthSheet visible={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={() => setAuthOpen(false)} />
-      </SafeAreaView>
-    </SafeAreaProvider>
+              <View style={styles.tabs}>
+                {TABS.map((t) => (
+                  <Pressable key={t.id} style={[styles.tab, tab === t.id && styles.tabOn]} onPress={() => setTab(t.id)}>
+                    <Txt style={[styles.tabText, tab === t.id && { color: colors.accent }]}>{t.label}</Txt>
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          )}
+          <AuthSheet visible={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={() => setAuthOpen(false)} />
+        </SafeAreaView>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

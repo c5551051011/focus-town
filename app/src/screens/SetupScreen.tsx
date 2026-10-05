@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 import { Pixel } from '../components/Pixel';
 import TimeWheel from '../components/TimeWheel';
 import SoundSheet from '../components/SoundSheet';
 import TagSheet from '../components/TagSheet';
+import FriendPicker from '../components/FriendPicker';
+import Avatar from '../components/Avatar';
+import Icon from '../components/Icon';
+import { Person } from '../lib/social';
 import { Pill, PixelButton, Txt } from '../components/ui';
 import { PRESET_TAGS, tagColor } from '../lib/tags';
 import { TIME_VALUES, buildingFor } from '../lib/buildings';
@@ -16,16 +20,19 @@ type Props = {
   todayMinutes: number;
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
+  friends: Person[]; // 서로 팔로우하는 친구
+  invitees: string[]; // 이번 세션에 초대할 친구 id
+  onInviteesChange: (ids: string[]) => void;
+  onAddFriends: () => void;
   onStart: (minutes: number, ambient: AmbientId, tag: string) => void;
-  onCreateRoom: (minutes: number, tag: string) => void;
-  onJoinRoom: () => void;
 };
 
-export default function SetupScreen({ todayMinutes, settings, onChange: update, onStart, onCreateRoom, onJoinRoom }: Props) {
+export default function SetupScreen({ todayMinutes, settings, onChange: update, friends, invitees, onInviteesChange, onAddFriends, onStart }: Props) {
   const [soundSheet, setSoundSheet] = useState(false);
   const [tagSheet, setTagSheet] = useState(false);
   const [dialOpen, setDialOpen] = useState(false);
-  const [group, setGroup] = useState(false); // SOLO / GROUP
+  const [friendSheet, setFriendSheet] = useState(false);
+  const invited = friends.filter((f) => invitees.includes(f.id));
   const { minutes, ambient, tag, customTags } = settings;
   const b = buildingFor(minutes);
 
@@ -35,16 +42,8 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
   };
 
   return (
-    <View style={styles.wrap}>
+    <ScrollView contentContainerStyle={styles.wrap}>
       <Txt style={styles.logo}>FOCUS TOWN</Txt>
-      <View style={styles.seg}>
-        {([false, true] as const).map((g) => (
-          <Pressable key={String(g)} onPress={() => setGroup(g)} style={[styles.segItem, group === g && styles.segOn]}>
-            <Txt style={[styles.segText, group === g && { color: colors.bg }]}>{g ? 'GROUP' : 'SOLO'}</Txt>
-          </Pressable>
-        ))}
-      </View>
-
       {settings.dailyGoal > 0 && (
         <View style={styles.goalWrap}>
           <Txt style={styles.goalText}>
@@ -78,14 +77,15 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
         <Txt style={styles.soundValue}>{ambientLabel(ambient)} {'>'}</Txt>
       </Pressable>
 
-      {group ? (
-        <>
-          <PixelButton label="CREATE ROOM" onPress={() => onCreateRoom(minutes, tag)} style={styles.start} />
-          <PixelButton label="JOIN WITH CODE" variant="ghost" onPress={onJoinRoom} style={{ marginTop: 10 }} />
-        </>
-      ) : (
-        <PixelButton label="START" onPress={start} style={styles.start} />
-      )}
+      <Pressable onPress={() => setFriendSheet(true)} style={styles.friendRow}>
+        <Icon name="user" size={18} color={colors.dim} />
+        <Txt style={styles.soundLabel}>WITH FRIENDS</Txt>
+        <View style={styles.friendAvatars}>
+          {invited.length === 0 ? <Txt style={styles.soundValue}>{friends.length ? 'Invite' : 'Add friends'} {'>'}</Txt> : invited.map((f) => <Avatar key={f.id} character={f} size={30} />)}
+        </View>
+      </Pressable>
+
+      <PixelButton label={invited.length ? `START WITH ${invited.length} FRIEND${invited.length > 1 ? 'S' : ''}` : 'START'} onPress={start} style={styles.start} />
 
       {/* 시간을 탭하면 열리는 다이얼 */}
       <Modal visible={dialOpen} transparent animationType="fade" onRequestClose={() => setDialOpen(false)}>
@@ -108,19 +108,33 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
         onClose={() => setTagSheet(false)}
       />
 
+      <FriendPicker
+        visible={friendSheet}
+        friends={friends}
+        selected={invitees}
+        onChange={onInviteesChange}
+        onAddFriends={() => {
+          setFriendSheet(false);
+          onAddFriends();
+        }}
+        onClose={() => setFriendSheet(false)}
+      />
+
       <SoundSheet
         visible={soundSheet}
         selected={ambient}
         onSelect={(id) => update({ ambient: id })}
         onClose={() => setSoundSheet(false)}
       />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 24, justifyContent: 'center' },
+  wrap: { flexGrow: 1, padding: 24, justifyContent: 'center' },
   seg: { flexDirection: 'row', alignSelf: 'center', marginTop: 14, width: 220 },
+  friendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 2, borderColor: colors.panel },
+  friendAvatars: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 4 },
   segItem: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
   segOn: { backgroundColor: colors.accent },
   segText: { fontSize: 9, color: colors.dim },

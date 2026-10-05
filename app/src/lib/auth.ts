@@ -13,6 +13,23 @@ export async function verifyCode(email: string, token: string): Promise<string |
   return error ? error.message : null;
 }
 
+// 게스트 계정: 이메일 없이 이 기기에서만 쓰는 계정. 친구/그룹은 그대로 쓸 수 있다.
+// (Supabase 대시보드에서 Authentication > Sign In / Providers > "Allow anonymous sign-ins" 를 켜야 한다)
+export async function signInGuest(): Promise<{ userId: string } | { error: string }> {
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error || !data.user) {
+      const msg = error?.message ?? '';
+      if (/anonymous/i.test(msg)) return { error: 'Guest accounts are not enabled on the server yet.' };
+      if (/network|fetch/i.test(msg)) return { error: 'Network problem. Check your connection.' };
+      return { error: 'Could not create your account. Please try again.' };
+    }
+    return { userId: data.user.id };
+  } catch {
+    return { error: 'Network problem. Check your connection.' };
+  }
+}
+
 // 계정 삭제: 서버의 delete_my_account() 함수가 본인 계정과 프로필을 지운다
 export async function deleteAccount(): Promise<string | null> {
   const { error } = await supabase.rpc('delete_my_account');
