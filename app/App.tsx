@@ -9,6 +9,9 @@ import { Session } from './src/lib/types';
 import { AmbientId } from './src/lib/ambient';
 import { initAnalytics, track } from './src/lib/analytics';
 import { initErrorReporting } from './src/lib/errors';
+import { syncReminders } from './src/lib/notifications';
+import { computeStats } from './src/lib/stats';
+import { computeStreak } from './src/lib/streak';
 import { PRESET_TAGS } from './src/lib/tags';
 import { EndReason } from './src/lib/useFocusSession';
 import ErrorBoundary from './src/components/ErrorBoundary';
@@ -57,6 +60,19 @@ export default function App() {
     });
   }, []);
 
+  // 하루 시작 알림: 설정이나 기록이 바뀔 때마다 앞으로 7일치를 다시 맞춘다
+  useEffect(() => {
+    if (!loaded) return;
+    const streak = computeStreak(sessions);
+    syncReminders({
+      enabled: settings.reminderOn,
+      hour: settings.reminderHour,
+      minute: settings.reminderMinute,
+      doneToday: streak.doneToday,
+      streak: streak.current,
+    });
+  }, [loaded, sessions, settings.reminderOn, settings.reminderHour, settings.reminderMinute]);
+
   const updateSettings = (patch: Partial<Settings>) => {
     const next = { ...settings, ...patch };
     applyPrefs(next);
@@ -75,9 +91,12 @@ export default function App() {
     setHelp(false);
   };
 
+  const todayBefore = computeStats(sessions).todayMinutes;
+
   const finish = (success: boolean, reason: EndReason) => {
     if (!active) return;
     track(success ? 'session_complete' : 'session_fail', { minutes: active.minutes, mode: modeOf(active.tag), reason });
+    if (success && settings.dailyGoal > 0 && todayBefore < settings.dailyGoal && todayBefore + active.minutes >= settings.dailyGoal) track('goal_reached', { goal: settings.dailyGoal });
     const next = [...sessions, { id: String(active.startedAt), startedAt: active.startedAt, minutes: active.minutes, success, tag: active.tag }];
     setSessions(next);
     saveSessions(next);
@@ -109,19 +128,19 @@ export default function App() {
             }}
           />
         ) : active ? (
-          <TimerScreen minutes={active.minutes} ambient={active.ambient} onDone={finish} />
+          <TimerScreen minutes={active.minutes} ambient={active.ambient} goal={settings.dailyGoal} todayBefore={todayBefore} onDone={finish} />
         ) : (
           <>
             <View style={styles.body}>
               {/* 탭 전환 시 다시 그리지 않도록 화면을 유지한 채 숨긴다 */}
               <View style={tab === 'setup' ? styles.body : styles.hidden}>
-                <SetupScreen settings={settings} onChange={updateSettings} onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t })} />
+                <SetupScreen todayMinutes={todayBefore} settings={settings} onChange={updateSettings} onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t })} />
               </View>
               <View style={tab === 'town' ? styles.body : styles.hidden}>
                 <TownScreen sessions={sessions} />
               </View>
               <View style={tab === 'stats' ? styles.body : styles.hidden}>
-                <StatsScreen sessions={sessions} />
+                <StatsScreen sessions={sessions} goal={settings.dailyGoal} />
               </View>
               <View style={tab === 'settings' ? styles.body : styles.hidden}>
                 <SettingsScreen settings={settings} onChange={updateSettings} onReset={resetRecords} onShowHelp={() => setHelp(true)} />

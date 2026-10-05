@@ -12,7 +12,7 @@ import { Session } from '../lib/types';
 
 type View_ = 'overview' | 'history';
 
-export default function StatsScreen({ sessions }: { sessions: Session[] }) {
+export default function StatsScreen({ sessions, goal }: { sessions: Session[]; goal: number }) {
   const [view, setView] = useState<View_>('overview');
 
   return (
@@ -25,12 +25,12 @@ export default function StatsScreen({ sessions }: { sessions: Session[] }) {
           </Pressable>
         ))}
       </View>
-      {view === 'overview' ? <Overview sessions={sessions} /> : <History sessions={sessions} />}
+      {view === 'overview' ? <Overview sessions={sessions} goal={goal} /> : <History sessions={sessions} />}
     </ScrollView>
   );
 }
 
-function Overview({ sessions }: { sessions: Session[] }) {
+function Overview({ sessions, goal }: { sessions: Session[]; goal: number }) {
   const s = computeStats(sessions);
   const streak = computeStreak(sessions);
   const totals = dayTotals(sessions);
@@ -57,6 +57,14 @@ function Overview({ sessions }: { sessions: Session[] }) {
           <Txt style={styles.heroNum}>{s.todayMinutes}</Txt>
           <Txt style={styles.heroUnit}>MIN</Txt>
         </View>
+        {goal > 0 && (
+          <View style={styles.goalWrap}>
+            <View style={styles.goalTrack}>
+              <View style={[styles.goalFill, { width: `${Math.min(1, s.todayMinutes / goal) * 100}%` }, s.todayMinutes >= goal && { backgroundColor: colors.gold }]} />
+            </View>
+            <Txt style={styles.goalText}>{s.todayMinutes >= goal ? 'GOAL REACHED!' : `GOAL ${goal} MIN`}</Txt>
+          </View>
+        )}
       </Panel>
 
       {/* 스트릭 */}
@@ -234,6 +242,10 @@ const styles = StyleSheet.create({
   dexGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: { color: colors.text, fontSize: 11, marginTop: 28, marginBottom: 12 },
   hero: { alignItems: 'center', paddingVertical: 22, marginTop: 18 },
+  goalWrap: { alignSelf: 'stretch', marginTop: 18, paddingHorizontal: 10, alignItems: 'center' },
+  goalTrack: { alignSelf: 'stretch', height: 14, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line },
+  goalFill: { height: '100%', backgroundColor: colors.accent },
+  goalText: { color: colors.dim, fontSize: 8, marginTop: 10 },
   heroLabel: { color: colors.dim, fontSize: 10 },
   heroNumRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 10 },
   heroNum: { color: colors.gold, fontSize: 44 },

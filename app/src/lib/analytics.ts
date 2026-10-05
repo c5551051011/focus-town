@@ -36,7 +36,9 @@ export type EventName =
   | 'session_start'
   | 'session_cancel'
   | 'session_complete'
-  | 'session_fail';
+  | 'session_fail'
+  | 'goal_reached'
+  | 'reminder_changed';
 
 export function track(event: EventName, props: Record<string, string | number | boolean> = {}): void {
   if (!prefs.analytics || !POSTHOG_KEY || !anonId) return;

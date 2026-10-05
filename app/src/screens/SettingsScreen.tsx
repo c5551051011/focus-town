@@ -1,9 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { colors } from '../theme';
 import { PRIVACY_URL, SUPPORT_EMAIL, TERMS_URL } from '../config';
-import { Panel, Txt } from '../components/ui';
+import { OptionSheet, Panel, Txt } from '../components/ui';
+import { ensureNotificationPermission } from '../lib/notifications';
+import { track } from '../lib/analytics';
 import { Settings } from '../lib/settings';
 import { setAmbientVolume } from '../lib/ambient';
 import { VOLUME_VALUES, VolumeLevel } from '../lib/prefs';
@@ -21,6 +23,23 @@ export default function SettingsScreen({ settings, onChange, onReset, onShowHelp
   const sendFeedback = () =>
     open(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Focus Town feedback (v${version})`)}`);
 
+  const [timeSheet, setTimeSheet] = useState(false);
+  const hhmm = (h: number, m: number) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+  const toggleReminder = async () => {
+    if (settings.reminderOn) {
+      onChange({ reminderOn: false });
+      track('reminder_changed', { enabled: false });
+      return;
+    }
+    if (await ensureNotificationPermission()) {
+      onChange({ reminderOn: true });
+      track('reminder_changed', { enabled: true });
+    } else {
+      Alert.alert('Notifications are off', 'Turn on notifications for Focus Town in your phone settings to get daily reminders.');
+    }
+  };
+
   const confirmReset = () =>
     Alert.alert('Reset all records?', 'Your town and stats will be erased. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -30,6 +49,32 @@ export default function SettingsScreen({ settings, onChange, onReset, onShowHelp
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
       <Txt style={styles.title}>SETTINGS</Txt>
+
+      <Txt style={styles.section}>GOAL & REMINDER</Txt>
+      <Panel style={styles.group}>
+        <View>
+          <Txt style={styles.rowLabel}>Daily goal (minutes)</Txt>
+          <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
+            <Segment
+              options={[['0', 'OFF'], ['30', '30'], ['60', '60'], ['90', '90'], ['120', '120']]}
+              value={String(settings.dailyGoal)}
+              onChange={(v) => onChange({ dailyGoal: Number(v) })}
+            />
+          </View>
+        </View>
+        <Row label="Daily reminder" note="A gentle nudge to start focusing.">
+          <Toggle on={settings.reminderOn} onPress={toggleReminder} />
+        </Row>
+        {settings.reminderOn && <LinkRow label={`Reminder time  ${hhmm(settings.reminderHour, settings.reminderMinute)}`} onPress={() => setTimeSheet(true)} />}
+      </Panel>
+      <OptionSheet
+        visible={timeSheet}
+        title="REMINDER TIME"
+        selected={settings.reminderHour}
+        options={[7, 8, 9, 12, 15, 18, 19, 20, 21, 22].map((h) => ({ value: h, label: hhmm(h, 0) }))}
+        onSelect={(h) => onChange({ reminderHour: h, reminderMinute: 0 })}
+        onClose={() => setTimeSheet(false)}
+      />
 
       <Txt style={styles.section}>SOUND</Txt>
       <Panel style={styles.group}>

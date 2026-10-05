@@ -11,9 +11,9 @@ import { buildingFor } from '../lib/buildings';
 import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
 
-type Props = { minutes: number; ambient: AmbientId; onDone: (success: boolean, reason: EndReason) => void };
+type Props = { minutes: number; ambient: AmbientId; goal: number; todayBefore: number; onDone: (success: boolean, reason: EndReason) => void };
 
-export default function TimerScreen({ minutes, ambient, onDone }: Props) {
+export default function TimerScreen({ minutes, ambient, goal, todayBefore, onDone }: Props) {
   useKeepAwake();
   const { phase, remainingMs, recovered, endReason, giveUp } = useFocusSession(minutes);
   const b = buildingFor(minutes);
@@ -46,6 +46,7 @@ export default function TimerScreen({ minutes, ambient, onDone }: Props) {
 
   if (finished) {
     const ok = phase === 'success';
+    const goalHit = ok && goal > 0 && todayBefore < goal && todayBefore + minutes >= goal;
     return (
       <View style={styles.center}>
         <Pixel name={ok ? b.id : 'ruins'} size={160} />
@@ -53,6 +54,7 @@ export default function TimerScreen({ minutes, ambient, onDone }: Props) {
         <Txt style={styles.msg}>
           {ok ? `${b.name} added to your town.\n+${minutes} min` : 'You left the app too long.\nTry again!'}
         </Txt>
+        {goalHit && <Txt style={styles.goal}>DAILY GOAL REACHED! ({goal} MIN)</Txt>}
         <PixelButton label="TO TOWN" onPress={() => onDone(ok, endReason ?? (ok ? 'completed' : 'left_app'))} style={styles.btn} />
       </View>
     );
@@ -80,6 +82,7 @@ export default function TimerScreen({ minutes, ambient, onDone }: Props) {
 const styles = StyleSheet.create({
   mute: { padding: 4 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
+  goal: { color: colors.gold, fontSize: 10, marginTop: 6, textAlign: 'center' },
   big: { fontSize: 20, marginTop: 20 },
   msg: { color: colors.dim, fontSize: 9, lineHeight: 16, textAlign: 'center', marginVertical: 8 },
   btn: { marginTop: 20, alignSelf: 'stretch' },

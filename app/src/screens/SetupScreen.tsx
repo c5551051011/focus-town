@@ -13,12 +13,13 @@ import { Settings } from '../lib/settings';
 import { requestNotificationPermission } from '../lib/notifications';
 
 type Props = {
+  todayMinutes: number;
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onStart: (minutes: number, ambient: AmbientId, tag: string) => void;
 };
 
-export default function SetupScreen({ settings, onChange: update, onStart }: Props) {
+export default function SetupScreen({ todayMinutes, settings, onChange: update, onStart }: Props) {
   const [soundSheet, setSoundSheet] = useState(false);
   const [tagSheet, setTagSheet] = useState(false);
   const [dialOpen, setDialOpen] = useState(false);
@@ -33,6 +34,17 @@ export default function SetupScreen({ settings, onChange: update, onStart }: Pro
   return (
     <View style={styles.wrap}>
       <Txt style={styles.logo}>FOCUS TOWN</Txt>
+
+      {settings.dailyGoal > 0 && (
+        <View style={styles.goalWrap}>
+          <Txt style={styles.goalText}>
+            TODAY {Math.min(todayMinutes, settings.dailyGoal)}/{settings.dailyGoal} MIN{todayMinutes >= settings.dailyGoal ? ' - DONE!' : ''}
+          </Txt>
+          <View style={styles.goalTrack}>
+            <View style={[styles.goalFill, { width: `${Math.min(1, todayMinutes / settings.dailyGoal) * 100}%` }, todayMinutes >= settings.dailyGoal && { backgroundColor: colors.gold }]} />
+          </View>
+        </View>
+      )}
 
       <View style={styles.preview}>
         <Pixel name={b.id} size={150} />
@@ -92,6 +104,10 @@ export default function SetupScreen({ settings, onChange: update, onStart }: Pro
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 24, justifyContent: 'center' },
   logo: { color: colors.accent, fontSize: 16, textAlign: 'center' },
+  goalWrap: { marginTop: 14, alignItems: 'center' },
+  goalText: { color: colors.dim, fontSize: 8 },
+  goalTrack: { width: 180, height: 10, marginTop: 8, backgroundColor: colors.panel, borderWidth: 2, borderColor: colors.line },
+  goalFill: { height: '100%', backgroundColor: colors.accent },
   preview: { alignItems: 'center', marginTop: 24, marginBottom: 12 },
   name: { fontSize: 9, color: colors.dim, marginTop: 12, textAlign: 'center' },
   timeBox: { alignItems: 'center', paddingVertical: 12 },

@@ -45,7 +45,8 @@ HOW IT WORKS
 
 FEATURES
 • 5 buildings that unlock with longer sessions
-• Daily streaks and a calendar of your focus history
+• Daily streaks, daily goals, and a calendar of your focus history
+• Optional daily reminder so you never forget your town
 • Weekly chart, focus time by mode, and a building collection
 • Calm lo-fi background music (free to preview), with an easy mute button
 • Retro 16-bit pixel art and chiptune sound effects
@@ -87,7 +88,8 @@ First release! Build your pixel town while you focus.
 
 주요 기능
 • 집중 시간에 따라 만나는 5종 건물
-• 매일 이어 가는 스트릭, 집중 기록 달력
+• 매일 이어 가는 스트릭, 일일 목표, 집중 기록 달력
+• 선택할 수 있는 하루 시작 알림
 • 주간 그래프, 모드별 집중 시간, 건물 도감
 • 잔잔한 로파이 배경음(미리 듣기 가능)과 간편한 음소거
 • 레트로 16비트 픽셀 아트와 칩튠 효과음
