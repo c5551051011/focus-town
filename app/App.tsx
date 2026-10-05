@@ -17,6 +17,11 @@ import { EndReason, GRACE_SECONDS } from './src/lib/useFocusSession';
 import { ActiveRecord, clearActive, loadActive, patchActive, saveActive } from './src/lib/activeSession';
 import { isPassAvailable, consumePass } from './src/lib/callPass';
 import CallPassPrompt from './src/components/CallPassPrompt';
+import AuthSheet from './src/components/AuthSheet';
+import CharacterScreen from './src/screens/CharacterScreen';
+import { deleteAccount, signOut, useAuthSession } from './src/lib/auth';
+import { fetchProfile, saveProfile } from './src/lib/profile';
+import { Character } from './src/lib/character';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import { loadSessions, saveSessions } from './src/lib/storage';
@@ -53,6 +58,10 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
   const [help, setHelp] = useState(false); // 설정에서 다시 연 "How to play"
+  const [editingCharacter, setEditingCharacter] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const authSession = useAuthSession();
+  const userId = authSession?.user.id ?? null;
 
   useEffect(() => {
     Promise.all([loadSessions(), loadSettings(), initAnalytics()]).then(async ([sess, s]) => {
@@ -97,6 +106,26 @@ export default function App() {
       streak: streak.current,
     });
   }, [loaded, sessions, settings.reminderOn, settings.reminderHour, settings.reminderMinute]);
+
+  // 로그인하면: 서버에 저장된 프로필이 있으면 그 캐릭터를 불러오고(새 기기 복원), 없으면 기기의 캐릭터를 서버에 저장한다
+  useEffect(() => {
+    if (!loaded || !userId) return;
+    (async () => {
+      const remote = await fetchProfile(userId);
+      if (remote) {
+        updateSettings({ character: remote });
+      } else if (settings.character) {
+        saveProfile(userId, settings.character);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, userId]);
+
+  const saveCharacter = (c: Character) => {
+    updateSettings({ character: c });
+    if (userId) saveProfile(userId, c);
+    setEditingCharacter(false);
+  };
 
   const updateSettings = (patch: Partial<Settings>) => {
     const next = { ...settings, ...patch };
@@ -166,6 +195,8 @@ export default function App() {
 
   if (!fontsLoaded || !loaded) return <View style={styles.root} />;
   const showOnboarding = !settings.onboarded || help;
+  const workers = settings.character ? [settings.character] : [];
+  const needsCharacter = !showOnboarding && !settings.character;
 
   return (
     <ErrorBoundary>
@@ -174,11 +205,20 @@ export default function App() {
         <StatusBar style="light" />
         {showOnboarding ? (
           <OnboardingScreen onFinish={finishOnboarding} />
+        ) : needsCharacter || editingCharacter ? (
+          <CharacterScreen
+            initial={settings.character}
+            mode={needsCharacter ? 'create' : 'edit'}
+            onSave={saveCharacter}
+            onCancel={needsCharacter ? undefined : () => setEditingCharacter(false)}
+            onSignIn={() => setAuthOpen(true)}
+          />
         ) : recovery ? (
           <CallPassPrompt awaySeconds={recovery.awaySeconds} onUse={resumeWithPass} onDecline={endRecovered} />
         ) : pending ? (
           <CountdownScreen
             minutes={pending.minutes}
+            workers={workers}
             onCancel={() => {
               track('session_cancel', { minutes: pending.minutes });
               setPending(null);
@@ -190,7 +230,7 @@ export default function App() {
             }}
           />
         ) : active ? (
-          <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
+          <TimerScreen minutes={active.minutes} endAt={active.endAt} ambient={active.ambient} workers={workers} goal={settings.dailyGoal} todayBefore={todayBefore} onEnded={record} onDone={leaveResult} />
         ) : (
           <>
             <View style={styles.body}>
@@ -205,7 +245,16 @@ export default function App() {
                 <StatsScreen sessions={sessions} goal={settings.dailyGoal} />
               </View>
               <View style={tab === 'settings' ? styles.body : styles.hidden}>
-                <SettingsScreen settings={settings} onChange={updateSettings} onReset={resetRecords} onShowHelp={() => setHelp(true)} />
+                <SettingsScreen settings={settings} onChange={updateSettings} onReset={resetRecords} onShowHelp={() => setHelp(true)}
+                  email={authSession?.user.email ?? null}
+                  onEditCharacter={() => setEditingCharacter(true)}
+                  onSignIn={() => setAuthOpen(true)}
+                  onSignOut={signOut}
+                  onDeleteAccount={async () => {
+                    const err = await deleteAccount();
+                    if (err) Alert.alert('Could not delete account', err);
+                  }}
+                />
               </View>
             </View>
             <View style={styles.tabs}>
@@ -217,6 +266,7 @@ export default function App() {
             </View>
           </>
         )}
+        <AuthSheet visible={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={() => setAuthOpen(false)} />
       </SafeAreaView>
     </SafeAreaProvider>
     </ErrorBoundary>

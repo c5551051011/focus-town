@@ -11,18 +11,20 @@ import { buildingFor } from '../lib/buildings';
 import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
 import CallPassPrompt from '../components/CallPassPrompt';
+import { Character } from '../lib/character';
 
 type Props = {
   minutes: number;
   endAt: number;
   ambient: AmbientId;
+  workers: Character[];
   goal: number;
   todayBefore: number;
   onEnded: (success: boolean, reason: EndReason) => void; // 세션이 끝난 순간(기록용)
   onDone: () => void; // 결과 화면에서 "TO TOWN"
 };
 
-export default function TimerScreen({ minutes, endAt, ambient, goal, todayBefore, onEnded, onDone }: Props) {
+export default function TimerScreen({ minutes, endAt, ambient, workers, goal, todayBefore, onEnded, onDone }: Props) {
   useKeepAwake();
   const { phase, remainingMs, recovered, endReason, awaySeconds, giveUp, acceptPass, declinePass } = useFocusSession(minutes, endAt);
   const [before] = useState(todayBefore); // 기록되기 전 오늘 집중 시간 (목표 달성 판정용)
@@ -82,6 +84,7 @@ export default function TimerScreen({ minutes, endAt, ambient, goal, todayBefore
     <SessionLayout
       building={b.id}
       progress={progress}
+      workers={workers}
       big={`${mm}:${ss}`}
       message={statusMessage(progress, Math.floor(progress * minutes * 60), recovered)}
       warn={phase === 'warning'}

@@ -52,10 +52,10 @@ FEATURES
 • Retro 16-bit pixel art and chiptune sound effects
 • Hold-to-stop button so you never quit by accident
 • 5-second cancel window after you press START
-• No ads. No account needed. Your records stay on your device.
+• No ads. Solo mode needs no account; records stay on your device. Optional email sign-in for group play.
 
 PRIVACY
-Focus Town works without an account. Anonymous crash and usage data can be turned off anytime in Settings.
+Solo mode works without an account. If you sign in, we store your email, display name and character. Anonymous crash and usage data can be turned off anytime in Settings. You can delete your account in the app.
 
 **Keywords — App Store (≤100, comma-separated, no spaces)**
 `focus,timer,pomodoro,study,productivity,pixel,town,streak,detox,habit,lofi,concentration`
@@ -95,10 +95,10 @@ First release! Build your pixel town while you focus.
 • 레트로 16비트 픽셀 아트와 칩튠 효과음
 • 꾹 눌러야 멈추는 정지 버튼으로 실수 방지
 • START 후 5초 동안 취소 가능
-• 광고 없음, 계정 필요 없음, 기록은 내 기기에만 저장
+• 광고 없음, 혼자 하기는 계정 불필요(기록은 내 기기에 저장), 그룹 플레이용 이메일 로그인은 선택
 
 개인정보
-회원가입 없이 사용할 수 있어요. 익명 오류/이용 데이터 공유는 설정에서 언제든 끌 수 있어요.
+혼자 하기는 회원가입 없이 사용할 수 있어요. 로그인하면 이메일, 이름, 캐릭터를 저장하며 앱에서 계정을 삭제할 수 있어요. 익명 오류/이용 데이터 공유는 설정에서 언제든 끌 수 있어요.
 
 **키워드 — App Store (≤100)**
 `집중,타이머,뽀모도로,공부,생산성,픽셀,마을,스트릭,디톡스,습관,로파이,몰입`
@@ -113,13 +113,13 @@ First release! Build your pixel town while you focus.
 
 ## 5. 개인정보 설문 답변 (초안)
 
-현재 앱 동작 기준: 회원가입 없음, 광고 없음, 결제 없음. 설정에서 끌 수 있는 익명 분석(PostHog)과 오류 보고(Sentry)만 전송.
+현재 앱 동작 기준: 광고 없음, 결제 없음. 혼자 하기는 계정 없이 사용, 선택적 이메일 로그인(Supabase). 설정에서 끌 수 있는 익명 분석(PostHog)과 오류 보고(Sentry)를 전송.
 
 ### Google Play — Data safety
 | 질문 | 답변 |
 | :--- | :--- |
 | 데이터를 수집하거나 공유하나요? | 예 (수집). 제3자와 "공유"는 서비스 제공자 처리 위탁이므로 보통 *공유 아님*으로 답변 |
-| 수집 데이터 유형 | **앱 활동 > 앱 상호작용**(세션 시작/완료 등), **앱 정보 및 성능 > 비정상 종료 로그, 진단**, **기기 또는 기타 ID**(앱 내부에서 만든 익명 ID) |
+| 수집 데이터 유형 | **앱 활동 > 앱 상호작용**(세션 시작/완료 등), **앱 정보 및 성능 > 비정상 종료 로그, 진단**, **기기 또는 기타 ID**(앱 내부에서 만든 익명 ID), **개인 정보 > 이메일 주소, 이름**(계정을 만든 경우), **앱 활동 > 기타 사용자 생성 콘텐츠**(캐릭터) |
 | 개인정보 수집 목적 | 분석, 앱 기능 개선(오류 수정) |
 | 데이터는 전송 중 암호화되나요? | 예 (HTTPS) |
 | 사용자가 데이터 삭제를 요청할 수 있나요? | 예 — 기기 내 데이터는 앱 삭제/초기화, 분석 데이터는 문의 이메일로 요청 |
@@ -131,10 +131,10 @@ First release! Build your pixel town while you focus.
 | :--- | :--- |
 | Data Used to Track You | **없음** (추적 없음) |
 | Data Not Linked to You | **Usage Data > Product Interaction**, **Diagnostics > Crash Data / Performance Data** — 목적: Analytics, App Functionality |
-| Data Linked to You | 없음 (계정 없음, 익명 ID는 신원과 연결되지 않음) |
+| Data Linked to You | **Contact Info > Email Address**, **Contact Info > Name**(표시 이름) — 목적: App Functionality (계정 로그인, 그룹). 분석용 익명 ID는 신원과 연결되지 않음 |
 | 암호화 수출 규정 | 표준 HTTPS만 사용 → `ITSAppUsesNonExemptEncryption = false` (면제) |
 
-> 그룹 모드/계정을 추가하면 이 답변을 다시 작성해야 합니다.
+> 계정을 만들면 이 항목이 추가됩니다. 그룹 세션 기록 등을 서버에 저장하게 되면 다시 확인하세요. 계정이 있으므로 App Store 규정상 **앱 안 계정 삭제**가 필요하고(구현됨), 다른 소셜 로그인(Google 등)을 추가하면 **Sign in with Apple**도 함께 제공해야 합니다.
 
 ## 6. 그래픽 자료
 

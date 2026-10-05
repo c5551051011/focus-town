@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AMBIENTS, AmbientId } from './ambient';
+import { Character, isValidCharacter } from './character';
 import { VOLUME_VALUES, VolumeLevel, prefs } from './prefs';
 
 export type Settings = {
@@ -17,8 +18,9 @@ export type Settings = {
   onboarded: boolean;
   tag: string;
   customTags: string[];
+  character: Character | null; // 내 캐릭터 (처음 실행 시 만든다)
 };
-export const DEFAULT_SETTINGS: Settings = { minutes: 25, ambient: 'off', volume: 'mid', sfx: true, haptics: true, notify: true, dailyGoal: 60, reminderOn: false, reminderHour: 20, reminderMinute: 0, analytics: true, onboarded: false, tag: 'STUDY', customTags: [] };
+export const DEFAULT_SETTINGS: Settings = { minutes: 25, ambient: 'off', volume: 'mid', sfx: true, haptics: true, notify: true, dailyGoal: 60, reminderOn: false, reminderHour: 20, reminderMinute: 0, analytics: true, onboarded: false, tag: 'STUDY', customTags: [], character: null };
 const KEY = 'focus_town_settings_v1';
 
 export function applyPrefs(s: Settings) {
@@ -36,6 +38,7 @@ export async function loadSettings(): Promise<Settings> {
     const s = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } as Settings;
     // 삭제된 배경음이 저장돼 있으면 OFF로 되돌린다
     if (!AMBIENTS.some((a) => a.id === s.ambient)) s.ambient = 'off';
+    if (!isValidCharacter(s.character)) s.character = null;
     return s;
   } catch {
     return DEFAULT_SETTINGS;

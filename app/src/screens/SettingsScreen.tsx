@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { colors } from '../theme';
+import Avatar from '../components/Avatar';
 import { PRIVACY_URL, SUPPORT_EMAIL, TERMS_URL } from '../config';
 import { OptionSheet, Panel, Txt } from '../components/ui';
 import { ensureNotificationPermission } from '../lib/notifications';
@@ -15,9 +16,14 @@ type Props = {
   onChange: (patch: Partial<Settings>) => void;
   onReset: () => void;
   onShowHelp: () => void;
+  email: string | null; // 로그인한 이메일 (없으면 비로그인)
+  onEditCharacter: () => void;
+  onSignIn: () => void;
+  onSignOut: () => void;
+  onDeleteAccount: () => void;
 };
 
-export default function SettingsScreen({ settings, onChange, onReset, onShowHelp }: Props) {
+export default function SettingsScreen({ settings, onChange, onReset, onShowHelp, email, onEditCharacter, onSignIn, onSignOut, onDeleteAccount }: Props) {
   const version = Constants.expoConfig?.version ?? '1.0.0';
   const open = (url: string) => Linking.openURL(url).catch(() => {});
   const sendFeedback = () =>
@@ -40,6 +46,12 @@ export default function SettingsScreen({ settings, onChange, onReset, onShowHelp
     }
   };
 
+  const confirmDelete = () =>
+    Alert.alert('Delete your account?', 'Your account and profile will be permanently deleted. Records on this device stay until you reset them.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: onDeleteAccount },
+    ]);
+
   const confirmReset = () =>
     Alert.alert('Reset all records?', 'Your town and stats will be erased. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -49,6 +61,36 @@ export default function SettingsScreen({ settings, onChange, onReset, onShowHelp
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
       <Txt style={styles.title}>SETTINGS</Txt>
+
+      <Txt style={styles.section}>PROFILE</Txt>
+      <Pressable onPress={onEditCharacter}>
+        <Panel style={styles.profile}>
+          {settings.character ? <Avatar character={settings.character} size={64} /> : null}
+          <View style={{ flex: 1, marginLeft: 14 }}>
+            <Txt style={styles.profileName}>{settings.character?.name ?? '-'}</Txt>
+            <Txt style={styles.note}>Edit character {'>'}</Txt>
+          </View>
+        </Panel>
+      </Pressable>
+
+      <Txt style={styles.section}>ACCOUNT</Txt>
+      <Panel style={styles.links}>
+        {email ? (
+          <>
+            <View style={styles.linkRow}>
+              <Txt style={styles.rowLabel}>Signed in</Txt>
+              <Txt style={[styles.note, { marginTop: 0 }]} numberOfLines={1}>{email}</Txt>
+            </View>
+            <LinkRow label="Sign out" onPress={onSignOut} />
+            <LinkRow label="Delete account" onPress={confirmDelete} />
+          </>
+        ) : (
+          <>
+            <LinkRow label="Sign in with email" onPress={onSignIn} />
+            <Txt style={[styles.note, { paddingBottom: 12 }]}>Sign in to play group sessions and keep your character on any device.</Txt>
+          </>
+        )}
+      </Panel>
 
       <Txt style={styles.section}>GOAL & REMINDER</Txt>
       <Panel style={styles.group}>
@@ -188,6 +230,8 @@ const styles = StyleSheet.create({
   segItem: { paddingVertical: 8, paddingHorizontal: 8, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line },
   segOn: { backgroundColor: colors.gold },
   segText: { fontSize: 7, color: colors.dim },
+  profile: { flexDirection: 'row', alignItems: 'center' },
+  profileName: { fontSize: 13 },
   links: { paddingVertical: 4 },
   linkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
   chev: { color: colors.dim, fontSize: 10 },

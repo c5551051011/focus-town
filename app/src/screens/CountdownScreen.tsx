@@ -6,11 +6,12 @@ import SessionLayout from '../components/SessionLayout';
 import { Txt } from '../components/ui';
 import { buildingFor } from '../lib/buildings';
 import { playSound } from '../lib/sounds';
+import { Character } from '../lib/character';
 
 const SECONDS = 5;
 
 // START 직후 5초 유예. 타이머와 같은 레이아웃이라 끝나면 그대로 이어서 건설이 시작된다.
-export default function CountdownScreen({ minutes, onGo, onCancel }: { minutes: number; onGo: () => void; onCancel: () => void }) {
+export default function CountdownScreen({ minutes, workers, onGo, onCancel }: { minutes: number; workers: Character[]; onGo: () => void; onCancel: () => void }) {
   const [left, setLeft] = useState(SECONDS);
   const b = buildingFor(minutes);
   const go = useRef(onGo);
@@ -34,6 +35,7 @@ export default function CountdownScreen({ minutes, onGo, onCancel }: { minutes: 
     <SessionLayout
       building={b.id}
       progress={0}
+      workers={workers}
       big={String(Math.max(left, 0))}
       message={'Get ready...\nStarting soon!'}
       bottom={

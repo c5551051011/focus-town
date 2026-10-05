@@ -4,6 +4,7 @@ import { colors } from '../theme';
 import { SpriteName } from './Pixel';
 import ConstructionSite from './ConstructionSite';
 import { Txt } from './ui';
+import { Character } from '../lib/character';
 
 // 카운트다운 화면과 타이머 화면이 똑같은 레이아웃을 써서, 화면이 바뀌어도 건물과 일꾼이 그대로 이어진다.
 export default function SessionLayout({
@@ -14,6 +15,7 @@ export default function SessionLayout({
   bottom,
   warn,
   topRight,
+  workers,
 }: {
   building: SpriteName;
   progress: number;
@@ -22,12 +24,13 @@ export default function SessionLayout({
   bottom: ReactNode;
   warn?: boolean;
   topRight?: ReactNode;
+  workers: Character[];
 }) {
   return (
     <View style={[styles.wrap, warn && styles.warn]}>
       <View style={styles.top}>{topRight}</View>
       <View style={styles.main}>
-        <ConstructionSite building={building} progress={progress} />
+        <ConstructionSite building={building} progress={progress} workers={workers} />
         <Txt style={styles.big}>{big}</Txt>
         <View style={styles.bar}>
           <View style={[styles.fill, { width: `${progress * 100}%` }]} />
