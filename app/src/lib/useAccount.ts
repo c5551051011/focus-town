@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { signInGuest, useAuthSession } from './auth';
 import { Character } from './character';
 import { saveProfile } from './profile';
@@ -39,6 +40,21 @@ export function useAccount(character: Character | null, ready: boolean) {
       alive = false;
     };
   }, [userId]);
+
+  // 상대가 나를 팔로우해도 보이도록: 앱이 열려 있는 동안 10초마다, 그리고 앱으로 돌아올 때 새로고침한다
+  useEffect(() => {
+    if (!userId) return;
+    const id = setInterval(() => {
+      if (AppState.currentState === 'active') refreshSocial();
+    }, 10000);
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') refreshSocial();
+    });
+    return () => {
+      clearInterval(id);
+      sub.remove();
+    };
+  }, [userId, refreshSocial]);
 
   // 친구/그룹 기능을 쓰는 순간 계정이 없으면 만든다. 성공하면 사용자 id를 돌려준다.
   const ensureAccount = useCallback(async (): Promise<{ userId: string } | { error: string }> => {

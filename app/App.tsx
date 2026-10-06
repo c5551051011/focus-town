@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, BackHandler, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PressStart2P_400Regular, useFonts } from '@expo-google-fonts/press-start-2p';
@@ -120,6 +120,16 @@ export default function App() {
       streak: streak.current,
     });
   }, [loaded, sessions, settings.reminderOn, settings.reminderHour, settings.reminderMinute]);
+
+  // 안드로이드 뒤로 가기: 열려 있는 화면(친구 추가·설정 등)을 먼저 닫는다
+  useEffect(() => {
+    if (!overlay) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setOverlay(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [overlay]);
 
   // 로그인하면: 서버에 저장된 프로필이 있으면 그 캐릭터를 불러오고(새 기기 복원), 없으면 기기의 캐릭터를 서버에 저장한다
   useEffect(() => {
