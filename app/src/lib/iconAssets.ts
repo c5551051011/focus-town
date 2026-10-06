@@ -10,5 +10,6 @@ export const ICON_IMAGES = {
   share: require('../../assets/pixel/icon_share.png'),
   help: require('../../assets/pixel/icon_help.png'),
   search: require('../../assets/pixel/icon_search.png'),
+  chart: require('../../assets/pixel/icon_chart.png'),
 } as const;
 export type IconName = keyof typeof ICON_IMAGES;

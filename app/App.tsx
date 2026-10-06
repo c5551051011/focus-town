@@ -29,6 +29,7 @@ import CallPassPrompt from './src/components/CallPassPrompt';
 import AuthSheet from './src/components/AuthSheet';
 import InviteBanner from './src/components/InviteBanner';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import TabBar, { TabId } from './src/components/TabBar';
 import GroupFlow, { GroupRecord } from './src/screens/GroupFlow';
 import CharacterScreen from './src/screens/CharacterScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -45,13 +46,7 @@ initErrorReporting();
 
 const modeOf = (tag: string) => (PRESET_TAGS.includes(tag) ? tag : 'custom'); // 직접 만든 모드 이름은 분석에 보내지 않는다
 
-type Tab = 'setup' | 'town' | 'stats' | 'me';
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'setup', label: 'FOCUS' },
-  { id: 'town', label: 'TOWN' },
-  { id: 'stats', label: 'STATS' },
-  { id: 'me', label: 'ME' },
-];
+type Tab = TabId;
 
 // 탭 위에 전체 화면으로 열리는 화면들
 type Overlay = { type: 'settings' } | { type: 'add'; query?: string } | { type: 'follow'; tab: 'following' | 'followers' } | null;
@@ -412,13 +407,7 @@ export default function App() {
                   />
                 </View>
               </View>
-              <View style={styles.tabs}>
-                {TABS.map((t) => (
-                  <Pressable key={t.id} style={[styles.tab, tab === t.id && styles.tabOn]} onPress={() => setTab(t.id)}>
-                    <Txt style={[styles.tabText, tab === t.id && { color: colors.accent }]}>{t.label}</Txt>
-                  </Pressable>
-                ))}
-              </View>
+              <TabBar tab={tab} onChange={setTab} />
             </>
           )}
           <AuthSheet visible={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={() => setAuthOpen(false)} />
@@ -432,8 +421,4 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   body: { flex: 1 },
   hidden: { display: 'none' },
-  tabs: { flexDirection: 'row', backgroundColor: colors.panel, borderTopWidth: 3, borderTopColor: colors.line },
-  tab: { flex: 1, paddingVertical: 18, alignItems: 'center', borderTopWidth: 4, borderTopColor: 'transparent' },
-  tabOn: { borderTopColor: colors.accent },
-  tabText: { fontSize: 10, color: colors.dim },
 });

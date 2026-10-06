@@ -1,7 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import Avatar from './Avatar';
-import { PixelButton, Txt } from './ui';
+import { Sans } from './ui';
 import { Person } from '../lib/social';
 
 export const MAX_INVITES = 3;
@@ -30,28 +30,32 @@ export default function FriendPicker({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.box} onPress={() => {}}>
-          <Txt style={styles.title}>FOCUS WITH FRIENDS</Txt>
+          <Sans style={styles.title}>FOCUS WITH FRIENDS</Sans>
           {friends.length === 0 ? (
             <>
-              <Txt style={styles.empty}>You have no friends yet.{'\n\n'}Follow someone, and ask them to follow you back. You become friends when you both follow each other.</Txt>
-              <PixelButton label="ADD FRIENDS" onPress={onAddFriends} style={{ marginTop: 6 }} />
+              <Sans style={styles.empty}>You have no friends yet. Follow someone and ask them to follow you back. You become friends when you both follow each other.</Sans>
+              <Pressable onPress={onAddFriends} style={styles.primary}>
+                <Sans style={styles.primaryText}>Add friends</Sans>
+              </Pressable>
             </>
           ) : (
             <>
-              <Txt style={styles.note}>Pick up to {MAX_INVITES}. They get an invite and can join anytime in the first 3 minutes.</Txt>
-              <ScrollView style={{ maxHeight: 320 }}>
+              <Sans style={styles.note}>Pick up to {MAX_INVITES}. They get an invite and can join anytime in the first 3 minutes.</Sans>
+              <ScrollView style={{ maxHeight: 330 }} showsVerticalScrollIndicator={false}>
                 {friends.map((f) => {
                   const on = selected.includes(f.id);
                   return (
                     <Pressable key={f.id} onPress={() => toggle(f.id)} style={[styles.row, on && styles.rowOn]}>
-                      <Avatar character={f} size={44} />
-                      <Txt style={[styles.name, on && { color: colors.bg }]} numberOfLines={1}>{f.name}</Txt>
-                      <View style={[styles.check, on && styles.checkOn]}>{on ? <Txt style={styles.checkMark}>OK</Txt> : null}</View>
+                      <Avatar character={f} size={46} />
+                      <Sans style={[styles.name, on && { color: colors.bg }]} numberOfLines={1}>{f.name}</Sans>
+                      <View style={[styles.check, on && styles.checkOn]}>{on ? <Sans style={styles.checkMark}>✓</Sans> : null}</View>
                     </Pressable>
                   );
                 })}
               </ScrollView>
-              <PixelButton label={selected.length ? `DONE (${selected.length})` : 'DONE'} onPress={onClose} style={{ marginTop: 14 }} />
+              <Pressable onPress={onClose} style={styles.primary}>
+                <Sans style={styles.primaryText}>{selected.length ? `Done (${selected.length})` : 'Done'}</Sans>
+              </Pressable>
             </>
           )}
         </Pressable>
@@ -61,15 +65,17 @@ export default function FriendPicker({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  box: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 18 },
-  title: { color: colors.accent, fontSize: 12, marginBottom: 12 },
-  note: { color: colors.dim, fontSize: 8, lineHeight: 14, marginBottom: 12 },
-  empty: { color: colors.dim, fontSize: 9, lineHeight: 16, marginVertical: 14 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, marginBottom: 8, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
+  box: { backgroundColor: soft.card, borderRadius: 22, padding: 18 },
+  title: { color: soft.subtle, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, marginBottom: 12, marginLeft: 4 },
+  note: { color: soft.subtle, fontSize: 12, lineHeight: 17, marginBottom: 14, marginLeft: 4 },
+  empty: { color: soft.subtle, fontSize: 13, lineHeight: 19, marginVertical: 10, marginLeft: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, marginBottom: 8, backgroundColor: soft.sunken, borderRadius: 14 },
   rowOn: { backgroundColor: colors.gold },
-  name: { flex: 1, fontSize: 11 },
-  check: { width: 30, height: 30, borderWidth: 3, borderColor: colors.line, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  checkOn: { backgroundColor: colors.accent },
-  checkMark: { fontSize: 7, color: colors.bg },
+  name: { flex: 1, fontSize: 14 },
+  check: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: soft.line, alignItems: 'center', justifyContent: 'center' },
+  checkOn: { backgroundColor: colors.bg, borderColor: colors.bg },
+  checkMark: { fontSize: 12, color: colors.gold },
+  primary: { marginTop: 14, paddingVertical: 15, borderRadius: 14, backgroundColor: colors.accent, alignItems: 'center' },
+  primaryText: { color: colors.bg, fontSize: 14 },
 });

@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import { selection } from '../lib/haptics';
-import { Txt } from './ui';
+import { Sans, Txt } from './ui';
 
-const ITEM = 52;
+const ITEM = 56;
 const ROWS = 3; // 보이는 줄 수 (가운데가 선택 값)
 
 // 위아래로 밀어서 시간을 고르는 작은 휠
@@ -50,7 +50,7 @@ export default function TimeWheel({ values, value, onChange }: { values: number[
               onPress={() => ref.current?.scrollTo({ y: i * ITEM, animated: true })}
             >
               <Txt style={[styles.num, dist === 0 && { color: colors.gold }]}>{v}</Txt>
-              <Txt style={styles.unit}>MIN</Txt>
+              <Sans style={styles.unit}>min</Sans>
             </Pressable>
           );
         })}
@@ -60,9 +60,9 @@ export default function TimeWheel({ values, value, onChange }: { values: number[
 }
 
 const styles = StyleSheet.create({
-  wrap: { height: ITEM * ROWS, width: 200, alignSelf: 'center' },
-  band: { position: 'absolute', left: 0, right: 0, top: ITEM * Math.floor(ROWS / 2), height: ITEM, borderWidth: 3, borderColor: colors.accent, backgroundColor: 'rgba(255,121,198,0.12)' },
-  item: { height: ITEM, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  num: { fontSize: 24, width: 84, textAlign: 'right' },
-  unit: { fontSize: 9, color: colors.dim, width: 40 },
+  wrap: { height: ITEM * ROWS, width: 220, alignSelf: 'center' },
+  band: { position: 'absolute', left: 0, right: 0, top: ITEM * Math.floor(ROWS / 2), height: ITEM, borderRadius: 16, backgroundColor: 'rgba(255,121,198,0.16)' },
+  item: { height: ITEM, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  num: { fontSize: 26, width: 90, textAlign: 'right' },
+  unit: { fontSize: 13, color: soft.subtle, width: 44 },
 });

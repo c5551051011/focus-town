@@ -128,7 +128,7 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 12, alignItems: 'center' },
   mapArea: { flex: 1, justifyContent: 'center' },
-  stage: { paddingVertical: 26, paddingHorizontal: 4, borderRadius: 26, backgroundColor: '#23203a', borderWidth: 1.5, borderColor: soft.line },
+  stage: { paddingVertical: 12 },
   header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 8 },
   title: { color: colors.accent, fontSize: 16 },
   count: { color: soft.subtle, fontSize: 14, fontWeight: '600' },

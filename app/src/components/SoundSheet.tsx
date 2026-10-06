@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
-import { Txt } from './ui';
+import { colors, soft } from '../theme';
+import { Sans } from './ui';
 import { AmbientId, TRACKS, startAmbient, stopAmbient } from '../lib/ambient';
 import { PRESET_TAGS, tagColor } from '../lib/tags';
 
 // 배경 사운드 선택 시트: 지금 모드에 어울리는 곡을 맨 위에 보여주고, 나머지는 모드별로 묶어서 보여준다.
-// 각 줄의 PLAY 버튼으로 미리 들어볼 수 있다.
+// 각 줄의 Play 버튼으로 미리 들어볼 수 있다.
 export default function SoundSheet({
   visible,
   tag,
@@ -52,19 +52,19 @@ export default function SoundSheet({
             close();
           }}
         >
-          <Txt style={[styles.label, on && { color: colors.bg }]} numberOfLines={1}>{title}</Txt>
+          <Sans style={[styles.label, on && { color: colors.bg }]} numberOfLines={1}>{title}</Sans>
           {modes ? (
             <View style={styles.modes}>
-              {kind ? <Txt style={[styles.mode, { color: on ? colors.bg : colors.gold }]}>{kind}</Txt> : null}
+              {kind ? <Sans style={[styles.mode, { color: on ? colors.bg : colors.gold }]}>{kind}</Sans> : null}
               {modes.map((m) => (
-                <Txt key={m} style={[styles.mode, { color: on ? colors.bg : tagColor(m) }]}>{m}</Txt>
+                <Sans key={m} style={[styles.mode, { color: on ? colors.bg : tagColor(m) }]}>{m}</Sans>
               ))}
             </View>
           ) : null}
         </Pressable>
         {id !== 'off' && (
           <Pressable onPress={() => togglePreview(id)} style={[styles.play, playing === id && styles.playOn]} hitSlop={6}>
-            <Txt style={styles.playText}>{playing === id ? 'STOP' : 'PLAY'}</Txt>
+            <Sans style={[styles.playText, playing === id && { color: colors.bg }]}>{playing === id ? 'Stop' : 'Play'}</Sans>
           </Pressable>
         )}
       </View>
@@ -75,20 +75,20 @@ export default function SoundSheet({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <Pressable style={styles.backdrop} onPress={close}>
         <Pressable style={styles.box} onPress={() => {}}>
-          <Txt style={styles.title}>BACKGROUND SOUND</Txt>
-          <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 8 }}>
-            {renderRow('off', 'OFF')}
+          <Sans style={styles.title}>BACKGROUND SOUND</Sans>
+          <ScrollView style={{ maxHeight: 540 }} contentContainerStyle={{ gap: 8, paddingBottom: 4 }} showsVerticalScrollIndicator={false}>
+            {renderRow('off', 'Off')}
 
             {recommended.length > 0 && (
               <>
-                <Txt style={[styles.section, { color: tagColor(tag) }]}>FOR {tag}</Txt>
+                <Sans style={[styles.section, { color: tagColor(tag) }]}>FOR {tag}</Sans>
                 {recommended.map((t) => renderRow(t.id, t.title, t.modes, t.kind))}
               </>
             )}
 
             {groups.map((g) => (
               <View key={g.mode} style={{ gap: 8 }}>
-                <Txt style={[styles.section, { color: tagColor(g.mode) }]}>{g.mode}</Txt>
+                <Sans style={[styles.section, { color: tagColor(g.mode) }]}>{g.mode}</Sans>
                 {g.tracks.map((t) => renderRow(t.id, t.title, t.modes, t.kind))}
               </View>
             ))}
@@ -100,17 +100,17 @@ export default function SoundSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 16 },
-  box: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 16 },
-  title: { color: colors.accent, fontSize: 12, marginBottom: 14 },
-  section: { fontSize: 9, marginTop: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 16 },
+  box: { backgroundColor: soft.card, borderRadius: 22, padding: 18 },
+  title: { color: soft.subtle, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, marginBottom: 14, marginLeft: 4 },
+  section: { fontSize: 12, marginTop: 14, marginLeft: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: soft.sunken, borderRadius: 14 },
   rowOn: { backgroundColor: colors.gold },
-  main: { flex: 1, padding: 12 },
-  label: { fontSize: 9, lineHeight: 14 },
-  modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  mode: { fontSize: 6 },
-  play: { marginRight: 10, paddingVertical: 10, paddingHorizontal: 10, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line },
+  main: { flex: 1, paddingVertical: 13, paddingHorizontal: 14 },
+  label: { fontSize: 14, lineHeight: 20 },
+  modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
+  mode: { fontSize: 10 },
+  play: { marginRight: 10, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
   playOn: { backgroundColor: colors.accent },
-  playText: { fontSize: 8 },
+  playText: { fontSize: 12, color: colors.text },
 });

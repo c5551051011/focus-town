@@ -554,6 +554,15 @@ def search(dx, dy):
     handle = (dx - cy > 2.2) and abs((dx - cx) - (dy - cy)) <= 1.4 and dx <= 6.6 and dy <= 6.6
     return ring or handle
 ICONS['search'] = field(search)
+# 막대 그래프 (3개)
+g = blank()
+for x0, x1, top in [(2, 4, 8), (7, 9, 3), (12, 14, 6)]:
+    for y in range(top, 14):
+        for x in range(x0, x1 + 1):
+            g[y][x] = 'W'
+for x in range(1, 16):
+    g[14][x] = 'W'
+ICONS['chart'] = g
 
 for name, g in ICONS.items():
     rows = [''.join(r) for r in g]

@@ -8,7 +8,7 @@ import TimeWheel from '../components/TimeWheel';
 import SoundSheet from '../components/SoundSheet';
 import TagSheet from '../components/TagSheet';
 import FriendPicker from '../components/FriendPicker';
-import { Pill, PixelButton, Sans, Txt } from '../components/ui';
+import { Pill, Sans, Txt } from '../components/ui';
 import { TIME_VALUES, buildingFor } from '../lib/buildings';
 import { AmbientId, ambientLabel } from '../lib/ambient';
 import { Settings } from '../lib/settings';
@@ -58,7 +58,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
       <View style={styles.center}>
         {/* 건물 미리보기: 둥근 받침 위에 올려 둔다 */}
         <View style={styles.plate}>
-          <Pixel name={b.id} size={150} />
+          <Pixel name={b.id} size={170} />
         </View>
         <Sans style={styles.name}>{b.name}</Sans>
 
@@ -93,15 +93,17 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
 
       {/* 시간을 탭하면 열리는 휠 */}
       <Modal visible={sheet === 'time'} transparent animationType="fade" onRequestClose={() => setSheet(null)}>
-        <View style={styles.dialBackdrop}>
-          <View style={styles.dialBox}>
-            <Txt style={styles.dialTitle}>FOCUS TIME</Txt>
-            <Pixel name={b.id} size={150} style={{ alignSelf: 'center' }} />
-            <Txt style={styles.dialName}>{b.name}</Txt>
+        <Pressable style={styles.dialBackdrop} onPress={() => setSheet(null)}>
+          <Pressable style={styles.dialBox} onPress={() => {}}>
+            <Sans style={styles.dialTitle}>FOCUS TIME</Sans>
+            <Pixel name={b.id} size={140} style={{ alignSelf: 'center' }} />
+            <Sans style={styles.dialName}>{b.name}</Sans>
             <TimeWheel values={TIME_VALUES} value={minutes} onChange={(m) => update({ minutes: m })} />
-            <PixelButton label="DONE" onPress={() => setSheet(null)} style={{ marginTop: 20, alignSelf: 'stretch' }} />
-          </View>
-        </View>
+            <Pressable onPress={() => setSheet(null)} style={styles.dialDone}>
+              <Txt style={styles.dialDoneText}>DONE</Txt>
+            </Pressable>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       <TagSheet
@@ -151,9 +153,9 @@ const styles = StyleSheet.create({
   goalFill: { height: '100%', borderRadius: 4, backgroundColor: colors.accent },
   goalText: { color: soft.subtle, fontSize: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
-  plate: { width: 220, height: 196, borderRadius: 30, backgroundColor: soft.card, borderWidth: 1.5, borderColor: soft.line, alignItems: 'center', justifyContent: 'center' },
+  plate: { alignItems: 'center', justifyContent: 'center', paddingVertical: 8 },
   name: { color: soft.subtle, fontSize: 13, marginTop: 14 },
-  timeBox: { marginTop: 14, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 28, borderRadius: 22, borderWidth: 2, borderColor: soft.line },
+  timeBox: { marginTop: 10, alignItems: 'center', paddingVertical: 6, paddingHorizontal: 28 },
   time: { fontSize: 44, lineHeight: 56, color: colors.gold },
   timeHint: { color: soft.subtle, fontSize: 11, marginTop: 2 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 22 },
@@ -163,8 +165,10 @@ const styles = StyleSheet.create({
   extra: { flexDirection: 'row', gap: 2 },
   start: { marginTop: 8, paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   startText: { color: colors.bg, fontSize: 18 },
-  dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  dialBox: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 20 },
-  dialName: { fontSize: 12, color: colors.text, textAlign: 'center', marginTop: 16, marginBottom: 18 },
-  dialTitle: { color: colors.accent, fontSize: 12, textAlign: 'center', marginBottom: 14 },
+  dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
+  dialBox: { backgroundColor: soft.card, borderRadius: 24, padding: 22 },
+  dialName: { fontSize: 14, color: colors.text, textAlign: 'center', marginTop: 12, marginBottom: 16 },
+  dialTitle: { color: soft.subtle, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textAlign: 'center', marginBottom: 10 },
+  dialDone: { marginTop: 20, paddingVertical: 17, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center' },
+  dialDoneText: { color: colors.bg, fontSize: 14 },
 });
