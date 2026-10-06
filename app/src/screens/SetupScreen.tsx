@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { colors, soft } from '../theme';
 import { Pixel } from '../components/Pixel';
 import Avatar from '../components/Avatar';
@@ -8,6 +8,7 @@ import TimeWheel from '../components/TimeWheel';
 import SoundSheet from '../components/SoundSheet';
 import TagSheet from '../components/TagSheet';
 import FriendPicker from '../components/FriendPicker';
+import ConfirmSheet from '../components/ConfirmSheet';
 import { Pill, Sans, Txt } from '../components/ui';
 import { ScreenTitle } from '../components/cards';
 import { TIME_VALUES, buildingFor } from '../lib/buildings';
@@ -29,14 +30,24 @@ type Props = {
 };
 
 // 첫 화면: 건물 하나, 시간 하나, 선택 칩 세 개, 시작 버튼 하나. 세부 설정은 칩을 눌렀을 때만 나온다.
+// 알림이 꺼져 있다는 안내는 앱을 켠 뒤 한 번만 보여준다
+let notifNagged = false;
+
 export default function SetupScreen({ todayMinutes, settings, onChange: update, friends, invitees, onInviteesChange, onAddFriends, onStart }: Props) {
   const [sheet, setSheet] = useState<'time' | 'newMode' | 'sound' | 'friends' | null>(null);
   const { minutes, ambient, tag, customTags, dailyGoal } = settings;
   const b = buildingFor(minutes);
   const invited = friends.filter((f) => invitees.includes(f.id));
 
+  const [needNotif, setNeedNotif] = useState(false);
   const start = async () => {
-    await requestNotificationPermission();
+    const granted = await requestNotificationPermission();
+    // 알림이 꺼져 있으면 이탈 경고(알림, 15초 카운트다운 카드)가 뜨지 않는다는 걸 한 번 알려준다
+    if (!granted && settings.notify && !notifNagged) {
+      notifNagged = true;
+      setNeedNotif(true);
+      return;
+    }
     onStart(minutes, ambient, tag);
   };
 
@@ -86,12 +97,16 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
             onPress={() => setSheet('friends')}
             icon={invited.length ? null : <Icon name="user" size={18} color={soft.subtle} />}
             label={invited.length ? '' : 'Friends'}
-            extra={invited.map((f) => <Avatar key={f.id} character={f} size={22} />)}
+            extra={invited.map((f, i) => (
+              <View key={f.id} style={i > 0 ? { marginLeft: -10 } : undefined}>
+                <Avatar character={f} size={54} />
+              </View>
+            ))}
           />
         </View>
 
         <Pressable onPress={start} style={({ pressed }) => [styles.start, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }]}>
-          <Txt style={styles.startText}>{invited.length ? `START WITH ${invited.length}` : 'START'}</Txt>
+          <Txt style={styles.startText}>START</Txt>
         </Pressable>
       </View>
 
@@ -127,6 +142,21 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
           onAddFriends();
         }}
         onClose={() => setSheet(null)}
+      />
+      <ConfirmSheet
+        visible={needNotif}
+        title="Notifications are off"
+        text="Without notifications you won't get a warning when you leave the app. Turn them on to get the 15-second come-back alert."
+        confirmLabel="Open settings"
+        cancelLabel="Start anyway"
+        onConfirm={() => {
+          setNeedNotif(false);
+          Linking.openSettings().catch(() => {});
+        }}
+        onCancel={() => {
+          setNeedNotif(false);
+          onStart(minutes, ambient, tag);
+        }}
       />
       <SoundSheet visible={sheet === 'sound'} tag={tag} selected={ambient} onSelect={(id) => update({ ambient: id })} onClose={() => setSheet(null)} />
     </ScrollView>
@@ -164,9 +194,9 @@ const styles = StyleSheet.create({
   bottom: { paddingTop: 12 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   chips: { flexDirection: 'row', gap: 10, marginTop: 20, alignSelf: 'stretch' },
-  chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, paddingHorizontal: 8, borderRadius: 14, backgroundColor: soft.card },
+  chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 6, paddingHorizontal: 8, minHeight: 66, borderRadius: 14, backgroundColor: soft.card },
   chipText: { fontSize: 13, color: colors.text, flexShrink: 1 },
-  extra: { flexDirection: 'row', gap: 2 },
+  extra: { flexDirection: 'row' },
   start: { marginTop: 16, paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   startText: { color: colors.bg, fontSize: 18 },
   dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },

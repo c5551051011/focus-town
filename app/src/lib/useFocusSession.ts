@@ -65,6 +65,15 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (state) => {
       if (isOver() || phaseRef.current === 'callPrompt') return;
+      // iOS: 제어 센터/앱 전환 화면처럼 "곧 떠날 수 있는" 순간에도 붉은 경고를 보여준다 (바로 돌아오면 아무 일 없다)
+      if (state === 'inactive') {
+        if (leftAt.current === null && phaseRef.current === 'running') update('warning');
+        return;
+      }
+      if (state === 'active' && leftAt.current === null && phaseRef.current === 'warning') {
+        update('running');
+        return;
+      }
       if (state === 'background') {
         if (leftAt.current !== null) return;
         leftAt.current = Date.now();

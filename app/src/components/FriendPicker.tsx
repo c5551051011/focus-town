@@ -46,7 +46,7 @@ export default function FriendPicker({
                   const on = selected.includes(f.id);
                   return (
                     <Pressable key={f.id} onPress={() => toggle(f.id)} style={[styles.row, on && styles.rowOn]}>
-                      <Avatar character={f} size={46} />
+                      <Avatar character={f} size={58} />
                       <Sans style={[styles.name, on && { color: colors.bg }]} numberOfLines={1}>{f.name}</Sans>
                       <View style={[styles.check, on && styles.checkOn]}>{on ? <Sans style={styles.checkMark}>✓</Sans> : null}</View>
                     </Pressable>
@@ -54,7 +54,7 @@ export default function FriendPicker({
                 })}
               </ScrollView>
               <Pressable onPress={onClose} style={styles.primary}>
-                <Sans style={styles.primaryText}>{selected.length ? `Done (${selected.length})` : 'Done'}</Sans>
+                <Sans style={styles.primaryText}>Done</Sans>
               </Pressable>
             </>
           )}

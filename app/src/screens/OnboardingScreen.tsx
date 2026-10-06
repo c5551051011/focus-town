@@ -5,8 +5,11 @@ import Icon from '../components/Icon';
 import { Pixel, SpriteName } from '../components/Pixel';
 import { Txt } from '../components/ui';
 import { PRIVACY_URL, TERMS_URL } from '../config';
+import { ensureNotificationPermission } from '../lib/notifications';
 
-type Slide = { title: string; text: string; art: ReactNode };
+type Consent = 'notifications' | 'screentime';
+// cta 가 있는 장은 "동의" 장이다: 큰 버튼이 동의(허용)이고, SKIP 은 동의하지 않고 다음 장으로 넘어간다.
+type Slide = { title: string; text: string; art: ReactNode; cta?: { label: string; kind: Consent } };
 
 const row = (names: SpriteName[], size: number) => (
   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-end' }}>
@@ -21,9 +24,9 @@ const SLIDES: Slide[] = [
     title: 'BUILD YOUR TOWN',
     text: 'Focus for a while and a building rises in your very own town.',
     art: (
-      <View style={{ alignItems: 'center', gap: 10 }}>
+      <View style={{ alignItems: 'center' }}>
         <Pixel name="house" size={170} />
-        {row(['bear', 'cat', 'rabbit'], 60)}
+        <View style={{ marginTop: -26 }}>{row(['bear', 'cat', 'rabbit'], 60)}</View>
       </View>
     ),
   },
@@ -43,8 +46,15 @@ const SLIDES: Slide[] = [
     art: <Pixel name="ruins" size={180} />,
   },
   {
+    title: 'GENTLE NUDGES',
+    text: 'Allow notifications so we can warn you the moment you leave the app, and cheer you on each day.',
+    art: <Icon name="bell" size={150} color={colors.gold} />,
+    cta: { label: 'ALLOW', kind: 'notifications' },
+  },
+  {
     title: 'BLOCK DISTRACTIONS',
-    text: 'Coming soon: pick the apps to block while you focus, using your phone’s Screen Time settings.',
+    text: 'Coming soon: block distracting apps while you focus. Say yes and we will turn it on when it is ready.',
+    cta: { label: "I'M IN", kind: 'screentime' },
     art: (
       <View style={{ alignItems: 'center', gap: 14 }}>
         <Icon name="shield" size={150} color={colors.accent} />
@@ -59,17 +69,31 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export default function OnboardingScreen({ onFinish }: { onFinish: (skipped: boolean) => void }) {
+export default function OnboardingScreen({ onFinish, onConsent }: { onFinish: (skipped: boolean) => void; onConsent?: (kind: Consent, agreed: boolean) => void }) {
   const { width } = useWindowDimensions();
   const ref = useRef<ScrollView>(null);
   const [page, setPage] = useState(0);
   const last = page === SLIDES.length - 1;
 
   const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => setPage(Math.round(e.nativeEvent.contentOffset.x / width));
-  const next = () => {
+  const slide = SLIDES[page];
+  const goNext = () => {
     if (last) return onFinish(false);
     ref.current?.scrollTo({ x: (page + 1) * width, animated: true });
     setPage(page + 1);
+  };
+  // 큰 버튼: 동의 장에서는 동의(허용)하고 넘어간다
+  const agree = async () => {
+    if (slide.cta) {
+      if (slide.cta.kind === 'notifications') onConsent?.('notifications', await ensureNotificationPermission());
+      else onConsent?.(slide.cta.kind, true);
+    }
+    goNext();
+  };
+  // SKIP: 동의하지 않고 다음 장으로
+  const skip = () => {
+    if (slide.cta) onConsent?.(slide.cta.kind, false);
+    goNext();
   };
 
   return (
@@ -111,13 +135,13 @@ export default function OnboardingScreen({ onFinish }: { onFinish: (skipped: boo
           ))}
         </View>
         <View style={styles.actions}>
-          {!last && (
-            <Txt style={styles.skip} onPress={() => onFinish(true)}>
+          {slide.cta && !last && (
+            <Txt style={styles.skip} onPress={skip}>
               SKIP
             </Txt>
           )}
-          <Pressable onPress={next} style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}>
-            <Txt style={styles.nextText}>{last ? "LET'S GO" : 'NEXT'}</Txt>
+          <Pressable onPress={agree} style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}>
+            <Txt style={styles.nextText}>{last ? "LET'S GO" : (slide.cta?.label ?? 'NEXT')}</Txt>
           </Pressable>
         </View>
       </View>

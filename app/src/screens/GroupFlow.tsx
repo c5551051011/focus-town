@@ -6,6 +6,7 @@ import Avatar from '../components/Avatar';
 import { Pixel } from '../components/Pixel';
 import SessionLayout, { TeamBar } from '../components/SessionLayout';
 import ResultLayout from '../components/ResultLayout';
+import TeamBuilding from '../components/TeamBuilding';
 import StopButton from '../components/StopButton';
 import { PixelButton, Txt } from '../components/ui';
 import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/ambient';
@@ -109,11 +110,10 @@ export default function GroupFlow({ initial, myId, ambient, onRecord, onExit }: 
     const left = mine.status === 'left';
     return (
       <Notice
-        title={left ? 'YOU LEFT' : 'YOU WERE DROPPED'}
-        text={left ? 'You left the session. Your team keeps building.' : 'You were away too long. Your team keeps building without you.'}
+        title={left ? 'BYE BYE!' : 'WHOOPS!'}
+        text={left ? 'You hopped out.\nYour team keeps\nbuilding for you!' : 'You wandered off\ntoo long. Your team\nkeeps building!'}
         icon={<Pixel name="ruins" size={140} />}
         onOk={onExit}
-        okLabel="TO TOWN"
       />
     );
   }
@@ -172,13 +172,18 @@ export default function GroupFlow({ initial, myId, ambient, onRecord, onExit }: 
 
 // ───────────────────────── 하위 화면 ─────────────────────────
 
+// 안내 화면. 아이콘이 있는 것(나감/탈락)은 아래 버튼 대신 왼쪽 위 X 로 닫는다.
 function Notice({ title, text, icon, onOk, okLabel = 'OK' }: { title: string; text: string; icon?: React.ReactNode; onOk: () => void; okLabel?: string }) {
-  return <ResultLayout hero={icon ?? <Pixel name="hammer" size={90} />} title={title} tone={icon ? 'bad' : 'neutral'} message={text} button={okLabel} onPress={onOk} />;
+  return icon ? (
+    <ResultLayout hero={icon} title={title} tone="bad" message={text} onClose={onOk} />
+  ) : (
+    <ResultLayout hero={<Pixel name="hammer" size={90} />} title={title} tone="neutral" message={text} button={okLabel} onPress={onOk} />
+  );
 }
 
-function MemberCard({ m, sub }: { m: RoomMember; sub?: string }) {
+function MemberCard({ m, sub, cols }: { m: RoomMember; sub?: string; cols: number }) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { width: cols === 3 ? '31.5%' : '48.5%' }]}>
       <Avatar character={toCharacter(m)} size={64} />
       <Txt style={styles.cardName} numberOfLines={1}>{m.name}</Txt>
       {m.is_host ? <Txt style={[styles.cardSub, { color: colors.gold }]}>HOST</Txt> : null}
@@ -319,18 +324,25 @@ function Result({ state, mine, onExit }: { state: RoomState; mine: RoomMember; o
   const building = tieredBuilding(room.minutes, room.building_tier ?? 0);
   const dur = room.durability ?? state.durability_now;
   const participants = members.filter((m) => m.active_since);
-  const title = finished ? 'COMPLETE!' : room.status === 'collapsed' ? 'COLLAPSED' : 'YOU WERE DROPPED';
+  const title = finished ? 'TEAMWORK!' : room.status === 'collapsed' ? 'OH NO!' : 'WHOOPS!';
   const message = finished
-    ? `${building.name} added to your town.${building.id !== buildingFor(room.minutes).id ? '\nThe building was damaged, so it came out smaller.' : ''}`
+    ? `${building.name} added\nto your town!${building.id !== buildingFor(room.minutes).id ? '\nIt got dented, so\nit came out smaller.' : ''}`
     : room.status === 'collapsed'
-      ? 'The team building fell apart.'
-      : 'Your team finished without you.';
+      ? "The team building\nfell apart.\nLet's try again!"
+      : 'Your team finished\nwithout you.\nThey built it for you!';
   return (
-    <ResultLayout hero={<Pixel name={finished ? building.id : 'ruins'} size={150} />} title={title} tone={finished ? 'good' : 'bad'} message={message} button="TO TOWN" onPress={onExit}>
-      <TeamBar pct={dur} color={toneColor(dur)} />
+    <ResultLayout
+      hero={finished ? <TeamBuilding building={building.id} members={participants.length} durability={dur} /> : <Pixel name="ruins" size={150} />}
+      title={title}
+      tone={finished ? 'good' : 'bad'}
+      message={message}
+      button="TO TOWN"
+      onPress={onExit}
+    >
+      <TeamBar pct={dur} color={toneColor(dur)} style={{ marginTop: 0 }} />
       <View style={styles.grid}>
         {participants.map((m) => (
-          <MemberCard key={m.user_id} m={m} sub={m.status === 'active' ? (room.status === 'done' ? 'FINISHED' : 'WAS THERE') : 'DROPPED'} />
+          <MemberCard key={m.user_id} m={m} cols={participants.length === 3 ? 3 : 2} sub={m.status === 'active' ? (room.status === 'done' ? 'FINISHED' : 'WAS THERE') : 'DROPPED'} />
         ))}
       </View>
     </ResultLayout>
@@ -343,8 +355,8 @@ const styles = StyleSheet.create({
   text: { color: colors.dim, fontSize: 9, lineHeight: 17, textAlign: 'center', marginVertical: 16 },
   fullBtn: { alignSelf: 'stretch', marginTop: 14 },
   error: { color: colors.danger, fontSize: 8, lineHeight: 14, textAlign: 'center', marginTop: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  card: { width: '47%', alignItems: 'center', paddingVertical: 14, backgroundColor: soft.card, borderRadius: 16 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12, justifyContent: 'space-between' },
+  card: { alignItems: 'center', paddingVertical: 14, backgroundColor: soft.card, borderRadius: 16 },
   cardName: { fontSize: 10, marginTop: 8, maxWidth: 130 },
   cardSub: { fontSize: 8, color: soft.subtle, marginTop: 6 },
   extra: { alignSelf: 'stretch', marginTop: 4 },

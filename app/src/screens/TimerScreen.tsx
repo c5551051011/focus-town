@@ -78,9 +78,9 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
     return (
       <ResultLayout
         hero={<Pixel name={ok ? b.id : 'ruins'} size={150} />}
-        title={ok ? 'COMPLETE!' : 'COLLAPSED'}
+        title={ok ? 'TA-DA!' : 'OOPS!'}
         tone={ok ? 'good' : 'bad'}
-        message={ok ? `${b.name} added to your town.\n+${minutes} min` : endReason === 'gave_up' ? 'You stopped the session.\nTry again!' : 'You left the app too long.\nTry again!'}
+        message={ok ? `${b.name} added\nto your town!\n+${minutes} min` : endReason === 'gave_up' ? "You stopped\nthe session.\nLet's try again!" : "You wandered off\ntoo long.\nLet's try again!"}
         button="TO TOWN"
         onPress={onDone}
       >
@@ -102,7 +102,7 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
       workers={workers}
       big={`${mm}:${ss}`}
       message={statusMessage(progress, Math.floor(progress * minutes * 60), recovered)}
-      warn={phase === 'warning'}
+      warn={phase === 'warning' || recovered}
       topRight={
         ambient === 'off' ? null : (
           <Pressable onPress={toggleMute} hitSlop={12} style={styles.mute}>

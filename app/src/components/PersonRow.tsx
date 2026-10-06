@@ -1,20 +1,20 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { colors, soft } from '../theme';
 import Avatar from './Avatar';
 import { Sans } from './ui';
+import ConfirmSheet from './ConfirmSheet';
 import { Person, isFriend } from '../lib/social';
 
 // 사람 한 줄: 캐릭터 + 이름(+친구 표시) + 팔로우 버튼
 export default function PersonRow({ p, busy, onFollow, onUnfollow }: { p: Person; busy?: boolean; onFollow: () => void; onUnfollow: () => void }) {
+  const [confirm, setConfirm] = useState(false);
   const friend = isFriend(p);
   const label = p.i_follow ? 'Following' : p.follows_me ? 'Follow back' : 'Follow';
   const press = () => {
     if (busy) return;
     if (!p.i_follow) return onFollow();
-    Alert.alert(`Unfollow ${p.name}?`, 'You will no longer be able to invite each other to group sessions.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Unfollow', style: 'destructive', onPress: onUnfollow },
-    ]);
+    setConfirm(true);
   };
   return (
     <View style={styles.row}>
@@ -32,6 +32,18 @@ export default function PersonRow({ p, busy, onFollow, onUnfollow }: { p: Person
       <Pressable onPress={press} style={[styles.btn, p.i_follow ? styles.btnOn : styles.btnOff, busy && { opacity: 0.6 }]}>
         <Sans style={[styles.btnText, !p.i_follow && { color: colors.bg }]}>{label}</Sans>
       </Pressable>
+      <ConfirmSheet
+        visible={confirm}
+        title={`Unfollow ${p.name}?`}
+        text="You will no longer be able to invite each other to group sessions."
+        confirmLabel="Unfollow"
+        destructive
+        onCancel={() => setConfirm(false)}
+        onConfirm={() => {
+          setConfirm(false);
+          onUnfollow();
+        }}
+      />
     </View>
   );
 }

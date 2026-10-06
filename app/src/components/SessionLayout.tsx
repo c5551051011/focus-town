@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, soft } from '../theme';
 import { SpriteName } from './Pixel';
 import ConstructionSite from './ConstructionSite';
@@ -44,8 +44,11 @@ export default function SessionLayout({
           </View>
           {team}
         </View>
-        <Txt style={styles.msg}>{message}</Txt>
         {extra}
+      </View>
+      {/* 안내 글씨는 아래쪽(정지 버튼 바로 위)에 크게 둔다 */}
+      <View style={styles.msgBox}>
+        <Txt style={styles.msg}>{message}</Txt>
       </View>
       <View style={styles.bottom}>{bottom}</View>
       <RedFlash on={!!warn} />
@@ -53,10 +56,24 @@ export default function SessionLayout({
   );
 }
 
-// 팀 빌딩(내구성) 바: 전체 진행률 바와 같은 폭·높이로 그 바로 아래에 둔다
-export function TeamBar({ pct, color, label = 'TEAM BUILDING' }: { pct: number; color: string; label?: string }) {
+// 팀 빌딩(내구성) 바. 집중 중에는 전체 진행률 바와 같은 폭·높이로 그 바로 아래에 두고(pixel),
+// 결과 화면에서는 테두리 없는 둥근 카드(soft)로 보여준다.
+export function TeamBar({ pct, color, label = 'TEAM BUILDING', variant = 'pixel', style }: { pct: number; color: string; label?: string; variant?: 'pixel' | 'soft'; style?: StyleProp<ViewStyle> }) {
+  if (variant === 'soft') {
+    return (
+      <View style={styles.softCard}>
+        <View style={styles.teamHead}>
+          <Txt style={styles.softLabel}>{label}</Txt>
+          <Txt style={[styles.softLabel, { color }]}>{pct}%</Txt>
+        </View>
+        <View style={styles.softTrack}>
+          <View style={[styles.softFill, { width: `${pct}%`, backgroundColor: color }]} />
+        </View>
+      </View>
+    );
+  }
   return (
-    <View style={styles.team}>
+    <View style={[styles.team, style]}>
       <View style={styles.teamHead}>
         <Txt style={styles.teamLabel}>{label}</Txt>
         <Txt style={[styles.teamLabel, { color }]}>{pct}%</Txt>
@@ -101,6 +118,11 @@ const styles = StyleSheet.create({
   team: { marginTop: 14 },
   teamHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   teamLabel: { fontSize: 9, color: soft.subtle },
-  msg: { color: '#cfcbe6', fontSize: 12, lineHeight: 22, textAlign: 'center', minHeight: 66, marginTop: 22, paddingHorizontal: 4 },
+  softCard: { backgroundColor: soft.card, borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18 },
+  softLabel: { fontSize: 11, color: soft.subtle },
+  softTrack: { height: 14, borderRadius: 7, backgroundColor: soft.sunken, overflow: 'hidden' },
+  softFill: { height: '100%', borderRadius: 7 },
+  msgBox: { minHeight: 96, alignItems: 'center', justifyContent: 'center', paddingBottom: 6 },
+  msg: { color: colors.text, fontSize: 14, lineHeight: 26, textAlign: 'center', paddingHorizontal: 4, opacity: 0.92 },
   bottom: { height: 110, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 28 },
 });

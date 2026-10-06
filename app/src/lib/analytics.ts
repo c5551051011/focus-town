@@ -33,6 +33,7 @@ export type EventName =
   | 'app_open'
   | 'onboarding_done'
   | 'onboarding_skipped'
+  | 'onboarding_consent'
   | 'session_start'
   | 'session_cancel'
   | 'session_complete'

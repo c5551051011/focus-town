@@ -1,5 +1,6 @@
 import { Children, ReactNode, isValidElement, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import ConfirmSheet from '../components/ConfirmSheet';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { colors, soft } from '../theme';
 import Icon from '../components/Icon';
@@ -32,6 +33,7 @@ const VOLUME_LABEL: Record<VolumeLevel, string> = { low: 'Low', mid: 'Medium', h
 export default function SettingsScreen({ settings, onChange, onBack, onReset, onShowHelp, account, onSignIn, onSignOut, onDeleteAccount }: Props) {
   const version = Constants.expoConfig?.version ?? '1.0.0';
   const [sheet, setSheet] = useState<'goal' | 'volume' | 'time' | null>(null);
+  const [confirm, setConfirm] = useState<'notif' | 'signout' | 'delete' | 'reset' | null>(null);
   const open = (url: string) => Linking.openURL(url).catch(() => {});
 
   const toggleReminder = async () => {
@@ -42,26 +44,27 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
       onChange({ reminderOn: true });
       track('reminder_changed', { enabled: true });
     } else {
-      Alert.alert('Notifications are off', 'Turn on notifications for Focus Town in your phone settings to get daily reminders.');
+      setConfirm('notif');
     }
   };
 
-  const confirmSignOut = () =>
-    Alert.alert(
-      account.guest ? 'Sign out of guest account?' : 'Sign out?',
-      account.guest ? 'A guest account lives only on this device. If you sign out, you will lose your friends and group access for good.' : 'You can sign in again anytime with your email.',
-      [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign out', style: 'destructive', onPress: onSignOut }],
-    );
-  const confirmDelete = () =>
-    Alert.alert('Delete your account?', 'Your account, profile and friends will be permanently deleted. Records on this device stay until you reset them.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: onDeleteAccount },
-    ]);
-  const confirmReset = () =>
-    Alert.alert('Reset all records?', 'Your town and stats will be erased. This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: onReset },
-    ]);
+  const confirmSignOut = () => setConfirm('signout');
+  const confirmDelete = () => setConfirm('delete');
+  const confirmReset = () => setConfirm('reset');
+  const dialog = {
+    notif: { title: 'Notifications are off', text: 'Turn on notifications for Focus Town in your phone settings to get daily reminders.', ok: 'OK', cancel: null, destructive: false, run: () => {} },
+    signout: {
+      title: account.guest ? 'Sign out of guest account?' : 'Sign out?',
+      text: account.guest ? 'A guest account lives only on this device. If you sign out, you will lose your friends and group access for good.' : 'You can sign in again anytime with your email.',
+      ok: 'Sign out',
+      cancel: 'Cancel',
+      destructive: true,
+      run: onSignOut,
+    },
+    delete: { title: 'Delete your account?', text: 'Your account, profile and friends will be permanently deleted. Records on this device stay until you reset them.', ok: 'Delete', cancel: 'Cancel', destructive: true, run: onDeleteAccount },
+    reset: { title: 'Reset all records?', text: 'Your town and stats will be erased. This cannot be undone.', ok: 'Reset', cancel: 'Cancel', destructive: true, run: onReset },
+  };
+  const d = confirm ? dialog[confirm] : null;
 
   return (
     <View style={styles.wrap}>
@@ -147,6 +150,20 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
         options={[7, 8, 9, 12, 15, 18, 19, 20, 21, 22].map((h) => ({ value: h, label: hhmm(h, 0) }))}
         onSelect={(h) => onChange({ reminderHour: h, reminderMinute: 0 })}
         onClose={() => setSheet(null)}
+      />
+      <ConfirmSheet
+        visible={!!d}
+        title={d?.title ?? ''}
+        text={d?.text ?? ''}
+        confirmLabel={d?.ok ?? 'OK'}
+        cancelLabel={d ? d.cancel : 'Cancel'}
+        destructive={d?.destructive}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => {
+          const run = d?.run;
+          setConfirm(null);
+          run?.();
+        }}
       />
     </View>
   );

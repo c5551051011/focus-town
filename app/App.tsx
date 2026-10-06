@@ -298,7 +298,13 @@ export default function App() {
         <SafeAreaView style={styles.root}>
           <StatusBar style="light" />
           {showOnboarding ? (
-            <OnboardingScreen onFinish={finishOnboarding} />
+            <OnboardingScreen
+              onFinish={finishOnboarding}
+              onConsent={(kind, agreed) => {
+                track('onboarding_consent', { kind, agreed });
+                if (kind === 'screentime' && agreed) updateSettings({ screenTimeInterest: true });
+              }}
+            />
           ) : needsCharacter || editingCharacter ? (
             <CharacterScreen
               initial={settings.character}
