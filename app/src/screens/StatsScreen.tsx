@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import Icon from '../components/Icon';
 import { Pixel } from '../components/Pixel';
 import { Sans, Txt } from '../components/ui';
+import SessionTimeline from '../components/SessionTimeline';
+import { SectionTitle, StatCard, statGrid } from '../components/cards';
 import { BUILDINGS, buildingOf } from '../lib/buildings';
 import { computeStats } from '../lib/stats';
 import { computeStreak, dayKey } from '../lib/streak';
@@ -13,9 +15,9 @@ import { Session } from '../lib/types';
 
 type View_ = 'overview' | 'history';
 
-const CARD = '#2a2740';
-const LINE = '#37335c';
-const SUBTLE = '#a9a5c4'; // 보조 글씨 (예전 dim보다 밝게)
+const CARD = soft.card;
+const LINE = soft.line;
+const SUBTLE = soft.subtle;
 
 export default function StatsScreen({ sessions, goal }: { sessions: Session[]; goal: number }) {
   const [view, setView] = useState<View_>('overview');
@@ -93,7 +95,7 @@ function Overview({ sessions, goal }: { sessions: Session[]; goal: number }) {
       ) : null}
 
       {/* 핵심 숫자 4개 */}
-      <View style={styles.grid}>
+      <View style={statGrid.grid}>
         <StatCard icon={<Pixel name="flame" size={34} style={streak.current === 0 && { opacity: 0.35 }} />} value={`${streak.current}`} unit={streak.current === 1 ? 'day' : 'days'} label="Current streak" sub={`Best ${streak.best}`} />
         <StatCard icon={<Icon name="target" size={30} color={colors.gold} />} value={`${s.weekMinutes}`} unit="min" label="Last 7 days" />
         <StatCard icon={<Pixel name="house" size={34} />} value={`${s.successCount}`} unit={s.successCount === 1 ? 'building' : 'buildings'} label="Built so far" />
@@ -238,7 +240,13 @@ function History({ sessions }: { sessions: Session[] }) {
         </View>
       </View>
 
-      <SectionTitle>{selected ? formatDay(selected) : 'Recent sessions'}</SectionTitle>
+      <SectionTitle>Recent activity</SectionTitle>
+      <View style={styles.card}>
+        <SessionTimeline sessions={sessions} selected={selected} onSelect={setSelected} />
+        <Sans style={styles.chartNote}>Tap a day to see its sessions.</Sans>
+      </View>
+
+      <SectionTitle>{selected ? formatDay(selected) : 'Latest sessions'}</SectionTitle>
       {list.length === 0 ? (
         <Sans style={styles.noSessions}>{selected ? 'No sessions on this day.' : 'No sessions yet.'}</Sans>
       ) : (
@@ -269,24 +277,6 @@ function History({ sessions }: { sessions: Session[] }) {
 function formatDay(key: string) {
   const [y, m, d] = key.split('-').map(Number);
   return `${MONTHS[m - 1]} ${d}, ${y}`;
-}
-
-function SectionTitle({ children }: { children: string }) {
-  return <Sans style={styles.section}>{children.toUpperCase()}</Sans>;
-}
-
-function StatCard({ icon, value, unit, label, sub }: { icon: React.ReactNode; value: string; unit: string; label: string; sub?: string }) {
-  return (
-    <View style={styles.stat}>
-      <View style={styles.statIcon}>{icon}</View>
-      <View style={styles.valueRow}>
-        <Sans style={styles.statValue}>{value}</Sans>
-        <Sans style={styles.statUnit}>{unit}</Sans>
-      </View>
-      <Sans style={styles.statLabel}>{label}</Sans>
-      {sub ? <Sans style={styles.statSub}>{sub}</Sans> : null}
-    </View>
-  );
 }
 
 const LEVELS = [

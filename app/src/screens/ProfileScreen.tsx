@@ -1,11 +1,12 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
 import { Pixel } from '../components/Pixel';
-import { PixelButton, Txt } from '../components/ui';
+import { Sans, Txt } from '../components/ui';
+import { SectionTitle, StatCard, statGrid } from '../components/cards';
 import { Character } from '../lib/character';
-import { Social } from '../lib/social';
+import { Social, isFriend } from '../lib/social';
 import { computeStats } from '../lib/stats';
 import { computeStreak } from '../lib/streak';
 import { Session } from '../lib/types';
@@ -22,98 +23,119 @@ type Props = {
   onSetupAccount: () => void;
 };
 
-// 내 프로필: 캐릭터, 팔로잉/팔로워, 친구 추가, 내 기록 요약
+// 내 프로필: 캐릭터, 팔로잉/팔로워, 친구 추가, 친구 목록, 내 기록 요약
 export default function ProfileScreen({ character, social, hasAccount, sessions, onEditCharacter, onOpenSettings, onAddFriends, onOpenFollow, onSetupAccount }: Props) {
   const stats = computeStats(sessions);
   const streak = computeStreak(sessions);
   const built = sessions.filter((s) => s.success).length;
   const hours = Math.floor(sessions.filter((s) => s.success).reduce((a, s) => a + s.minutes, 0) / 60);
+  const friends = social ? social.following.filter(isFriend) : [];
 
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.top}>
+        <Txt style={styles.title}>ME</Txt>
         <Pressable onPress={onOpenSettings} hitSlop={12} style={styles.gear}>
-          <Icon name="gear" size={28} color={colors.dim} />
+          <Icon name="gear" size={26} color={soft.subtle} />
         </Pressable>
       </View>
 
+      {/* 프로필 카드 */}
       <View style={styles.hero}>
-        {character ? <Avatar character={character} size={120} /> : null}
+        {character ? <Avatar character={character} size={112} /> : null}
         <Txt style={styles.name}>{character?.name ?? '-'}</Txt>
-        <Txt style={styles.edit} onPress={onEditCharacter}>
-          EDIT CHARACTER
-        </Txt>
+        <Pressable onPress={onEditCharacter} style={styles.editBtn}>
+          <Sans style={styles.editText}>Edit character</Sans>
+        </Pressable>
       </View>
 
       {hasAccount ? (
         <>
+          {/* 팔로잉 / 팔로워 */}
           <View style={styles.follows}>
             <Pressable style={styles.followCell} onPress={() => onOpenFollow('following')}>
-              <Txt style={styles.followNum}>{social?.following.length ?? '-'}</Txt>
-              <Txt style={styles.followLabel}>FOLLOWING</Txt>
+              <Sans style={styles.followNum}>{social?.following.length ?? '–'}</Sans>
+              <Sans style={styles.followLabel}>Following</Sans>
             </Pressable>
             <View style={styles.followLine} />
             <Pressable style={styles.followCell} onPress={() => onOpenFollow('followers')}>
-              <Txt style={styles.followNum}>{social?.followers.length ?? '-'}</Txt>
-              <Txt style={styles.followLabel}>FOLLOWERS</Txt>
+              <Sans style={styles.followNum}>{social?.followers.length ?? '–'}</Sans>
+              <Sans style={styles.followLabel}>Followers</Sans>
             </Pressable>
           </View>
+
           <Pressable onPress={onAddFriends} style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.85 }]}>
-            <Icon name="plus" size={22} color={colors.bg} />
-            <Txt style={styles.addText}>ADD FRIENDS</Txt>
+            <Icon name="plus" size={20} color={colors.bg} />
+            <Sans style={styles.addText}>Add friends</Sans>
           </Pressable>
+
+          {/* 친구 목록(서로 팔로우) */}
+          <SectionTitle>{`Friends${friends.length ? ` · ${friends.length}` : ''}`}</SectionTitle>
+          {friends.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.friendRow}>
+              {friends.map((f) => (
+                <Pressable key={f.id} style={styles.friend} onPress={() => onOpenFollow('following')}>
+                  <Avatar character={f} size={56} />
+                  <Sans style={styles.friendName} numberOfLines={1}>{f.name}</Sans>
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.hintCard}>
+              <Sans style={styles.hintTitle}>No friends yet</Sans>
+              <Sans style={styles.hintText}>Follow someone and ask them to follow you back. When you both follow each other, you can focus together.</Sans>
+            </View>
+          )}
         </>
       ) : (
         <View style={styles.setup}>
-          <Txt style={styles.setupTitle}>PLAY WITH FRIENDS</Txt>
-          <Txt style={styles.setupText}>Create a profile to follow friends and focus together in group sessions.</Txt>
-          <PixelButton label="CREATE PROFILE" onPress={onSetupAccount} style={{ alignSelf: 'stretch', marginTop: 16 }} />
+          <Sans style={styles.setupTitle}>Play with friends</Sans>
+          <Sans style={styles.setupText}>Create a profile to follow friends and focus together in group sessions.</Sans>
+          <Pressable onPress={onSetupAccount} style={styles.addBtn}>
+            <Sans style={styles.addText}>Create profile</Sans>
+          </Pressable>
         </View>
       )}
 
-      <Txt style={styles.section}>STATISTICS</Txt>
-      <View style={styles.grid}>
-        <Stat icon={<Pixel name="flame" size={30} />} value={`${streak.current}`} label="DAY STREAK" />
-        <Stat icon={<Icon name="target" size={28} color={colors.gold} />} value={`${stats.weekMinutes}m`} label="THIS WEEK" />
-        <Stat icon={<Pixel name="house" size={30} />} value={`${built}`} label="BUILDINGS" />
-        <Stat icon={<Icon name="bell" size={26} color={colors.accent} />} value={`${hours}h`} label="TOTAL FOCUS" />
+      <SectionTitle>My focus</SectionTitle>
+      <View style={[statGrid.grid, { marginTop: 0 }]}>
+        <StatCard icon={<Pixel name="flame" size={34} style={streak.current === 0 && { opacity: 0.35 }} />} value={`${streak.current}`} unit={streak.current === 1 ? 'day' : 'days'} label="Current streak" sub={`Best ${streak.best}`} />
+        <StatCard icon={<Icon name="target" size={30} color={colors.gold} />} value={`${stats.weekMinutes}`} unit="min" label="Last 7 days" />
+        <StatCard icon={<Pixel name="house" size={34} />} value={`${built}`} unit={built === 1 ? 'building' : 'buildings'} label="Built so far" />
+        <StatCard icon={<Icon name="bell" size={28} color={colors.accent} />} value={`${hours}`} unit="hours" label="Total focus" />
       </View>
     </ScrollView>
   );
 }
 
-function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
-  return (
-    <View style={styles.stat}>
-      {icon}
-      <View style={{ marginLeft: 12 }}>
-        <Txt style={styles.statValue}>{value}</Txt>
-        <Txt style={styles.statLabel}>{label}</Txt>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 40 },
-  top: { height: 52, alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 20 },
-  gear: { padding: 4 },
-  hero: { alignItems: 'center', paddingBottom: 22 },
-  name: { fontSize: 18, marginTop: 14 },
-  edit: { color: colors.dim, fontSize: 8, marginTop: 12, textDecorationLine: 'underline' },
-  follows: { flexDirection: 'row', marginHorizontal: 20, borderTopWidth: 3, borderBottomWidth: 3, borderColor: colors.panel },
-  followCell: { flex: 1, alignItems: 'center', paddingVertical: 18 },
-  followLine: { width: 3, backgroundColor: colors.panel },
-  followNum: { fontSize: 20, color: colors.text },
-  followLabel: { color: colors.dim, fontSize: 8, marginTop: 10 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginHorizontal: 20, marginTop: 18, paddingVertical: 17, backgroundColor: colors.accent, borderWidth: 3, borderColor: colors.line, borderBottomWidth: 7 },
-  addText: { color: colors.bg, fontSize: 12 },
-  setup: { marginHorizontal: 20, padding: 18, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
-  setupTitle: { color: colors.gold, fontSize: 11 },
-  setupText: { color: colors.dim, fontSize: 8, lineHeight: 15, marginTop: 10 },
-  section: { color: colors.dim, fontSize: 9, marginTop: 30, marginBottom: 12, marginHorizontal: 24 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20 },
-  stat: { width: '48%', flexDirection: 'row', alignItems: 'center', padding: 14, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
-  statValue: { fontSize: 14, color: colors.gold },
-  statLabel: { fontSize: 7, color: colors.dim, marginTop: 8 },
+  scroll: { padding: 20, paddingBottom: 48 },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  title: { color: colors.accent, fontSize: 16 },
+  gear: { padding: 6, borderRadius: 18, backgroundColor: soft.card },
+
+  hero: { alignItems: 'center', backgroundColor: soft.card, borderRadius: 18, paddingVertical: 26, marginTop: 18 },
+  name: { fontSize: 20, marginTop: 16 },
+  editBtn: { marginTop: 16, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 18, borderWidth: 1.5, borderColor: soft.line },
+  editText: { color: soft.subtle, fontSize: 13, fontWeight: '600' },
+
+  follows: { flexDirection: 'row', backgroundColor: soft.card, borderRadius: 14, marginTop: 14 },
+  followCell: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+  followLine: { width: 1.5, marginVertical: 14, backgroundColor: soft.line },
+  followNum: { fontSize: 24, fontWeight: '800' },
+  followLabel: { color: soft.subtle, fontSize: 13, marginTop: 4 },
+
+  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14, paddingVertical: 15, borderRadius: 14, backgroundColor: colors.accent },
+  addText: { color: colors.bg, fontSize: 16, fontWeight: '800' },
+
+  friendRow: { gap: 16, paddingRight: 8 },
+  friend: { alignItems: 'center', width: 68 },
+  friendName: { color: colors.text, fontSize: 12, marginTop: 8, maxWidth: 68 },
+  hintCard: { backgroundColor: soft.card, borderRadius: 14, padding: 16 },
+  hintTitle: { fontSize: 15, fontWeight: '700' },
+  hintText: { color: soft.subtle, fontSize: 13, lineHeight: 19, marginTop: 6 },
+
+  setup: { backgroundColor: soft.card, borderRadius: 16, padding: 18, marginTop: 14 },
+  setupTitle: { color: colors.gold, fontSize: 16, fontWeight: '800' },
+  setupText: { color: soft.subtle, fontSize: 13, lineHeight: 19, marginTop: 8 },
 });
