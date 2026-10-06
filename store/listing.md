@@ -178,3 +178,21 @@ Android 에뮬레이터 촬영: 에뮬레이터 우측 툴바의 카메라 아�
 - [ ] 스크린샷 촬영
 - [ ] Android: 비공개 테스트 → 프로덕션 (신규 개인 개발자 계정은 테스터 12명, 14일 비공개 테스트 요건이 있을 수 있으니 Play Console에서 확인)
 - [ ] iOS: App Store Connect에 앱 생성 → TestFlight → 심사 제출
+
+## App Review 메모 (App Store Connect → App Review Information → Notes)
+
+```
+Towny is a pixel-art focus timer. Everything in solo mode works without an account:
+choose a time, press START and stay in the app until the building is finished.
+
+Friends and group sessions need an account. Sign-in is passwordless: the app emails a
+6-digit code. If you want to test the friend/group features, please write to
+towny.admin@gmail.com and we will reply with a code right away.
+
+Notifications are used only to warn the user when they leave the app during a focus
+session and for an optional daily reminder. The Live Activity shows the countdown on the
+lock screen while the app is in the background. Users can delete their account in
+Settings > Account > Delete account.
+```
+
+> 심사자가 이메일 코드를 받을 수 없을 때를 대비해 위 문구로 안내합니다. 반려되면 심사용 데모 계정(이메일+비밀번호 로그인)을 추가하는 방법이 있습니다.
