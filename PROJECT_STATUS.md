@@ -20,6 +20,26 @@
 | 번들 ID / 패키지명 | ✅ `app.towny.mobile` 로 변경함 (App Store Connect 에 앱을 만들기 전) | 이전 `com.jjinchoi.focustown` 으로 설치한 테스트 앱은 별개의 앱이라 아이폰에서 지워야 함. 이전 ID 는 Apple 개발자 사이트에 남아 있어도 무방 |
 | 저장 키 | `focus_town_*` 그대로 | 앱에 저장된 기록이 사라지지 않게 유지 |
 
+## 다음 대화로 이어가기 (2026-10-07 기준)
+
+**코드 상태**: `main` 최신 커밋 `890f8ef` 이후. 앱 이름 Towny, 번들 ID `app.towny.mobile`, 저장소 `github.com/c5551051011/towny`.
+
+**빌드/제출 현황** (확인은 `cd app && npx eas-cli build:list --limit 8`)
+- iOS production **4번**: 성공, App Store Connect 로 **제출됨**(처리 상태·TestFlight 확인 필요). 화면 잠금/새 문구/통화 패스 화면 이전 버전.
+- iOS production **5번**: 실패(Swift `notify_*` 컴파일 오류) → 공개 API 로 고쳐 `890f8ef` 로 커밋. **새 빌드 재시도 중**(업로드가 한 번 네트워크 오류로 실패해 다시 시작함. 빌드 목록에서 상태 확인).
+- Android preview APK: EAS 빌드 `e8566ee5-a625-4d4f-a1cb-1cb3125321d3` (대기열). 끝나면 빌드 페이지 링크/QR 로 설치.
+
+**다음에 할 일 (순서)**
+1. Supabase SQL Editor 에서 `backend/supabase/migrations/0005_lock.sql` 실행 (그룹에서 화면 잠금을 이탈로 안 보게 함)
+2. 새 iOS 빌드가 성공하면 `cd app && npx eas-cli submit -p ios --latest` (EAS 가 Apple 로그인을 물을 수 있음 → 사용자가 직접 입력). 이미 올라간 4번보다 최신
+3. TestFlight 로 아이폰에 설치해서 확인: 라이브 액티비티, **화면 잠금(암호 필요)**, 이메일 로그인 코드(스팸함 포함), 친구/그룹, 알림 권한
+4. 스크린샷 다시 찍기: FOCUS 시작 화면(제목 TOWNY), 완료 화면(새 문구) → `screenshots/` 에 넣으면 `python3 app/tools/gen_store_screenshots.py` 의 `SHOTS` 에 추가해 생성
+5. App Store Connect 에서 앱 정보·스크린샷·App Privacy·연령 등급 입력, 심사 메모(`store/listing.md` 맨 아래) 붙이고 Submit for Review
+6. Apple 에 Family Controls(Screen Time) 권한 신청 → 승인 후 `eas.json` 의 `ENABLE_SCREEN_TIME` 과 `EXPO_PUBLIC_ENABLE_SCREEN_TIME` 을 "1" 로 (7.4)
+7. 소셜 로그인(Apple + 구글 + 카카오)은 제출 이후 단계
+
+**작업 방식 메모**: 사용자는 한국어 답변·단계별 안내를 선호하고, Apple 로그인(비밀번호/2단계)은 직접 입력해야 함. Mac 에 Xcode 가 없어 Swift 는 EAS 빌드로만 컴파일 확인. Android 시험은 세 번째 에뮬레이터(`Pixel_3a_API_34`, 포트 5558; 화면이 검게 나오면 `adb shell input keyevent KEYCODE_WAKEUP`)로 하고, 사용자가 쓰는 5554/5556 은 건드리지 않음. EAS 무료 빌드 횟수가 한정되어 있으니 변경을 묶어서 빌드.
+
 ## 1. 한 줄 소개
 집중하는 동안 귀여운 **픽셀 건물**이 지어지고, 끝나면 나만의 **마을**에 쌓이는 모바일(iOS/Android) 집중 타이머 게임. 친구와 함께 집중하면 **한 건물을 같이 짓고**, 누군가 앱을 벗어나면 건물이 상합니다.
 
