@@ -21,7 +21,8 @@
 | 온보딩(6장) · 캐릭터 만들기 | 완료 | 알림 동의(ALLOW), 앱 차단 관심(I'M IN), SKIP = 동의 없이 다음 장 |
 | FOCUS(시작 화면) | 완료 | 건물 미리보기, 시간 휠(5~120분), 모드 알약, 사운드, 친구 선택, START |
 | 솔로 집중 | 완료 | 15초 이탈 유예, 하루 1회 통화 패스, 강제 종료 후 복구 |
-| 친구(팔로우) | 완료 | 이름 검색, 친구 코드/링크, 서로 팔로우 = 친구 |
+| 로그인 | 이메일 코드(완료) · 소셜은 다음 단계 | **친구/초대/팔로우 링크는 로그인 필요**, 솔로 집중은 로그인 없이 가능. 게스트 계정은 더 이상 자동 생성하지 않음 |
+| 친구(팔로우) | 완료 | 이름 검색, 친구 코드/링크, 서로 팔로우 = 친구 (로그인 필요) |
 | 그룹 집중 | 완료 · 에뮬레이터 2대로 검증 | 팀 내구성, 탈락, 늦은 참여 승인, 결과 |
 | 팀원 넛지(알림 보내기) | 코드 완료 · **서버/FCM 설정 필요** | 아래 6장 |
 | TOWN(마을) | 완료 | 8×8 아이소메트릭 땅, 기간 필터, 건물 수 요약 |
@@ -30,7 +31,7 @@
 | 배경 사운드 | 완료 | 21종(모드별 추천), 합성 싱잉볼 포함 |
 | 화면 밖 진행 표시 | iOS 라이브 액티비티 · Android 알림 카드 | Android 확인 완료, **iOS 실기기 확인 대기** |
 | 분석/오류 수집 | 준비됨(키 없음) | PostHog + Sentry, 사용자가 끌 수 있음 |
-| 앱 차단(Screen Time) | 미구현 | 온보딩에서 "Coming soon" + 관심 수집만 |
+| 앱 차단(Screen Time) | iOS 코드 완료 · **Apple 승인 대기** | 설정에서 앱 고르기, 집중 중 잠금. Android 는 아직 없음 (아래 7.4) |
 
 ---
 
@@ -129,6 +130,12 @@ docs/  store/               공개 문서, 스토어 자료
 
 ---
 
+## 6.5 로그인 방식
+
+- **지금**: 이메일 6자리 코드(비밀번호 없음). 앱: `AuthSheet`, 서버: Supabase Auth OTP.
+- 코드가 실제로 오려면 Supabase 대시보드에서: Authentication → Email Templates(**Confirm signup**, **Magic Link**)에 `{{ .Token }}` 포함, 그리고 **Custom SMTP** 설정(기본 메일 서비스는 시간당 발송 수가 매우 적어 실사용 불가. Resend, Postmark 등 권장).
+- **소셜 로그인(구글/카카오)은 다음 단계**: Apple 심사 규칙 4.8 때문에 소셜 로그인을 넣으면 **Sign in with Apple 도 반드시** 함께 넣어야 합니다. 구글(Cloud Console OAuth 클라이언트), 카카오(Kakao Developers 앱), Apple(App ID capability) 설정이 필요해 사용자 작업이 많음. 이메일 코드만으로도 첫 제출은 가능.
+
 ## 7. 빌드와 배포
 
 ### 7.1 Android (로컬 릴리스 APK)
@@ -149,6 +156,12 @@ npx eas-cli build -p ios --profile preview
 - 인증서/프로비저닝은 EAS 서버에 저장되어 있어 `--non-interactive` 로도 빌드됩니다. Apple 로그인(비밀번호/2단계 인증)이 필요한 경우는 **직접 터미널에서** 입력해야 합니다.
 - 설치: 빌드 페이지(링크는 8장) → 아이폰 Safari 에서 열기 → 설치. 처음엔 설정 → 개인정보 보호 및 보안 → **개발자 모드** 켜기, 설정 → 일반 → VPN 및 기기 관리에서 프로필 **신뢰**.
 - 라이브 액티비티는 설정 → Focus Town → 실시간 현황(Live Activities) 이 켜져 있어야 합니다.
+
+### 7.4 Screen Time(앱 차단) — Apple 승인이 먼저 필요
+- 구현: `app/modules/screen-time`(Swift, FamilyControls + ManagedSettings), `app/src/lib/screenTime.ts`, 설정 > Focus lock, 온보딩 "I'M IN". 집중 시작에 선택한 앱을 잠그고, 끝나거나 멈추거나 앱을 켤 때 풉니다.
+- **Apple 의 Family Controls 권한이 승인되어야** 실기기/TestFlight/App Store 에서 동작합니다. 승인 전에 권한을 앱에 넣으면 iOS 빌드 인증서 발급이 실패하므로, 권한은 환경변수 `ENABLE_SCREEN_TIME=1` 일 때만 넣습니다(`app/plugins/withScreenTime.js`, `app/eas.json` 의 env, 기본 "0").
+- 승인 절차: ① Account Holder 가 https://developer.apple.com/contact/request/family-controls-distribution 에서 신청(번들 ID `com.jjinchoi.focustown`) ② 승인 후 `eas.json` 의 `ENABLE_SCREEN_TIME` 을 "1" 로 ③ iOS 재빌드(인증서 갱신 때 Apple 로그인 필요할 수 있음). 승인 전에는 설정의 스위치를 켜면 "Not available yet" 안내가 뜹니다.
+- 알려진 한계: 앱이 강제 종료되면 잠금이 남을 수 있어(다음에 앱을 켤 때 풀림) 필요하면 DeviceActivity 확장으로 종료 시각에 자동 해제 추가. Android 는 접근성/사용 통계 권한이 필요한 별도 구현이 필요해 미지원.
 
 ### 7.3 TestFlight / App Store (아직 하지 않음)
 - 필요한 것: ① App Store Connect 에 앱 레코드 생성(번들 ID 동일), ② `production` 프로필로 빌드(`npx eas-cli build -p ios --profile production`), ③ `npx eas-cli submit -p ios`
@@ -191,6 +204,8 @@ npx eas-cli build -p ios --profile preview
 **바로 (몇 분)**
 - [ ] `0004_nudge.sql` 실행
 - [ ] iPhone 에 새 빌드 설치 → 라이브 액티비티와 친구/그룹 흐름 확인
+- [ ] Supabase: 이메일 템플릿(`{{ .Token }}`)과 Custom SMTP 설정 (로그인 코드가 오려면 필수)
+- [ ] Apple 에 Family Controls 권한 신청 (7.4)
 - [ ] 개인정보/약관의 `[DEVELOPER NAME]`, `[CONTACT EMAIL]` 채우기, `SUPPORT_EMAIL`(`app/src/config.ts`) 설정, GitHub Pages(main /docs) 켜기
 
 **출시 준비**
@@ -212,6 +227,7 @@ npx eas-cli build -p ios --profile preview
 - 린트: `App.tsx` 에 기존부터 있던 오류 1건(선언 전 사용)과 경고 2건이 남아 있음(동작에는 영향 없음).
 - 앱이 백그라운드인 동안 화면의 붉은 깜빡임은 볼 수 없음 → 알림/카드로 대체. **알림 권한이 없으면 이탈 경고가 전혀 뜨지 않음**(온보딩과 START 안내로 보완).
 - 통화 패스 화면, 늦은 참여 대기 화면은 아직 예전 각진 버튼 스타일.
+- 이메일 코드만 지원(소셜 로그인 없음). 로그인하지 않으면 친구/그룹 기능을 쓸 수 없음.
 - 릴리스 빌드의 시간 휠 최소값은 5분(1분은 개발 모드 전용), 그룹 테스트는 5분 세션으로 해야 함.
 
 ---

@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   art: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 },
   // 그림 뒤에 깔리는 둥근 받침
   halo: { minWidth: 230, minHeight: 230, borderRadius: 115, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
-  copy: { paddingBottom: 22 },
+  copy: { height: 196, paddingBottom: 22 },
   title: { color: colors.accent, fontSize: 18, lineHeight: 28 },
   bar: { width: 44, height: 5, borderRadius: 3, backgroundColor: colors.gold, marginTop: 14 },
   text: { color: colors.text, fontSize: 11, lineHeight: 22, marginTop: 14, opacity: 0.92 },

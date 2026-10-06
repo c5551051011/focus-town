@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { colors, soft } from '../theme';
 import { Txt } from './ui';
 
@@ -24,6 +24,11 @@ export default function ResultLayout({
   onPress?: () => void;
   onClose?: () => void; // 있으면 왼쪽 위에 X 버튼을 둔다 (아래 버튼 대신 쓰는 용도)
 }) {
+  const { width } = useWindowDimensions();
+  // 한 줄에 한 문장이 다 들어가도록 글자 크기를 정한다 (픽셀 폰트는 글자 폭이 일정해서 폭 ÷ 글자 수로 계산)
+  const lines = message.split('\n');
+  const longest = Math.max(...lines.map((l) => l.length), 1);
+  const size = Math.max(9, Math.min(14, Math.floor((width - 64) / longest)));
   const color = tone === 'good' ? colors.gold : tone === 'bad' ? colors.danger : colors.accent;
   return (
     <View style={styles.scroll}>
@@ -34,8 +39,8 @@ export default function ResultLayout({
       </View>
       <View style={styles.bottom}>
         <View>
-          {message.split('\n').map((line, i) => (
-            <Txt key={i} style={styles.msg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+          {lines.map((line, i) => (
+            <Txt key={i} style={[styles.msg, { fontSize: size, lineHeight: Math.round(size * 1.9) }]}>
               {line}
             </Txt>
           ))}
@@ -64,7 +69,7 @@ const styles = StyleSheet.create({
   halo: { width: 250, height: 250, borderRadius: 125, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 26, lineHeight: 40, marginTop: 28, textAlign: 'center' },
   bottom: { gap: 16, paddingTop: 12 },
-  msg: { fontSize: 14, lineHeight: 26, color: colors.text, opacity: 0.92, textAlign: 'center', paddingHorizontal: 4 },
+  msg: { color: colors.text, opacity: 0.92, textAlign: 'center' },
   btn: { paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   btnText: { color: colors.bg, fontSize: 16 },
   close: { position: 'absolute', top: 12, left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center' },

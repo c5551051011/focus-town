@@ -52,7 +52,7 @@ export default function SoundSheet({
             close();
           }}
         >
-          <Sans style={[styles.label, on && { color: colors.bg }]} numberOfLines={1}>{title}</Sans>
+          <Sans style={[styles.label, on && { color: colors.bg }]} numberOfLines={2}>{title}</Sans>
         </Pressable>
         {id !== 'off' && (
           <Pressable onPress={() => togglePreview(id)} style={[styles.play, playing === id && styles.playOn]} hitSlop={6}>
