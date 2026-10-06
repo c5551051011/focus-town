@@ -34,5 +34,16 @@
     "web": "expo start --web",
     "lint": "expo lint"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "expo-live-activity",
+          "focus-ongoing"
+        ],
+        "listUnknownPackages": false
+      }
+    }
+  }
 }
