@@ -1,6 +1,6 @@
 import { ReactNode, useRef, useState } from 'react';
-import { Linking, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { colors } from '../theme';
+import { Linking, NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { colors, soft } from '../theme';
 import Icon from '../components/Icon';
 import { Pixel, SpriteName } from '../components/Pixel';
 import { Txt } from '../components/ui';
@@ -77,9 +77,12 @@ export default function OnboardingScreen({ onFinish }: { onFinish: (skipped: boo
       <ScrollView ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={onScrollEnd} style={{ flex: 1 }}>
         {SLIDES.map((s) => (
           <View key={s.title} style={[styles.slide, { width }]}>
-            <View style={styles.art}>{s.art}</View>
+            <View style={styles.art}>
+              <View style={styles.halo}>{s.art}</View>
+            </View>
             <View style={styles.copy}>
               <Txt style={styles.title}>{s.title}</Txt>
+              <View style={styles.bar} />
               <Txt style={styles.text}>{s.text}</Txt>
             </View>
           </View>
@@ -113,9 +116,9 @@ export default function OnboardingScreen({ onFinish }: { onFinish: (skipped: boo
               SKIP
             </Txt>
           )}
-          <Txt style={styles.next} onPress={next}>
-            {last ? "LET'S GO >" : 'NEXT >'}
-          </Txt>
+          <Pressable onPress={next} style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}>
+            <Txt style={styles.nextText}>{last ? "LET'S GO" : 'NEXT'}</Txt>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -126,16 +129,20 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
   slide: { justifyContent: 'space-between', paddingHorizontal: 28 },
   art: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 },
-  copy: { paddingBottom: 18 },
+  // 그림 뒤에 깔리는 둥근 받침
+  halo: { minWidth: 280, minHeight: 280, borderRadius: 140, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  copy: { paddingBottom: 22 },
   title: { color: colors.accent, fontSize: 22, lineHeight: 34 },
-  text: { color: colors.text, fontSize: 13, lineHeight: 26, marginTop: 16 },
+  bar: { width: 44, height: 5, borderRadius: 3, backgroundColor: colors.gold, marginTop: 14 },
+  text: { color: colors.text, fontSize: 13, lineHeight: 26, marginTop: 18, opacity: 0.92 },
   bottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28, paddingBottom: 30, paddingTop: 10 },
-  dots: { flexDirection: 'row', gap: 8 },
-  dot: { width: 12, height: 12, backgroundColor: colors.panel, borderWidth: 2, borderColor: colors.line },
-  dotOn: { backgroundColor: colors.accent },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 24 },
-  skip: { color: colors.dim, fontSize: 11, padding: 8 },
-  next: { color: colors.accent, fontSize: 13, padding: 8 },
-  legal: { color: colors.dim, fontSize: 7, lineHeight: 13, paddingHorizontal: 28 },
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: soft.line },
+  dotOn: { width: 28, backgroundColor: colors.accent },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  skip: { color: soft.subtle, fontSize: 11, padding: 8 },
+  nextBtn: { paddingVertical: 14, paddingHorizontal: 26, borderRadius: 22, backgroundColor: colors.accent },
+  nextText: { color: colors.bg, fontSize: 12 },
+  legal: { color: soft.subtle, fontSize: 7, lineHeight: 13, paddingHorizontal: 28 },
   link: { color: colors.gold, fontSize: 7, textDecorationLine: 'underline' },
 });

@@ -68,7 +68,10 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
           <Txt style={styles.time}>{minutes}:00</Txt>
           <Sans style={styles.timeHint}>tap to change</Sans>
         </Pressable>
+      </View>
 
+      {/* 아래쪽 묶음: 모드 · 사운드/친구 · START 를 START 버튼 바로 위에 모아 둔다 */}
+      <View style={styles.bottom}>
         {/* 집중 모드: 색이 다른 알약 버튼 */}
         <View style={styles.pills}>
           {[...PRESET_TAGS, ...customTags].map((t) => (
@@ -86,11 +89,11 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
             extra={invited.map((f) => <Avatar key={f.id} character={f} size={22} />)}
           />
         </View>
-      </View>
 
-      <Pressable onPress={start} style={({ pressed }) => [styles.start, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }]}>
-        <Txt style={styles.startText}>{invited.length ? `START WITH ${invited.length}` : 'START'}</Txt>
-      </Pressable>
+        <Pressable onPress={start} style={({ pressed }) => [styles.start, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }]}>
+          <Txt style={styles.startText}>{invited.length ? `START WITH ${invited.length}` : 'START'}</Txt>
+        </Pressable>
+      </View>
 
       {/* 시간을 탭하면 열리는 휠 */}
       <Modal visible={sheet === 'time'} transparent animationType="fade" onRequestClose={() => setSheet(null)}>
@@ -158,12 +161,13 @@ const styles = StyleSheet.create({
   timeBox: { marginTop: 10, alignItems: 'center', paddingVertical: 6, paddingHorizontal: 28 },
   time: { fontSize: 44, lineHeight: 56, color: colors.gold },
   timeHint: { color: soft.subtle, fontSize: 11, marginTop: 2 },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 52 },
+  bottom: { paddingTop: 12 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   chips: { flexDirection: 'row', gap: 10, marginTop: 20, alignSelf: 'stretch' },
   chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, paddingHorizontal: 8, borderRadius: 14, backgroundColor: soft.card },
   chipText: { fontSize: 13, color: colors.text, flexShrink: 1 },
   extra: { flexDirection: 'row', gap: 2 },
-  start: { marginTop: 8, paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
+  start: { marginTop: 16, paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   startText: { color: colors.bg, fontSize: 18 },
   dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
   dialBox: { backgroundColor: soft.card, borderRadius: 24, padding: 22 },
