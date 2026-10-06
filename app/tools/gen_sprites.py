@@ -546,6 +546,14 @@ def glyph(ch):
     d.text(((16 - w) / 2, 0), ch, font=f, fill=255)
     return [['W' if im.getpixel((x, y)) > 110 else '.' for x in range(16)] for y in range(16)]
 ICONS['help'] = glyph('?')
+# 돋보기: 고리 + 손잡이
+def search(dx, dy):
+    cx, cy = -1.6, -1.6
+    r = math.hypot(dx - cx, dy - cy)
+    ring = 3.4 <= r <= 5.2
+    handle = (dx - cy > 2.2) and abs((dx - cx) - (dy - cy)) <= 1.4 and dx <= 6.6 and dy <= 6.6
+    return ring or handle
+ICONS['search'] = field(search)
 
 for name, g in ICONS.items():
     rows = [''.join(r) for r in g]

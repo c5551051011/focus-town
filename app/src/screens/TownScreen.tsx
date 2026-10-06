@@ -1,8 +1,8 @@
 import { memo, useState } from 'react';
 import { Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import { Pixel, SpriteName } from '../components/Pixel';
-import { Txt } from '../components/ui';
+import { Sans, Txt } from '../components/ui';
 import { buildingOf } from '../lib/buildings';
 import { Session } from '../lib/types';
 
@@ -27,6 +27,7 @@ const SLOTS = [
 // 뒤쪽 칸부터 그려야 앞 건물이 위에 겹친다
 const DRAW_ORDER = [...ALL_TILES].sort((a, b) => row(a) + col(a) - (row(b) + col(b)) || a - b);
 
+const LABELS: Record<string, string> = { DAY: 'Day', WEEK: 'Week', MONTH: 'Month', ALL: 'All' };
 const PERIODS = ['DAY', 'WEEK', 'MONTH', 'ALL'] as const;
 type Period = (typeof PERIODS)[number];
 
@@ -70,15 +71,21 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 
   return (
     <View style={styles.wrap}>
-      <Txt style={styles.title}>MY TOWN</Txt>
+      <View style={styles.header}>
+        <Txt style={styles.title}>MY TOWN</Txt>
+        <Sans style={styles.count}>
+          {shown} {shown === 1 ? 'building' : 'buildings'}
+        </Sans>
+      </View>
+
+      {/* 기간 선택: 둥근 알약 모양 구간 선택 */}
       <View style={styles.seg}>
         {PERIODS.map((p) => (
           <Pressable key={p} onPress={() => setPeriod({ id: p, start: periodStart(p) })} style={[styles.segItem, period.id === p && styles.segOn]}>
-            <Txt style={[styles.segText, period.id === p && { color: colors.bg }]}>{p}</Txt>
+            <Sans style={[styles.segText, period.id === p && { color: colors.bg, fontWeight: '800' }]}>{LABELS[p]}</Sans>
           </Pressable>
         ))}
       </View>
-      <Txt style={styles.sub}>Buildings {shown}</Txt>
       <View style={styles.mapArea}>
       <View style={{ width: w * SIZE, height: mapH }}>
         {DRAW_ORDER.map((idx) => (
@@ -93,7 +100,10 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
       </View>
       </View>
       {shown === 0 && (
-        <Txt style={styles.hint}>{built.length === 0 ? 'Finish a session to build your first building!' : 'No buildings in this period.'}</Txt>
+        <View style={styles.hintCard}>
+          <Sans style={styles.hintTitle}>{built.length === 0 ? 'Your town is waiting' : 'Nothing built in this period'}</Sans>
+          <Sans style={styles.hintText}>{built.length === 0 ? 'Finish a focus session to build your first building.' : 'Try a longer period to see your buildings.'}</Sans>
+        </View>
       )}
     </View>
   );
@@ -102,11 +112,14 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 12, alignItems: 'center' },
   mapArea: { flex: 1, justifyContent: 'center' },
-  title: { color: colors.accent, fontSize: 16, marginTop: 8 },
-  seg: { flexDirection: 'row', alignSelf: 'stretch', marginTop: 16, marginHorizontal: 8 },
-  segItem: { flex: 1, paddingVertical: 11, alignItems: 'center', backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
+  header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 8 },
+  title: { color: colors.accent, fontSize: 16 },
+  count: { color: soft.subtle, fontSize: 14, fontWeight: '600' },
+  seg: { flexDirection: 'row', alignSelf: 'stretch', marginTop: 16, marginHorizontal: 8, padding: 4, borderRadius: 22, backgroundColor: soft.card },
+  segItem: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 18 },
   segOn: { backgroundColor: colors.accent },
-  segText: { fontSize: 8, color: colors.dim },
-  sub: { color: colors.dim, fontSize: 9, marginVertical: 14 },
-  hint: { color: colors.gold, fontSize: 9, lineHeight: 16, textAlign: 'center', paddingBottom: 24 },
+  segText: { fontSize: 14, color: soft.subtle, fontWeight: '600' },
+  hintCard: { alignSelf: 'stretch', marginHorizontal: 8, marginBottom: 16, padding: 16, borderRadius: 14, backgroundColor: soft.card, alignItems: 'center' },
+  hintTitle: { fontSize: 15, fontWeight: '700' },
+  hintText: { color: soft.subtle, fontSize: 13, marginTop: 6, textAlign: 'center' },
 });

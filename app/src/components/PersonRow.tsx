@@ -1,13 +1,13 @@
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import Avatar from './Avatar';
-import { Txt } from './ui';
+import { Sans } from './ui';
 import { Person, isFriend } from '../lib/social';
 
 // 사람 한 줄: 캐릭터 + 이름(+친구 표시) + 팔로우 버튼
 export default function PersonRow({ p, busy, onFollow, onUnfollow }: { p: Person; busy?: boolean; onFollow: () => void; onUnfollow: () => void }) {
   const friend = isFriend(p);
-  const label = p.i_follow ? 'FOLLOWING' : p.follows_me ? 'FOLLOW BACK' : 'FOLLOW';
+  const label = p.i_follow ? 'Following' : p.follows_me ? 'Follow back' : 'Follow';
   const press = () => {
     if (busy) return;
     if (!p.i_follow) return onFollow();
@@ -18,26 +18,33 @@ export default function PersonRow({ p, busy, onFollow, onUnfollow }: { p: Person
   };
   return (
     <View style={styles.row}>
-      <Avatar character={p} size={48} />
+      <Avatar character={p} size={52} />
       <View style={styles.info}>
-        <Txt style={styles.name} numberOfLines={1}>{p.name}</Txt>
-        {friend ? <Txt style={styles.badge}>FRIENDS</Txt> : p.follows_me ? <Txt style={styles.sub}>Follows you</Txt> : null}
+        <Sans style={styles.name} numberOfLines={1}>{p.name}</Sans>
+        {friend ? (
+          <View style={styles.badge}>
+            <Sans style={styles.badgeText}>Friends</Sans>
+          </View>
+        ) : p.follows_me ? (
+          <Sans style={styles.sub}>Follows you</Sans>
+        ) : null}
       </View>
-      <Pressable onPress={press} style={[styles.btn, p.i_follow ? styles.btnOn : styles.btnOff]}>
-        <Txt style={[styles.btnText, !p.i_follow && { color: colors.bg }]}>{label}</Txt>
+      <Pressable onPress={press} style={[styles.btn, p.i_follow ? styles.btnOn : styles.btnOff, busy && { opacity: 0.6 }]}>
+        <Sans style={[styles.btnText, !p.i_follow && { color: colors.bg }]}>{label}</Sans>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: colors.panel },
-  info: { flex: 1, marginLeft: 12, marginRight: 8 },
-  name: { fontSize: 11 },
-  badge: { color: colors.gold, fontSize: 7, marginTop: 7 },
-  sub: { color: colors.dim, fontSize: 7, marginTop: 7 },
-  btn: { paddingVertical: 9, paddingHorizontal: 10, borderWidth: 3, minWidth: 96, alignItems: 'center' },
-  btnOff: { backgroundColor: colors.accent, borderColor: colors.line },
-  btnOn: { backgroundColor: 'transparent', borderColor: colors.dim },
-  btnText: { fontSize: 7, color: colors.dim },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: soft.line },
+  info: { flex: 1, marginLeft: 14, marginRight: 8 },
+  name: { fontSize: 16, fontWeight: '700' },
+  badge: { alignSelf: 'flex-start', marginTop: 6, paddingVertical: 3, paddingHorizontal: 9, borderRadius: 10, backgroundColor: 'rgba(241,250,140,0.14)' },
+  badgeText: { color: colors.gold, fontSize: 11, fontWeight: '700' },
+  sub: { color: soft.subtle, fontSize: 12, marginTop: 5 },
+  btn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, minWidth: 98, alignItems: 'center' },
+  btnOff: { backgroundColor: colors.accent },
+  btnOn: { borderWidth: 1.5, borderColor: soft.line, backgroundColor: 'transparent' },
+  btnText: { color: soft.subtle, fontSize: 13, fontWeight: '800' },
 });

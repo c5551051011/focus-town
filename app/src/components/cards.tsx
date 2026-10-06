@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { colors, soft } from '../theme';
-import { Sans } from './ui';
+import { Sans, Txt } from './ui';
 
 // Stats 와 ME 가 같이 쓰는 카드 부품
 
@@ -23,11 +23,28 @@ export function StatCard({ icon, value, unit, label, sub }: { icon: ReactNode; v
   );
 }
 
+// 탭 위에 전체 화면으로 열리는 화면의 머리글: 둥근 뒤로가기 버튼 + 제목
+export function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <View style={styles.header}>
+      <Pressable onPress={onBack} hitSlop={10} style={styles.backBtn}>
+        <Sans style={styles.backArrow}>‹</Sans>
+      </Pressable>
+      <Txt style={styles.headerTitle}>{title}</Txt>
+      <View style={{ width: 40 }} />
+    </View>
+  );
+}
+
 export const statGrid = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 14 },
 });
 
 const styles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center' },
+  backArrow: { color: colors.accent, fontSize: 26, fontWeight: '700', lineHeight: 30 },
+  headerTitle: { color: colors.accent, fontSize: 14 },
   section: { color: soft.subtle, fontSize: 12, fontWeight: '700', letterSpacing: 1.2, marginTop: 30, marginBottom: 12 },
   stat: { width: '47.8%', backgroundColor: soft.card, borderRadius: 14, padding: 16 },
   statIcon: { height: 36, justifyContent: 'center' },

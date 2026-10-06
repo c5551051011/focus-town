@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   panel: { backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line, padding: 12 },
 });
 
-// 값을 탭하면 열리는 선택 시트
+// 값을 탭하면 열리는 선택 시트 (둥근 카드, 읽기 쉬운 글꼴)
 export function OptionSheet<T extends string | number>({
   visible,
   title,
@@ -80,20 +80,23 @@ export function OptionSheet<T extends string | number>({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={sheet.backdrop} onPress={onClose}>
         <Pressable style={sheet.box} onPress={() => {}}>
-          <Txt style={sheet.title}>{title}</Txt>
-          {options.map((o) => (
-            <Pressable
-              key={String(o.value)}
-              onPress={() => {
-                onSelect(o.value);
-                onClose();
-              }}
-              style={[sheet.row, o.value === selected && sheet.rowOn]}
-            >
-              <Txt style={[sheet.label, o.value === selected && { color: colors.bg }]}>{o.label}</Txt>
-              {o.hint ? <Txt style={[sheet.hint, o.value === selected && { color: colors.bg }]}>{o.hint}</Txt> : null}
-            </Pressable>
-          ))}
+          <Sans style={sheet.title}>{title}</Sans>
+          {options.map((o) => {
+            const on = o.value === selected;
+            return (
+              <Pressable
+                key={String(o.value)}
+                onPress={() => {
+                  onSelect(o.value);
+                  onClose();
+                }}
+                style={[sheet.row, on && sheet.rowOn]}
+              >
+                <Sans style={[sheet.label, on && { color: colors.bg, fontWeight: '800' }]}>{o.label}</Sans>
+                {o.hint ? <Sans style={[sheet.hint, on && { color: colors.bg }]}>{o.hint}</Sans> : null}
+              </Pressable>
+            );
+          })}
         </Pressable>
       </Pressable>
     </Modal>
@@ -102,12 +105,12 @@ export function OptionSheet<T extends string | number>({
 
 const sheet = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 24 },
-  box: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 16, gap: 8 },
-  title: { color: colors.accent, fontSize: 12, marginBottom: 8 },
-  row: { backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  box: { backgroundColor: '#2a2740', borderRadius: 18, padding: 18, gap: 8 },
+  title: { color: '#a9a5c4', fontSize: 12, fontWeight: '700', letterSpacing: 1.2, marginBottom: 6, marginLeft: 4 },
+  row: { backgroundColor: '#1b1930', borderRadius: 12, paddingVertical: 15, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rowOn: { backgroundColor: colors.gold },
-  label: { fontSize: 10 },
-  hint: { fontSize: 7, color: colors.dim },
+  label: { fontSize: 16, fontWeight: '600' },
+  hint: { fontSize: 12, color: '#a9a5c4' },
 });
 
 // 모드 선택용 알약(pill) 버튼. 색은 모드마다 다르다.
