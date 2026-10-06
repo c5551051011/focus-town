@@ -22,7 +22,7 @@
 
 ## 2. English listing
 
-**Name (≤30)**: `Towny` — 이미 쓰이고 있어 등록이 안 되면 `Towny: Focus for Productivity`(29자) 또는 `Towny: Pixel Focus Timer`(24자)
+**Name (≤30)**: `Towny` (App Store 검색에서 같은 이름의 앱이 없음을 확인함. 앱 레코드를 만들 때 거부되면 `Towny: Pixel Focus Timer`(24자)로)
 
 **Subtitle — App Store (≤30)**: `Pixel town focus timer`
 

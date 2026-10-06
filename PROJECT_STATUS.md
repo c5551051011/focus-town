@@ -150,6 +150,20 @@ docs/  store/               공개 문서, 스토어 자료
 - 코드가 실제로 오려면 Supabase 대시보드에서: Authentication → Email Templates(**Confirm signup**, **Magic Link**)에 `{{ .Token }}` 포함, 그리고 **Custom SMTP** 설정(기본 메일 서비스는 시간당 발송 수가 매우 적어 실사용 불가. Resend, Postmark 등 권장).
 - **소셜 로그인(구글/카카오)은 다음 단계**: Apple 심사 규칙 4.8 때문에 소셜 로그인을 넣으면 **Sign in with Apple 도 반드시** 함께 넣어야 합니다. 구글(Cloud Console OAuth 클라이언트), 카카오(Kakao Developers 앱), Apple(App ID capability) 설정이 필요해 사용자 작업이 많음. 이메일 코드만으로도 첫 제출은 가능.
 
+
+**Supabase 이메일 템플릿 (Authentication → Emails → Templates)** — 앱은 링크가 아니라 **6자리 코드**로 로그인하므로 두 템플릿 모두 `{{ .Token }}` 을 보여 주고 링크(`{{ .ConfirmationURL }}`)는 넣지 않습니다. 처음 가입하는 사람에게는 **Confirm signup**, 이미 계정이 있는 사람에게는 **Magic Link** 가 나갑니다.
+- 제목: `Your Towny sign-in code`
+- 본문(HTML):
+```html
+<div style="font-family:Arial,sans-serif;max-width:420px;margin:0 auto;padding:24px;">
+  <h2 style="margin:0 0 12px;">Welcome to Towny 🏠</h2>
+  <p style="margin:0 0 16px;">Enter this code in the app to sign in:</p>
+  <p style="font-size:36px;font-weight:bold;letter-spacing:8px;margin:0 0 16px;">{{ .Token }}</p>
+  <p style="color:#666;margin:0;">The code expires soon. If you didn't request it, you can ignore this email.</p>
+</div>
+```
+- 같이 확인: Authentication → Sign In / Providers → Email 의 **Email OTP Length = 6**, **Email OTP Expiration** 은 기본(3600초)이나 10분 정도로 줄여도 됨.
+
 ## 7. 빌드와 배포
 
 ### 7.1 Android (로컬 릴리스 APK)
