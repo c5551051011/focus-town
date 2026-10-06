@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { colors, font } from '../theme';
-import { PixelButton, Txt } from './ui';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
+import { colors, font, soft } from '../theme';
+import { Txt } from './ui';
 import { sendCode, verifyCode } from '../lib/auth';
 
 // 이메일 코드 로그인: 1) 이메일 입력 → 2) 메일로 받은 6자리 코드 입력
-export default function AuthSheet({ visible, onClose, onSignedIn }: { visible: boolean; onClose: () => void; onSignedIn: () => void }) {
+// reason: 왜 로그인이 필요한지 한 줄 (친구 기능을 누르고 들어온 경우 등)
+export default function AuthSheet({ visible, reason, onClose, onSignedIn }: { visible: boolean; reason?: string; onClose: () => void; onSignedIn: () => void }) {
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -45,12 +46,15 @@ export default function AuthSheet({ visible, onClose, onSignedIn }: { visible: b
     onSignedIn();
   };
 
+  const codeReady = code.length >= 6;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <Pressable style={styles.backdrop} onPress={close}>
           <Pressable style={styles.box} onPress={() => {}}>
             <Txt style={styles.title}>SIGN IN</Txt>
+            {reason ? <Txt style={styles.reason}>{reason}</Txt> : null}
             {step === 'email' ? (
               <>
                 <Txt style={styles.note}>We will email you a 6-digit code. No password needed.</Txt>
@@ -58,13 +62,15 @@ export default function AuthSheet({ visible, onClose, onSignedIn }: { visible: b
                   value={email}
                   onChangeText={setEmail}
                   placeholder="you@email.com"
-                  placeholderTextColor={colors.dim}
+                  placeholderTextColor={soft.subtle}
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
                   style={styles.input}
                 />
-                <PixelButton label={busy ? 'SENDING...' : 'SEND CODE'} onPress={busy ? () => {} : send} style={{ marginTop: 16 }} />
+                <Pressable onPress={busy ? undefined : send} style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]}>
+                  <Txt style={styles.btnText}>{busy ? 'SENDING...' : 'SEND CODE'}</Txt>
+                </Pressable>
               </>
             ) : (
               <>
@@ -73,19 +79,20 @@ export default function AuthSheet({ visible, onClose, onSignedIn }: { visible: b
                   value={code}
                   onChangeText={(t) => setCode(t.replace(/[^0-9]/g, '').slice(0, 8))}
                   placeholder="123456"
-                  placeholderTextColor={colors.dim}
+                  placeholderTextColor={soft.subtle}
                   keyboardType="number-pad"
                   autoFocus
                   style={[styles.input, { letterSpacing: 6, textAlign: 'center' }]}
                 />
-                <PixelButton label={busy ? 'CHECKING...' : 'VERIFY'} onPress={busy || code.length < 6 ? () => {} : verify} style={[{ marginTop: 16 }, code.length < 6 && { opacity: 0.4 }]} />
+                <Pressable onPress={busy || !codeReady ? undefined : verify} style={({ pressed }) => [styles.btn, !codeReady && { opacity: 0.4 }, pressed && { opacity: 0.85 }]}>
+                  <Txt style={styles.btnText}>{busy ? 'CHECKING...' : 'VERIFY'}</Txt>
+                </Pressable>
                 <Txt style={styles.link} onPress={reset}>
                   USE A DIFFERENT EMAIL
                 </Txt>
               </>
             )}
             {error ? <Txt style={styles.error}>{error}</Txt> : null}
-            <View style={{ height: 4 }} />
           </Pressable>
         </Pressable>
       </KeyboardAvoidingView>
@@ -94,11 +101,14 @@ export default function AuthSheet({ visible, onClose, onSignedIn }: { visible: b
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  box: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 18 },
-  title: { color: colors.accent, fontSize: 14, marginBottom: 14 },
-  note: { color: colors.dim, fontSize: 8, lineHeight: 15, marginBottom: 14 },
-  input: { fontFamily: font, fontSize: 11, color: colors.text, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line, paddingHorizontal: 12, paddingVertical: 14 },
-  link: { color: colors.dim, fontSize: 8, textAlign: 'center', marginTop: 18, textDecorationLine: 'underline' },
-  error: { color: colors.danger, fontSize: 8, lineHeight: 14, marginTop: 14 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', padding: 20 },
+  box: { backgroundColor: soft.card, borderRadius: 24, padding: 22 },
+  title: { color: colors.accent, fontSize: 16, marginBottom: 14 },
+  reason: { color: colors.gold, fontSize: 10, lineHeight: 18, marginBottom: 12 },
+  note: { color: soft.subtle, fontSize: 9, lineHeight: 17, marginBottom: 16 },
+  input: { fontFamily: font, fontSize: 12, color: colors.text, backgroundColor: soft.sunken, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 16 },
+  btn: { marginTop: 16, paddingVertical: 17, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center' },
+  btnText: { color: colors.bg, fontSize: 12 },
+  link: { color: soft.subtle, fontSize: 8, textAlign: 'center', marginTop: 18, textDecorationLine: 'underline' },
+  error: { color: colors.danger, fontSize: 9, lineHeight: 16, marginTop: 14 },
 });

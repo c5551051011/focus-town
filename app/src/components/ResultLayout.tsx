@@ -33,7 +33,13 @@ export default function ResultLayout({
         <Txt style={[styles.title, { color }]}>{title}</Txt>
       </View>
       <View style={styles.bottom}>
-        <Txt style={styles.msg}>{message}</Txt>
+        <View>
+          {message.split('\n').map((line, i) => (
+            <Txt key={i} style={styles.msg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {line}
+            </Txt>
+          ))}
+        </View>
         {children}
         {button && onPress ? (
           <Pressable onPress={onPress} style={({ pressed }) => [styles.btn, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }]}>

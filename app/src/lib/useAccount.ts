@@ -1,19 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
-import { signInGuest, useAuthSession } from './auth';
-import { Character } from './character';
-import { saveProfile } from './profile';
+import { useAuthSession } from './auth';
 import { Invite, myInvites } from './rooms';
 import { syncPushToken } from './push';
 import { Person, Social, isFriend, mySocial } from './social';
 
-// 계정 상태(게스트/이메일), 친구 목록, 받은 초대를 한 곳에서 관리한다.
-export function useAccount(character: Character | null, ready: boolean) {
+// 로그인 상태(이메일 계정), 친구 목록을 한 곳에서 관리한다.
+// 친구/그룹 기능은 로그인한 계정만 쓸 수 있다. 예전 테스트용 게스트(익명) 세션은 로그인 안 한 것으로 본다.
+export function useAccount() {
   const session = useAuthSession();
-  const userId = session?.user.id ?? null;
+  const user = session && !session.user.is_anonymous ? session.user : null;
+  const userId = user?.id ?? null;
   const [socialData, setSocialData] = useState<Social | null>(null);
   const social = userId ? socialData : null; // 로그아웃하면 바로 비운다
-  const triedGuest = useRef(false);
 
   const refreshSocial = useCallback(async () => {
     if (!userId) return;
@@ -21,16 +20,7 @@ export function useAccount(character: Character | null, ready: boolean) {
     if (r.ok) setSocialData(r.data);
   }, [userId]);
 
-  // 캐릭터를 만들고 나면 조용히 게스트 계정을 만든다 (실패해도 혼자 하기는 그대로 쓸 수 있다)
-  useEffect(() => {
-    if (!ready || !character || userId || triedGuest.current) return;
-    triedGuest.current = true;
-    signInGuest().then((r) => {
-      if ('userId' in r) saveProfile(r.userId, character).then(refreshSocial);
-    });
-  }, [ready, character, userId, refreshSocial]);
-
-  // 계정이 생기면(또는 바뀌면) 친구 목록을 불러온다
+  // 로그인하면(또는 계정이 바뀌면) 친구 목록을 불러온다
   useEffect(() => {
     if (!userId) return;
     let alive = true;
@@ -61,28 +51,9 @@ export function useAccount(character: Character | null, ready: boolean) {
     };
   }, [userId, refreshSocial]);
 
-  // 친구/그룹 기능을 쓰는 순간 계정이 없으면 만든다. 성공하면 사용자 id를 돌려준다.
-  const ensureAccount = useCallback(async (): Promise<{ userId: string } | { error: string }> => {
-    if (userId) return { userId };
-    if (!character) return { error: 'Create your character first.' };
-    const r = await signInGuest();
-    if ('error' in r) return r;
-    await saveProfile(r.userId, character);
-    return r;
-  }, [userId, character]);
-
   const friends: Person[] = social ? social.following.filter(isFriend) : [];
 
-  return {
-    session,
-    userId,
-    isGuest: session?.user.is_anonymous ?? false,
-    email: session?.user.email ?? null,
-    social,
-    friends,
-    refreshSocial,
-    ensureAccount,
-  };
+  return { session, userId, email: user?.email ?? null, social, friends, refreshSocial };
 }
 
 // 친구가 보낸 그룹 초대를 주기적으로 확인한다 (앱이 열려 있고 집중 중이 아닐 때만)

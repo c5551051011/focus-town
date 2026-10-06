@@ -12,6 +12,7 @@ import { buildingFor } from '../lib/buildings';
 import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
 import { startLive, stopLive } from '../lib/liveProgress';
+import { blockApps, unblockApps } from '../lib/screenTime';
 import CallPassPrompt from '../components/CallPassPrompt';
 import { Character } from '../lib/character';
 
@@ -61,6 +62,15 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
     if (finished) stopAmbient();
   }, [finished]);
 
+  // 집중하는 동안 고른 앱을 잠근다 (끝나거나 멈추면 푼다)
+  useEffect(() => {
+    blockApps();
+    return unblockApps;
+  }, []);
+  useEffect(() => {
+    if (finished) unblockApps();
+  }, [finished]);
+
   // Android 뒤로가기로 실수로 세션을 나가지 못하게 막는다
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
@@ -80,9 +90,8 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
         hero={<Pixel name={ok ? b.id : 'ruins'} size={150} />}
         title={ok ? 'TA-DA!' : 'OOPS!'}
         tone={ok ? 'good' : 'bad'}
-        message={ok ? `${b.name} added\nto your town!\n+${minutes} min` : endReason === 'gave_up' ? "You stopped\nthe session.\nLet's try again!" : "You wandered off\ntoo long.\nLet's try again!"}
-        button="TO TOWN"
-        onPress={onDone}
+        message={ok ? `${b.name} is built!\n+${minutes} min` : endReason === 'gave_up' ? "You stopped the session.\nLet's try again!" : "You wandered off too long.\nLet's try again!"}
+        onClose={onDone}
       >
         {goalHit && (
           <View style={styles.goalPill}>

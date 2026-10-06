@@ -18,6 +18,8 @@ import { ActiveRecord, clearActive, loadActive, patchActive, saveActive } from '
 import { isPassAvailable, consumePass } from './src/lib/callPass';
 import { RoomState, acceptInvite, createRoomWithInvites, declineInvite, getRoomState, myOpenRoom } from './src/lib/rooms';
 import { deleteAccount, signOut } from './src/lib/auth';
+import { supabase } from './src/lib/supabase';
+import { unblockApps } from './src/lib/screenTime';
 import { fetchProfile, saveProfile } from './src/lib/profile';
 import { Character } from './src/lib/character';
 import { parseFollowCode } from './src/lib/social';
@@ -69,10 +71,13 @@ export default function App() {
   const [help, setHelp] = useState(false); // 설정에서 다시 연 "How to play"
   const [editingCharacter, setEditingCharacter] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [authReason, setAuthReason] = useState('');
+  const authResolve = useRef<((id: string | null) => void) | null>(null);
+  const askLoginRef = useRef<(reason: string) => Promise<string | null>>(() => Promise.resolve(null)); // 링크로 열렸을 때 최신 로그인 함수를 쓰기 위해
   const [group, setGroup] = useState<RoomState | null>(null); // 참여 중인 그룹 방
   const [joining, setJoining] = useState(false);
 
-  const account = useAccount(settings.character, loaded && settings.onboarded);
+  const account = useAccount();
   const { userId } = account;
   const idle = loaded && !pending && !active && !group && !recovery && !editingCharacter && !help && settings.onboarded;
   const inviteBox = useInvites(userId, idle);
@@ -158,7 +163,8 @@ export default function App() {
   useEffect(() => {
     const open = (url: string | null) => {
       const code = url ? parseFollowCode(url) : null;
-      if (code) setOverlay({ type: 'add', query: code });
+      // 로그인한 뒤 친구 추가 화면으로 간다 (로그인 창을 닫으면 아무 일도 없다)
+      if (code) askLoginRef.current('Sign in to follow your friend.').then((id) => id && setOverlay({ type: 'add', query: code }));
     };
     Linking.getInitialURL().then(open).catch(() => {});
     const sub = Linking.addEventListener('url', (e) => open(e.url));
@@ -189,19 +195,40 @@ export default function App() {
     setHelp(false);
   };
 
-  // 친구/그룹 기능을 쓸 때 계정이 없으면 게스트 계정을 만든다
-  const needAccount = async (): Promise<string | null> => {
-    const r = await account.ensureAccount();
-    if ('error' in r) {
-      Alert.alert('Account unavailable', r.error);
-      return null;
-    }
-    return r.userId;
+  // 친구/그룹 기능은 로그인이 필요하다. 로그인 창을 띄우고, 로그인하면 사용자 id 를 돌려준다 (닫으면 null).
+  const askLogin = (reason: string): Promise<string | null> => {
+    if (userId) return Promise.resolve(userId);
+    return new Promise((resolve) => {
+      authResolve.current = resolve;
+      setAuthReason(reason);
+      setAuthOpen(true);
+    });
   };
+  const finishAuth = async (signedIn: boolean) => {
+    setAuthOpen(false);
+    const resolve = authResolve.current;
+    authResolve.current = null;
+    if (!resolve) return;
+    if (!signedIn) return resolve(null);
+    const { data } = await supabase.auth.getSession();
+    const u = data.session?.user;
+    resolve(u && !u.is_anonymous ? u.id : null);
+  };
+  const needAccount = () => askLogin('Sign in to add friends and focus together.');
 
   const openAddFriends = async () => {
     if (await needAccount()) setOverlay({ type: 'add' });
   };
+
+
+  useEffect(() => {
+    askLoginRef.current = askLogin;
+  });
+
+  // 앱이 꺼진 사이 앱 잠금이 남아 있지 않도록, 켤 때마다 한 번 푼다 (집중 중이면 곧 다시 잠근다)
+  useEffect(() => {
+    unblockApps();
+  }, []);
 
   // 친구를 초대해서 그룹으로 시작: 방을 만들자마자 시작한다
   const startGroup = async (p: Pending) => {
@@ -290,7 +317,7 @@ export default function App() {
   const showOnboarding = !settings.onboarded || help;
   const workers = settings.character ? [settings.character] : [];
   const needsCharacter = !showOnboarding && !settings.character;
-  const accountInfo = { email: account.email, guest: account.isGuest, signedIn: !!userId };
+  const accountInfo = { email: account.email, signedIn: !!userId };
 
   return (
     <ErrorBoundary>
@@ -300,9 +327,9 @@ export default function App() {
           {showOnboarding ? (
             <OnboardingScreen
               onFinish={finishOnboarding}
-              onConsent={(kind, agreed) => {
+              onConsent={(kind, agreed, enabled) => {
                 track('onboarding_consent', { kind, agreed });
-                if (kind === 'screentime' && agreed) updateSettings({ screenTimeInterest: true });
+                if (kind === 'screentime' && agreed) updateSettings({ screenTimeInterest: true, screenTimeBlock: !!enabled });
               }}
             />
           ) : needsCharacter || editingCharacter ? (
@@ -311,7 +338,7 @@ export default function App() {
               mode={needsCharacter ? 'create' : 'edit'}
               onSave={saveCharacter}
               onCancel={needsCharacter ? undefined : () => setEditingCharacter(false)}
-              onSignIn={() => setAuthOpen(true)}
+              onSignIn={() => askLogin('Sign in to keep your profile and friends.')}
             />
           ) : recovery ? (
             <CallPassPrompt awaySeconds={recovery.awaySeconds} onUse={resumeWithPass} onDecline={endRecovered} />
@@ -358,7 +385,7 @@ export default function App() {
                 setHelp(true);
               }}
               account={accountInfo}
-              onSignIn={() => setAuthOpen(true)}
+              onSignIn={() => askLogin('Sign in to keep your profile and friends.')}
               onSignOut={signOut}
               onDeleteAccount={async () => {
                 const err = await deleteAccount();
@@ -398,6 +425,7 @@ export default function App() {
                     invitees={invitees}
                     onInviteesChange={setInvitees}
                     onAddFriends={openAddFriends}
+                    signedIn={!!userId}
                     onStart={(m, a, t) => setPending({ minutes: m, ambient: a, tag: t, invitees })}
                   />
                 </View>
@@ -426,7 +454,7 @@ export default function App() {
               <TabBar tab={tab} onChange={setTab} />
             </>
           )}
-          <AuthSheet visible={authOpen} onClose={() => setAuthOpen(false)} onSignedIn={() => setAuthOpen(false)} />
+          <AuthSheet visible={authOpen} reason={authReason} onClose={() => finishAuth(false)} onSignedIn={() => finishAuth(true)} />
         </SafeAreaView>
       </SafeAreaProvider>
     </ErrorBoundary>

@@ -46,7 +46,8 @@
       "expo-notifications",
       "expo-asset",
       "@sentry/react-native",
-      "expo-live-activity"
+      "expo-live-activity",
+      "./plugins/withScreenTime"
     ],
     "extra": {
       "eas": {

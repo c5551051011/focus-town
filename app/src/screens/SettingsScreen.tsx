@@ -1,6 +1,6 @@
 import { Children, ReactNode, isValidElement, useState } from 'react';
 import ConfirmSheet from '../components/ConfirmSheet';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { colors, soft } from '../theme';
 import Icon from '../components/Icon';
@@ -14,6 +14,7 @@ import { VOLUME_VALUES, VolumeLevel } from '../lib/prefs';
 import { IconName } from '../lib/iconAssets';
 import { ensureNotificationPermission } from '../lib/notifications';
 import { track } from '../lib/analytics';
+import { blockedAppCount, pickBlockedApps, screenTimeAvailable, setupScreenTime } from '../lib/screenTime';
 
 type Props = {
   settings: Settings;
@@ -21,7 +22,7 @@ type Props = {
   onBack: () => void;
   onReset: () => void;
   onShowHelp: () => void;
-  account: { email: string | null; guest: boolean; signedIn: boolean };
+  account: { email: string | null; signedIn: boolean };
   onSignIn: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
@@ -33,7 +34,8 @@ const VOLUME_LABEL: Record<VolumeLevel, string> = { low: 'Low', mid: 'Medium', h
 export default function SettingsScreen({ settings, onChange, onBack, onReset, onShowHelp, account, onSignIn, onSignOut, onDeleteAccount }: Props) {
   const version = Constants.expoConfig?.version ?? '1.0.0';
   const [sheet, setSheet] = useState<'goal' | 'volume' | 'time' | null>(null);
-  const [confirm, setConfirm] = useState<'notif' | 'signout' | 'delete' | 'reset' | null>(null);
+  const [confirm, setConfirm] = useState<'notif' | 'signout' | 'delete' | 'reset' | 'st_denied' | 'st_unavailable' | null>(null);
+  const [blockedCount, setBlockedCount] = useState(() => blockedAppCount());
   const open = (url: string) => Linking.openURL(url).catch(() => {});
 
   const toggleReminder = async () => {
@@ -48,20 +50,42 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
     }
   };
 
+  // 집중 중 앱 잠금(iOS 스크린 타임)
+  const lockAvailable = screenTimeAvailable();
+  const toggleLock = async () => {
+    if (settings.screenTimeBlock) return onChange({ screenTimeBlock: false });
+    if (!lockAvailable) return setConfirm('st_unavailable');
+    const r = await setupScreenTime();
+    if (r.ok) {
+      setBlockedCount(r.count);
+      onChange({ screenTimeBlock: true });
+    } else setConfirm(r.reason === 'denied' ? 'st_denied' : 'st_unavailable');
+  };
+  const chooseApps = async () => setBlockedCount(await pickBlockedApps());
+
   const confirmSignOut = () => setConfirm('signout');
   const confirmDelete = () => setConfirm('delete');
   const confirmReset = () => setConfirm('reset');
   const dialog = {
     notif: { title: 'Notifications are off', text: 'Turn on notifications for Focus Town in your phone settings to get daily reminders.', ok: 'OK', cancel: null, destructive: false, run: () => {} },
     signout: {
-      title: account.guest ? 'Sign out of guest account?' : 'Sign out?',
-      text: account.guest ? 'A guest account lives only on this device. If you sign out, you will lose your friends and group access for good.' : 'You can sign in again anytime with your email.',
+      title: 'Sign out?',
+      text: 'You can sign in again anytime with your email. Friends and group sessions need you to be signed in.',
       ok: 'Sign out',
       cancel: 'Cancel',
       destructive: true,
       run: onSignOut,
     },
     delete: { title: 'Delete your account?', text: 'Your account, profile and friends will be permanently deleted. Records on this device stay until you reset them.', ok: 'Delete', cancel: 'Cancel', destructive: true, run: onDeleteAccount },
+    st_denied: { title: 'Screen Time is off', text: "Allow Screen Time for Focus Town in your phone's Settings to lock apps while you focus.", ok: 'Open settings', cancel: 'Not now', destructive: false, run: () => Linking.openSettings().catch(() => {}) },
+    st_unavailable: {
+      title: Platform.OS === 'ios' ? 'Not available yet' : 'Coming to Android',
+      text: Platform.OS === 'ios' ? "Locking apps needs Apple's approval for Screen Time, which this version doesn't have yet. It will switch on in a future update." : 'Locking apps while you focus is iPhone-only for now.',
+      ok: 'OK',
+      cancel: null,
+      destructive: false,
+      run: () => {},
+    },
     reset: { title: 'Reset all records?', text: 'Your town and stats will be erased. This cannot be undone.', ok: 'Reset', cancel: 'Cancel', destructive: true, run: onReset },
   };
   const d = confirm ? dialog[confirm] : null;
@@ -76,6 +100,18 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
           <Row icon="target" tint="#f1fa8c" label="Daily goal" value={settings.dailyGoal ? `${settings.dailyGoal} min` : 'Off'} onPress={() => setSheet('goal')} />
           <Row icon="bell" tint="#ff79c6" label="Daily reminder" note="A gentle nudge to start focusing." right={<Switch on={settings.reminderOn} onPress={toggleReminder} />} />
           {settings.reminderOn && <Row sub label="Reminder time" value={hhmm(settings.reminderHour, settings.reminderMinute)} onPress={() => setSheet('time')} />}
+        </Card>
+
+        <SectionTitle>Focus lock</SectionTitle>
+        <Card>
+          <Row
+            icon="shield"
+            tint="#8be9fd"
+            label="Block distracting apps"
+            note={lockAvailable ? 'Locks the apps you pick while you focus.' : 'iPhone only for now.'}
+            right={<Switch on={settings.screenTimeBlock && lockAvailable} onPress={toggleLock} />}
+          />
+          {settings.screenTimeBlock && lockAvailable && <Row sub label="Apps to block" value={`${blockedCount} selected`} onPress={chooseApps} />}
         </Card>
 
         <SectionTitle>Sound & feel</SectionTitle>
@@ -98,11 +134,11 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
           <Row
             icon="user"
             tint="#7ee787"
-            label={account.signedIn ? (account.guest ? 'Guest account' : 'Signed in') : 'Not set up'}
+            label={account.signedIn ? 'Signed in' : 'Not signed in'}
             value={account.email ?? undefined}
-            note={account.guest ? 'Lives on this device only.' : undefined}
+            note={account.signedIn ? undefined : 'Sign in to add friends and play together.'}
           />
-          {!account.email && <Row sub label="Sign in with email" link onPress={onSignIn} />}
+          {!account.signedIn && <Row sub label="Sign in with email" link onPress={onSignIn} />}
           {account.signedIn && <Row sub label="Sign out" link onPress={confirmSignOut} />}
           {account.signedIn && <Row sub label="Delete account" link danger onPress={confirmDelete} />}
         </Card>

@@ -40,7 +40,8 @@
       "reactNativeDirectoryCheck": {
         "exclude": [
           "expo-live-activity",
-          "focus-ongoing"
+          "focus-ongoing",
+          "screen-time"
         ],
         "listUnknownPackages": false
       }

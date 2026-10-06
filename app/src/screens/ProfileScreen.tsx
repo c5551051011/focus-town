@@ -92,9 +92,9 @@ export default function ProfileScreen({ character, social, hasAccount, sessions,
       ) : (
         <View style={styles.setup}>
           <Sans style={styles.setupTitle}>Play with friends</Sans>
-          <Sans style={styles.setupText}>Create a profile to follow friends and focus together in group sessions.</Sans>
+          <Sans style={styles.setupText}>Sign in to add friends, share your follow link and focus together in group sessions.</Sans>
           <Pressable onPress={onSetupAccount} style={styles.addBtn}>
-            <Sans style={styles.addText}>Create profile</Sans>
+            <Sans style={styles.addText}>Sign in</Sans>
           </Pressable>
         </View>
       )}

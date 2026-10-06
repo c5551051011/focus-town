@@ -26,6 +26,7 @@ type Props = {
   invitees: string[]; // 이번 세션에 초대할 친구 id
   onInviteesChange: (ids: string[]) => void;
   onAddFriends: () => void;
+  signedIn: boolean; // 친구 기능은 로그인이 필요하다
   onStart: (minutes: number, ambient: AmbientId, tag: string) => void;
 };
 
@@ -33,7 +34,7 @@ type Props = {
 // 알림이 꺼져 있다는 안내는 앱을 켠 뒤 한 번만 보여준다
 let notifNagged = false;
 
-export default function SetupScreen({ todayMinutes, settings, onChange: update, friends, invitees, onInviteesChange, onAddFriends, onStart }: Props) {
+export default function SetupScreen({ todayMinutes, settings, onChange: update, friends, invitees, onInviteesChange, onAddFriends, signedIn, onStart }: Props) {
   const [sheet, setSheet] = useState<'time' | 'newMode' | 'sound' | 'friends' | null>(null);
   const { minutes, ambient, tag, customTags, dailyGoal } = settings;
   const b = buildingFor(minutes);
@@ -134,6 +135,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
       />
       <FriendPicker
         visible={sheet === 'friends'}
+        signedIn={signedIn}
         friends={friends}
         selected={invitees}
         onChange={onInviteesChange}

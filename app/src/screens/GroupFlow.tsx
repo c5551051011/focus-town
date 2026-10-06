@@ -18,6 +18,7 @@ import { selection } from '../lib/haptics';
 import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
 import { startLive, stopLive } from '../lib/liveProgress';
+import { blockApps, unblockApps } from '../lib/screenTime';
 
 export type GroupRecord = {
   startedAt: number;
@@ -111,7 +112,7 @@ export default function GroupFlow({ initial, myId, ambient, onRecord, onExit }: 
     return (
       <Notice
         title={left ? 'BYE BYE!' : 'WHOOPS!'}
-        text={left ? 'You hopped out.\nYour team keeps\nbuilding for you!' : 'You wandered off\ntoo long. Your team\nkeeps building!'}
+        text={left ? 'You hopped out.\nYour team keeps building!' : 'You wandered off too long.\nYour team keeps building!'}
         icon={<Pixel name="ruins" size={140} />}
         onOk={onExit}
       />
@@ -244,6 +245,11 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
   }, []);
+  // 팀이 짓는 동안 고른 앱을 잠근다 (이 화면이 사라지면 푼다)
+  useEffect(() => {
+    blockApps();
+    return unblockApps;
+  }, []);
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
   }, []);
@@ -326,18 +332,17 @@ function Result({ state, mine, onExit }: { state: RoomState; mine: RoomMember; o
   const participants = members.filter((m) => m.active_since);
   const title = finished ? 'TEAMWORK!' : room.status === 'collapsed' ? 'OH NO!' : 'WHOOPS!';
   const message = finished
-    ? `${building.name} added\nto your town!${building.id !== buildingFor(room.minutes).id ? '\nIt got dented, so\nit came out smaller.' : ''}`
+    ? `${building.name} is built!${building.id !== buildingFor(room.minutes).id ? '\nIt got a bit dented.' : ''}`
     : room.status === 'collapsed'
-      ? "The team building\nfell apart.\nLet's try again!"
-      : 'Your team finished\nwithout you.\nThey built it for you!';
+      ? "The building fell apart.\nLet's try again!"
+      : 'They finished without you.\nThey built it for you!';
   return (
     <ResultLayout
       hero={finished ? <TeamBuilding building={building.id} members={participants.length} durability={dur} /> : <Pixel name="ruins" size={150} />}
       title={title}
       tone={finished ? 'good' : 'bad'}
       message={message}
-      button="TO TOWN"
-      onPress={onExit}
+      onClose={onExit}
     >
       <TeamBar pct={dur} color={toneColor(dur)} style={{ marginTop: 0 }} />
       <View style={styles.grid}>

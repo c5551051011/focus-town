@@ -1,11 +1,12 @@
 import { ReactNode, useRef, useState } from 'react';
-import { Linking, NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Linking, NativeScrollEvent, Platform, NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { colors, soft } from '../theme';
 import Icon from '../components/Icon';
 import { Pixel, SpriteName } from '../components/Pixel';
 import { Txt } from '../components/ui';
 import { PRIVACY_URL, TERMS_URL } from '../config';
 import { ensureNotificationPermission } from '../lib/notifications';
+import { screenTimeAvailable, setupScreenTime } from '../lib/screenTime';
 
 type Consent = 'notifications' | 'screentime';
 // cta 가 있는 장은 "동의" 장이다: 큰 버튼이 동의(허용)이고, SKIP 은 동의하지 않고 다음 장으로 넘어간다.
@@ -26,7 +27,7 @@ const SLIDES: Slide[] = [
     art: (
       <View style={{ alignItems: 'center' }}>
         <Pixel name="house" size={130} />
-        <View style={{ marginTop: -20 }}>{row(['bear', 'cat', 'rabbit'], 46)}</View>
+        <View style={{ marginTop: 4 }}>{row(['bear', 'cat', 'rabbit'], 36)}</View>
       </View>
     ),
   },
@@ -53,12 +54,14 @@ const SLIDES: Slide[] = [
   },
   {
     title: 'BLOCK DISTRACTIONS',
-    text: 'Coming soon: block distracting apps while you focus. Say yes and we will turn it on when it is ready.',
+    text: screenTimeAvailable()
+      ? 'Lock the apps that distract you while you focus. Say yes and pick them now.'
+      : 'Blocking distracting apps is coming soon. Say yes and we will turn it on when it is ready.',
     cta: { label: "I'M IN", kind: 'screentime' },
     art: (
       <View style={{ alignItems: 'center', gap: 14 }}>
         <Icon name="shield" size={110} color={colors.accent} />
-        <Txt style={{ color: colors.gold, fontSize: 11 }}>COMING SOON</Txt>
+        {screenTimeAvailable() ? null : <Txt style={{ color: colors.gold, fontSize: 11 }}>COMING SOON</Txt>}
       </View>
     ),
   },
@@ -69,7 +72,7 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export default function OnboardingScreen({ onFinish, onConsent }: { onFinish: (skipped: boolean) => void; onConsent?: (kind: Consent, agreed: boolean) => void }) {
+export default function OnboardingScreen({ onFinish, onConsent }: { onFinish: (skipped: boolean) => void; onConsent?: (kind: Consent, agreed: boolean, enabled?: boolean) => void }) {
   const { width } = useWindowDimensions();
   const ref = useRef<ScrollView>(null);
   const [page, setPage] = useState(0);
@@ -86,7 +89,8 @@ export default function OnboardingScreen({ onFinish, onConsent }: { onFinish: (s
   const agree = async () => {
     if (slide.cta) {
       if (slide.cta.kind === 'notifications') onConsent?.('notifications', await ensureNotificationPermission());
-      else onConsent?.(slide.cta.kind, true);
+      else if (Platform.OS === 'ios' && screenTimeAvailable()) onConsent?.(slide.cta.kind, true, (await setupScreenTime()).ok);
+      else onConsent?.(slide.cta.kind, true, false);
     }
     goNext();
   };
@@ -113,19 +117,22 @@ export default function OnboardingScreen({ onFinish, onConsent }: { onFinish: (s
         ))}
       </ScrollView>
 
-      {last && (
-        <Txt style={styles.legal}>
-          By continuing you agree to the{' '}
-          <Txt style={styles.link} onPress={() => Linking.openURL(TERMS_URL).catch(() => {})}>
-            Terms
-          </Txt>{' '}
-          and{' '}
-          <Txt style={styles.link} onPress={() => Linking.openURL(PRIVACY_URL).catch(() => {})}>
-            Privacy Policy
+      {/* 약관 안내: 마지막 장에서만 보이지만 자리는 항상 잡아 두어서, 그림 위치가 장마다 바뀌지 않게 한다 */}
+      <View style={styles.legalSlot}>
+        {last && (
+          <Txt style={styles.legal}>
+            By continuing you agree to the{' '}
+            <Txt style={styles.link} onPress={() => Linking.openURL(TERMS_URL).catch(() => {})}>
+              Terms
+            </Txt>{' '}
+            and{' '}
+            <Txt style={styles.link} onPress={() => Linking.openURL(PRIVACY_URL).catch(() => {})}>
+              Privacy Policy
+            </Txt>
+            . Anonymous crash and usage data helps us improve the app; you can turn it off anytime in Settings.
           </Txt>
-          . Anonymous crash and usage data helps us improve the app; you can turn it off anytime in Settings.
-        </Txt>
-      )}
+        )}
+      </View>
 
       {/* 아래쪽: 왼쪽 점, 오른쪽에 간단한 SKIP / NEXT */}
       <View style={styles.bottom}>
@@ -167,6 +174,7 @@ const styles = StyleSheet.create({
   skip: { color: soft.subtle, fontSize: 11, padding: 8 },
   nextBtn: { paddingVertical: 14, paddingHorizontal: 26, borderRadius: 22, backgroundColor: colors.accent },
   nextText: { color: colors.bg, fontSize: 12 },
+  legalSlot: { height: 66, justifyContent: 'center' },
   legal: { color: soft.subtle, fontSize: 7, lineHeight: 13, paddingHorizontal: 28 },
   link: { color: colors.gold, fontSize: 7, textDecorationLine: 'underline' },
 });

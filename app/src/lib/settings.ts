@@ -17,12 +17,13 @@ export type Settings = {
   liveProgress: boolean; // 화면 밖 진행 카드(라이브 액티비티/알림 카드)
   analytics: boolean; // 익명 사용/크래시 데이터 공유
   onboarded: boolean;
+  screenTimeBlock: boolean; // 집중하는 동안 고른 앱을 잠근다 (iOS 스크린 타임)
   screenTimeInterest: boolean; // 온보딩에서 "앱 차단"에 관심 있다고 한 사람 (기능이 나오면 켜 준다)
   tag: string;
   customTags: string[];
   character: Character | null; // 내 캐릭터 (처음 실행 시 만든다)
 };
-export const DEFAULT_SETTINGS: Settings = { minutes: 25, ambient: 'off', volume: 'mid', sfx: true, haptics: true, notify: true, dailyGoal: 60, reminderOn: false, reminderHour: 20, reminderMinute: 0, liveProgress: true, analytics: true, onboarded: false, screenTimeInterest: false, tag: 'STUDY', customTags: [], character: null };
+export const DEFAULT_SETTINGS: Settings = { minutes: 25, ambient: 'off', volume: 'mid', sfx: true, haptics: true, notify: true, dailyGoal: 60, reminderOn: false, reminderHour: 20, reminderMinute: 0, liveProgress: true, analytics: true, onboarded: false, screenTimeBlock: false, screenTimeInterest: false, tag: 'STUDY', customTags: [], character: null };
 const KEY = 'focus_town_settings_v1';
 
 export function applyPrefs(s: Settings) {
@@ -31,6 +32,7 @@ export function applyPrefs(s: Settings) {
   prefs.notify = s.notify;
   prefs.analytics = s.analytics;
   prefs.liveProgress = s.liveProgress;
+  prefs.screenTime = s.screenTimeBlock;
   prefs.volume = VOLUME_VALUES[s.volume];
 }
 

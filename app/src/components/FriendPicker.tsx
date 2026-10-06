@@ -9,6 +9,7 @@ export const MAX_INVITES = 3;
 // 같이 집중할 친구를 고르는 시트 (서로 팔로우하는 친구만 보인다)
 export default function FriendPicker({
   visible,
+  signedIn,
   friends,
   selected,
   onChange,
@@ -16,6 +17,7 @@ export default function FriendPicker({
   onClose,
 }: {
   visible: boolean;
+  signedIn: boolean;
   friends: Person[];
   selected: string[];
   onChange: (ids: string[]) => void;
@@ -31,7 +33,14 @@ export default function FriendPicker({
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.box} onPress={() => {}}>
           <Sans style={styles.title}>FOCUS WITH FRIENDS</Sans>
-          {friends.length === 0 ? (
+          {!signedIn ? (
+            <>
+              <Sans style={styles.empty}>Sign in to invite friends and focus together. Solo focus works without an account.</Sans>
+              <Pressable onPress={onAddFriends} style={styles.primary}>
+                <Sans style={styles.primaryText}>Sign in</Sans>
+              </Pressable>
+            </>
+          ) : friends.length === 0 ? (
             <>
               <Sans style={styles.empty}>You have no friends yet. Follow someone and ask them to follow you back. You become friends when you both follow each other.</Sans>
               <Pressable onPress={onAddFriends} style={styles.primary}>

@@ -8,5 +8,6 @@ export const prefs = {
   notify: true,
   analytics: true,
   liveProgress: true,
+  screenTime: false, // 집중 중 앱 잠금(스크린 타임)
   volume: 0.6,
 };

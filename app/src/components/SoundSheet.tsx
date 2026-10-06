@@ -41,7 +41,7 @@ export default function SoundSheet({
   const recommended = TRACKS.filter((t) => t.modes.includes(tag));
   const groups = PRESET_TAGS.map((m) => ({ mode: m, tracks: TRACKS.filter((t) => t.modes[0] === m && !recommended.includes(t)) })).filter((g) => g.tracks.length > 0);
 
-  const renderRow = (id: string, title: string, modes?: string[], kind?: string) => {
+  const renderRow = (id: string, title: string) => {
     const on = id === selected;
     return (
       <View key={id} style={[styles.row, on && styles.rowOn]}>
@@ -53,14 +53,6 @@ export default function SoundSheet({
           }}
         >
           <Sans style={[styles.label, on && { color: colors.bg }]} numberOfLines={1}>{title}</Sans>
-          {modes ? (
-            <View style={styles.modes}>
-              {kind ? <Sans style={[styles.mode, { color: on ? colors.bg : colors.gold }]}>{kind}</Sans> : null}
-              {modes.map((m) => (
-                <Sans key={m} style={[styles.mode, { color: on ? colors.bg : tagColor(m) }]}>{m}</Sans>
-              ))}
-            </View>
-          ) : null}
         </Pressable>
         {id !== 'off' && (
           <Pressable onPress={() => togglePreview(id)} style={[styles.play, playing === id && styles.playOn]} hitSlop={6}>
@@ -82,14 +74,14 @@ export default function SoundSheet({
             {recommended.length > 0 && (
               <>
                 <Sans style={[styles.section, { color: tagColor(tag) }]}>FOR {tag}</Sans>
-                {recommended.map((t) => renderRow(t.id, t.title, t.modes, t.kind))}
+                {recommended.map((t) => renderRow(t.id, t.title))}
               </>
             )}
 
             {groups.map((g) => (
               <View key={g.mode} style={{ gap: 8 }}>
                 <Sans style={[styles.section, { color: tagColor(g.mode) }]}>{g.mode}</Sans>
-                {g.tracks.map((t) => renderRow(t.id, t.title, t.modes, t.kind))}
+                {g.tracks.map((t) => renderRow(t.id, t.title))}
               </View>
             ))}
           </ScrollView>
@@ -106,10 +98,8 @@ const styles = StyleSheet.create({
   section: { fontSize: 12, marginTop: 14, marginLeft: 4 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: soft.sunken, borderRadius: 14 },
   rowOn: { backgroundColor: colors.gold },
-  main: { flex: 1, paddingVertical: 13, paddingHorizontal: 14 },
+  main: { flex: 1, paddingVertical: 16, paddingHorizontal: 14 },
   label: { fontSize: 14, lineHeight: 20 },
-  modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
-  mode: { fontSize: 10 },
   play: { marginRight: 10, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
   playOn: { backgroundColor: colors.accent },
   playText: { fontSize: 12, color: colors.text },
