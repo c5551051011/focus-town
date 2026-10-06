@@ -7,9 +7,8 @@ import Icon from '../components/Icon';
 import TimeWheel from '../components/TimeWheel';
 import SoundSheet from '../components/SoundSheet';
 import TagSheet from '../components/TagSheet';
-import ModeSheet from '../components/ModeSheet';
 import FriendPicker from '../components/FriendPicker';
-import { PixelButton, Txt } from '../components/ui';
+import { Pill, PixelButton, Txt } from '../components/ui';
 import { TIME_VALUES, buildingFor } from '../lib/buildings';
 import { AmbientId, ambientLabel } from '../lib/ambient';
 import { Settings } from '../lib/settings';
@@ -30,7 +29,7 @@ type Props = {
 
 // 첫 화면: 건물 하나, 시간 하나, 선택 칩 세 개, 시작 버튼 하나. 세부 설정은 칩을 눌렀을 때만 나온다.
 export default function SetupScreen({ todayMinutes, settings, onChange: update, friends, invitees, onInviteesChange, onAddFriends, onStart }: Props) {
-  const [sheet, setSheet] = useState<'time' | 'mode' | 'newMode' | 'sound' | 'friends' | null>(null);
+  const [sheet, setSheet] = useState<'time' | 'newMode' | 'sound' | 'friends' | null>(null);
   const { minutes, ambient, tag, customTags, dailyGoal } = settings;
   const b = buildingFor(minutes);
   const invited = friends.filter((f) => invitees.includes(f.id));
@@ -59,8 +58,15 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
           <Txt style={styles.time}>{minutes}:00</Txt>
         </Pressable>
 
+        {/* 집중 모드: 색이 다른 알약 버튼 */}
+        <View style={styles.pills}>
+          {[...PRESET_TAGS, ...customTags].map((t) => (
+            <Pill key={t} label={t} color={tagColor(t)} on={t === tag} onPress={() => update({ tag: t })} />
+          ))}
+          <Pill label="+" color={colors.dim} on={false} onPress={() => setSheet('newMode')} />
+        </View>
+
         <View style={styles.chips}>
-          <Chip onPress={() => setSheet('mode')} icon={<View style={[styles.dot, { backgroundColor: tagColor(tag) }]} />} label={tag} color={tagColor(tag)} />
           <Chip onPress={() => setSheet('sound')} icon={<Icon name="bell" size={16} color={colors.dim} />} label={ambientLabel(ambient)} />
           <Chip
             onPress={() => setSheet('friends')}
@@ -86,14 +92,6 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
         </View>
       </Modal>
 
-      <ModeSheet
-        visible={sheet === 'mode'}
-        selected={tag}
-        customTags={customTags}
-        onSelect={(t) => update({ tag: t })}
-        onNew={() => setSheet('newMode')}
-        onClose={() => setSheet(null)}
-      />
       <TagSheet
         visible={sheet === 'newMode'}
         customTags={customTags}
@@ -141,10 +139,10 @@ const styles = StyleSheet.create({
   name: { fontSize: 9, color: colors.dim, marginTop: 14 },
   timeBox: { marginTop: 22, paddingBottom: 6, borderBottomWidth: 3, borderBottomColor: colors.panel },
   time: { fontSize: 48, color: colors.gold },
-  chips: { flexDirection: 'row', gap: 8, marginTop: 30, alignSelf: 'stretch' },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 26 },
+  chips: { flexDirection: 'row', gap: 8, marginTop: 22, alignSelf: 'stretch' },
   chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 6, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
   chipText: { fontSize: 8, color: colors.text, flexShrink: 1 },
-  dot: { width: 12, height: 12 },
   extra: { flexDirection: 'row', gap: 2 },
   start: { marginTop: 8 },
   dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
