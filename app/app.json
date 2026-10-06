@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Focus Town",
+    "name": "Towny",
     "slug": "focus-town",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -55,6 +55,6 @@
       }
     },
     "owner": "c5551051011",
-    "scheme": "focustown"
+    "scheme": "towny"
   }
 }

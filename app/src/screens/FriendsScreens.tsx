@@ -60,7 +60,7 @@ export function AddFriendsScreen({ social, initialQuery, onBack, onChanged }: Co
 
   const share = () => {
     if (!code) return;
-    Share.share({ message: `Follow me on Focus Town and let's focus together!\n${followLink(code)}\n\nFriend code: ${code}` }).catch(() => {});
+    Share.share({ message: `Follow me on Towny and let's focus together!\n${followLink(code)}\n\nFriend code: ${code}` }).catch(() => {});
   };
 
   const shown = searching ? results : null;

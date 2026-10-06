@@ -67,7 +67,7 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
   const confirmDelete = () => setConfirm('delete');
   const confirmReset = () => setConfirm('reset');
   const dialog = {
-    notif: { title: 'Notifications are off', text: 'Turn on notifications for Focus Town in your phone settings to get daily reminders.', ok: 'OK', cancel: null, destructive: false, run: () => {} },
+    notif: { title: 'Notifications are off', text: 'Turn on notifications for Towny in your phone settings to get daily reminders.', ok: 'OK', cancel: null, destructive: false, run: () => {} },
     signout: {
       title: 'Sign out?',
       text: 'You can sign in again anytime with your email. Friends and group sessions need you to be signed in.',
@@ -77,7 +77,7 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
       run: onSignOut,
     },
     delete: { title: 'Delete your account?', text: 'Your account, profile and friends will be permanently deleted. Records on this device stay until you reset them.', ok: 'Delete', cancel: 'Cancel', destructive: true, run: onDeleteAccount },
-    st_denied: { title: 'Screen Time is off', text: "Allow Screen Time for Focus Town in your phone's Settings to lock apps while you focus.", ok: 'Open settings', cancel: 'Not now', destructive: false, run: () => Linking.openSettings().catch(() => {}) },
+    st_denied: { title: 'Screen Time is off', text: "Allow Screen Time for Towny in your phone's Settings to lock apps while you focus.", ok: 'Open settings', cancel: 'Not now', destructive: false, run: () => Linking.openSettings().catch(() => {}) },
     st_unavailable: {
       title: Platform.OS === 'ios' ? 'Not available yet' : 'Coming to Android',
       text: Platform.OS === 'ios' ? "Locking apps needs Apple's approval for Screen Time, which this version doesn't have yet. It will switch on in a future update." : 'Locking apps while you focus is iPhone-only for now.',
@@ -147,7 +147,7 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
         <Card>
           <Row icon="shield" tint="#8be9fd" label="Share crash & usage data" note="Anonymous. Helps us fix bugs." right={<Switch on={settings.analytics} onPress={() => onChange({ analytics: !settings.analytics })} />} />
           <Row icon="help" tint="#f8f8f2" label="How to play" onPress={onShowHelp} chevron />
-          {SUPPORT_EMAIL ? <Row sub label="Send feedback" link onPress={() => open(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Focus Town feedback (v${version})`)}`)} /> : null}
+          {SUPPORT_EMAIL ? <Row sub label="Send feedback" link onPress={() => open(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Towny feedback (v${version})`)}`)} /> : null}
           <Row sub label="Privacy policy" link onPress={() => open(PRIVACY_URL)} />
           <Row sub label="Terms of service" link onPress={() => open(TERMS_URL)} />
         </Card>
@@ -156,7 +156,7 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
           <Sans style={styles.resetText}>Reset all records</Sans>
         </Pressable>
 
-        <Sans style={styles.about}>Focus Town v{version}</Sans>
+        <Sans style={styles.about}>Towny v{version}</Sans>
         <Sans style={styles.about}>Lo-fi music: Open Lo-Fi (CC0)</Sans>
       </ScrollView>
 

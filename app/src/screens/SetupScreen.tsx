@@ -55,7 +55,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
       <View style={styles.top}>
-        <ScreenTitle title="FOCUS TOWN" center />
+        <ScreenTitle title="TOWNY" center />
         {dailyGoal > 0 ? (
           <View style={styles.goalPill}>
             <View style={styles.goalTrack}>

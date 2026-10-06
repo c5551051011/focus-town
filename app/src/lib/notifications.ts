@@ -14,7 +14,7 @@ Notifications.setNotificationHandler({
 // Android 13+ 에서는 알림 채널이 있어야 권한 팝업이 뜬다
 if (Platform.OS === 'android') {
   Notifications.setNotificationChannelAsync('default', {
-    name: 'Focus Town',
+    name: 'Towny',
     importance: Notifications.AndroidImportance.HIGH,
   }).catch(() => {});
 }
@@ -90,7 +90,7 @@ export async function syncReminders(opts: { enabled: boolean; hour: number; minu
           : 'Your town is waiting. Ready to focus?';
       await Notifications.scheduleNotificationAsync({
         identifier: reminderId(i),
-        content: { title: 'Focus Town', body },
+        content: { title: 'Towny', body },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when },
       });
     }

@@ -46,11 +46,11 @@ export const unfollowUser = (id: string) => call<null>('unfollow_user', { p_user
 export const isFriend = (p: Person) => p.i_follow && p.follows_me;
 
 // ── 팔로우 링크 ──
-const SITE = 'https://c5551051011.github.io/focus-town';
+const SITE = 'https://c5551051011.github.io/towny';
 export const followLink = (code: string) => `${SITE}/follow.html?code=${code}`;
-export const followAppLink = (code: string) => `focustown://follow/${code}`;
+export const followAppLink = (code: string) => `towny://follow/${code}`;
 
-// 붙여넣은 글에서 친구 코드(8자리)를 뽑는다: 링크 전체, focustown://follow/CODE, 코드만 모두 허용
+// 붙여넣은 글에서 친구 코드(8자리)를 뽑는다: 링크 전체, towny://follow/CODE(예전 focustown:// 링크 포함), 코드만 모두 허용
 export function parseFollowCode(input: string): string | null {
   const m = input.trim().match(/(?:code=|follow\/|^)([0-9A-Fa-f]{8})\b/);
   return m ? m[1].toUpperCase() : null;

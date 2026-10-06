@@ -1,4 +1,4 @@
-# Focus Town backend (Supabase)
+# Towny backend (Supabase)
 
 서버는 Supabase(Auth + Postgres)를 사용합니다. 별도 서버 코드는 없고, DB 정의(SQL)만 이 폴더에 둡니다.
 
@@ -10,7 +10,7 @@
 3. **로그인 메일에 코드 넣기** (이메일로 기존 계정을 불러올 때 필요, 나중에 해도 됩니다) (앱은 이메일로 받은 6자리 코드로 로그인합니다):
    Authentication → Emails → Templates 에서 **Confirm signup** 과 **Magic Link** 두 템플릿 모두 본문에 아래 줄을 넣습니다.
    ```html
-   <h2>Your Focus Town code</h2>
+   <h2>Your Towny code</h2>
    <p>Enter this code in the app: <b>{{ .Token }}</b></p>
    ```
 4. **메일 발송 한도**: 기본 메일 서버는 시간당 발송 수가 매우 적습니다. 테스트는 괜찮지만, 출시 전에 Authentication → Emails → SMTP Settings 에서 커스텀 SMTP(Resend, SendGrid 등)를 연결하세요.

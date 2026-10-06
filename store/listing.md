@@ -1,4 +1,4 @@
-# Focus Town — 스토어 등록 자료
+# Towny — 스토어 등록 자료
 
 > 앱 이름 / 문구 / 개인정보 설문 답변 / 스크린샷 체크리스트. App Store Connect와 Play Console에 그대로 붙여 넣을 수 있게 정리했습니다.
 > `[ ]` 로 표시한 곳은 직접 정해서 채워야 하는 값입니다.
@@ -7,14 +7,14 @@
 
 | 항목 | 값 |
 | :--- | :--- |
-| 앱 이름 | Focus Town |
+| 앱 이름 | Towny |
 | 번들/패키지 ID | `com.jjinchoi.focustown` (iOS/Android 동일) |
 | 카테고리 | Productivity (보조: Games > Casual 또는 Lifestyle) |
 | 가격 | 무료, 광고 없음, 인앱 결제 없음 |
 | 지원 언어 | English (앱 UI). 스토어 설명은 영어 + 한국어 |
-| 개인정보 처리방침 URL | `https://c5551051011.github.io/focus-town/privacy.html` |
-| 이용약관 URL | `https://c5551051011.github.io/focus-town/terms.html` |
-| 지원 URL | `[ ]` (GitHub Pages 주소 `https://c5551051011.github.io/focus-town/` 사용 가능) |
+| 개인정보 처리방침 URL | `https://c5551051011.github.io/towny/privacy.html` |
+| 이용약관 URL | `https://c5551051011.github.io/towny/terms.html` |
+| 지원 URL | `[ ]` (GitHub Pages 주소 `https://c5551051011.github.io/towny/` 사용 가능) |
 | 문의 이메일 | `[ ]` |
 | 개발자/판매자 이름 | JIN CHOI |
 
@@ -22,7 +22,7 @@
 
 ## 2. English listing
 
-**Name (≤30)**: `Focus Town`
+**Name (≤30)**: `Towny`
 
 **Subtitle — App Store (≤30)**: `Pixel town focus timer`
 
@@ -33,7 +33,7 @@ Focus for a while and watch a cute pixel building rise. Stay in the app, keep yo
 Focus to build a pixel town. Stay in the app, keep your streak, grow your town.
 
 **Full description (≤4000)**
-Focus Town turns focus time into a tiny pixel town.
+Towny turns focus time into a tiny pixel town.
 
 Pick how long you want to focus, press START, and a team of baby bear, cat and rabbit builders gets to work. Stay in the app until the timer ends and your building is complete. The longer you focus, the bigger the building: from a straw hut to a stone castle.
 
@@ -66,7 +66,7 @@ First release! Build your pixel town while you focus.
 
 ## 3. 한국어 설명
 
-**이름 (≤30)**: `포커스 타운` *(앱 아이콘 아래 표시 이름은 Focus Town 유지 권장)*
+**이름 (≤30)**: `타우니` *(앱 아이콘 아래 표시 이름은 Towny 유지 권장)*
 
 **부제 — App Store (≤30)**: `픽셀 마을 집중 타이머`
 
@@ -77,7 +77,7 @@ First release! Build your pixel town while you focus.
 집중하면 픽셀 마을이 자라요. 앱을 벗어나지 않고 스트릭을 이어 가 보세요.
 
 **자세한 설명**
-포커스 타운은 집중하는 시간을 작은 픽셀 마을로 바꿔 주는 앱이에요.
+타우니은 집중하는 시간을 작은 픽셀 마을로 바꿔 주는 앱이에요.
 
 집중할 시간을 고르고 START를 누르면 아기 곰, 고양이, 토끼 일꾼들이 건물을 짓기 시작해요. 타이머가 끝날 때까지 앱을 벗어나지 않으면 건물이 완공돼요. 오래 집중할수록 더 큰 건물이 생겨요. 오두막부터 돌 성까지!
 

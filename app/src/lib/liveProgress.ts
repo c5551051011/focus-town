@@ -61,7 +61,7 @@ const cheer = (s: LiveSession) => {
 
 function normalState(s: LiveSession) {
   return {
-    title: s.kind === 'group' ? `Focus Town · Team · ${s.tag}` : `Focus Town · ${s.tag}`,
+    title: s.kind === 'group' ? `Towny · Team · ${s.tag}` : `Towny · ${s.tag}`,
     subtitle: cheer(s),
     progressBar: { date: s.endAt },
     imageName: `b_${s.buildingId}`,
@@ -71,8 +71,8 @@ function normalState(s: LiveSession) {
 
 function awayState(s: LiveSession, graceEndAt: number) {
   return s.kind === 'group'
-    ? { title: 'Focus Town · Your team misses you!', subtitle: 'Your friends are still building. Hop back soon!', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' }
-    : { title: 'Focus Town · Psst, come back!', subtitle: 'Your tiny builders miss you! Hurry back!', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' };
+    ? { title: 'Towny · Your team misses you!', subtitle: 'Your friends are still building. Hop back soon!', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' }
+    : { title: 'Towny · Psst, come back!', subtitle: 'Your tiny builders miss you! Hurry back!', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' };
 }
 
 function render(state: ReturnType<typeof normalState>, endAt: number, timeoutMs: number) {

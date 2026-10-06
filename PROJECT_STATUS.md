@@ -1,10 +1,24 @@
-# Focus Town (포커스 타운) 프로젝트 현황
+# Towny (타우니) 프로젝트 현황
 
 > 갱신: 2026-10-06 · 저장소: https://github.com/c5551051011/focus-town (브랜치 `main`)
 > 이 문서는 "지금까지 무엇이 만들어졌고, 어떻게 돌리고, 무엇이 남았는지"를 한 곳에 정리한 것입니다.
 > 기획 원문은 `focus_town_final.md`(한국어 기획서), 서버 설정은 `backend/README.md`, 기기 테스트 항목은 `TESTING_TODO.md` 에 있습니다.
 
 ---
+
+## 0. 이름 변경 (Focus Town → Towny) 체크리스트
+
+앱 이름이 **Towny**(한글 표기 타우니)로 바뀌었습니다. 사용자에게 보이는 곳(앱 이름, 화면 제목, 알림, 공유 문구, 딥링크 `towny://`, 공개 문서, 스토어 자료)은 모두 바꿨고, 아래는 직접 해야 하는 곳입니다.
+
+| 대상 | 할 일 | 비고 |
+|---|---|---|
+| GitHub 저장소 | Settings → General → Repository name 을 `towny` 로 변경 | 바꾼 뒤 `git remote set-url origin https://github.com/c5551051011/towny.git`. 이전 주소는 자동으로 연결됨 |
+| GitHub Pages | 저장소 이름이 바뀌면 문서 주소가 `https://c5551051011.github.io/towny/` 로 바뀜 | 앱의 `config.ts`, `social.ts`, 스토어 자료는 이미 이 주소로 바꿔 둠. 이름을 바꾼 뒤 Pages(main /docs)가 켜져 있는지 확인 |
+| Supabase | Project Settings → General → Project name 을 `Towny` 로 변경 | **프로젝트 주소(URL)와 키는 바뀌지 않음** → 코드 변경 없음. Authentication → SMTP 의 Sender name, 이메일 템플릿 문구도 Towny 로 |
+| App Store Connect | 앱 만들 때 이름을 `Towny` 로 | 이름이 이미 쓰이고 있으면 `Towny: Pixel Focus Timer` 처럼 부제를 붙여 등록 |
+| EAS(expo.dev) | 프로젝트 이름은 그대로 두어도 됨 | 슬러그 `focus-town` 은 프로젝트 ID 와 연결되어 있어 바꾸면 빌드가 실패함. 바꾸려면 expo.dev 에서 먼저 슬러그를 바꾼 뒤 `app.json` 의 `slug` 를 맞춤 |
+| 번들 ID / 패키지명 | `com.jjinchoi.focustown` 그대로 | 사용자에게 보이지 않음. 바꾸려면 Apple 인증서·프로필을 다시 만들어야 해서(로그인 필요) 지금은 유지 |
+| 저장 키 | `focus_town_*` 그대로 | 앱에 저장된 기록이 사라지지 않게 유지 |
 
 ## 1. 한 줄 소개
 집중하는 동안 귀여운 **픽셀 건물**이 지어지고, 끝나면 나만의 **마을**에 쌓이는 모바일(iOS/Android) 집중 타이머 게임. 친구와 함께 집중하면 **한 건물을 같이 짓고**, 누군가 앱을 벗어나면 건물이 상합니다.
@@ -155,7 +169,7 @@ npx eas-cli build -p ios --profile preview
 - 번들 ID `com.jjinchoi.focustown` (+ 라이브 액티비티 `com.jjinchoi.focustown.LiveActivity`), Apple 팀 `3FFQ9Z7QHZ`(개인), 등록 기기: 사용자의 iPhone
 - 인증서/프로비저닝은 EAS 서버에 저장되어 있어 `--non-interactive` 로도 빌드됩니다. Apple 로그인(비밀번호/2단계 인증)이 필요한 경우는 **직접 터미널에서** 입력해야 합니다.
 - 설치: 빌드 페이지(링크는 8장) → 아이폰 Safari 에서 열기 → 설치. 처음엔 설정 → 개인정보 보호 및 보안 → **개발자 모드** 켜기, 설정 → 일반 → VPN 및 기기 관리에서 프로필 **신뢰**.
-- 라이브 액티비티는 설정 → Focus Town → 실시간 현황(Live Activities) 이 켜져 있어야 합니다.
+- 라이브 액티비티는 설정 → Towny → 실시간 현황(Live Activities) 이 켜져 있어야 합니다.
 
 ### 7.4 Screen Time(앱 차단) — Apple 승인이 먼저 필요
 - 구현: `app/modules/screen-time`(Swift, FamilyControls + ManagedSettings), `app/src/lib/screenTime.ts`, 설정 > Focus lock, 온보딩 "I'M IN". 집중 시작에 선택한 앱을 잠그고, 끝나거나 멈추거나 앱을 켤 때 풉니다.

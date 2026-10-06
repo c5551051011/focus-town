@@ -4,7 +4,7 @@
 export const SUPPORT_EMAIL = ''; // 문의/피드백 메일 주소 (비어 있으면 피드백 버튼이 숨겨진다)
 
 // GitHub Pages(docs/ 폴더)에 게시되는 문서 주소
-const SITE = 'https://c5551051011.github.io/focus-town';
+const SITE = 'https://c5551051011.github.io/towny';
 export const PRIVACY_URL = `${SITE}/privacy.html`;
 export const TERMS_URL = `${SITE}/terms.html`;
 

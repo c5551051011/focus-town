@@ -161,7 +161,7 @@ export default function App() {
     })();
   }, [loaded, userId]);
 
-  // 친구 팔로우 링크(focustown://follow/CODE 또는 웹 링크)로 앱이 열리면 친구 추가 화면으로 간다
+  // 친구 팔로우 링크(towny://follow/CODE 또는 웹 링크)로 앱이 열리면 친구 추가 화면으로 간다
   useEffect(() => {
     const open = (url: string | null) => {
       const code = url ? parseFollowCode(url) : null;
