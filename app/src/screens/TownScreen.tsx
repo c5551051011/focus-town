@@ -3,7 +3,7 @@ import { Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-n
 import { colors, soft } from '../theme';
 import { Pixel, SpriteName } from '../components/Pixel';
 import { Sans, Txt } from '../components/ui';
-import { buildingOf } from '../lib/buildings';
+import { BUILDINGS, buildingOf } from '../lib/buildings';
 import { Session } from '../lib/types';
 
 const SIZE = 8;
@@ -60,10 +60,13 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
   // 땅은 처음부터 전부 깔려 있다. 건물 자리는 "전체 기록" 순서로 정해져서, 기간을 바꿔도 건물이 움직이지 않는다
   const built = sessions.filter((s) => s.success).sort((a, b) => a.startedAt - b.startedAt);
   const onTile = new Map<number, SpriteName>();
+  const counts: Record<string, number> = {};
   let shown = 0;
   built.forEach((s, i) => {
     if (s.startedAt < period.start) return;
-    onTile.set(SLOTS[i % SLOTS.length], buildingOf(s).id);
+    const id = buildingOf(s).id;
+    onTile.set(SLOTS[i % SLOTS.length], id);
+    counts[id] = (counts[id] ?? 0) + 1;
     shown++;
   });
 
@@ -87,6 +90,7 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
         ))}
       </View>
       <View style={styles.mapArea}>
+      <View style={styles.stage}>
       <View style={{ width: w * SIZE, height: mapH }}>
         {DRAW_ORDER.map((idx) => (
           <Tile
@@ -99,6 +103,18 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
         ))}
       </View>
       </View>
+      </View>
+      {shown > 0 && (
+        <View style={styles.summary}>
+          {BUILDINGS.map((b) => (
+            <View key={b.id} style={[styles.summaryItem, !counts[b.id] && { opacity: 0.35 }]}>
+              <Pixel name={b.id} size={30} />
+              <Sans style={styles.summaryCount}>{counts[b.id] ?? 0}</Sans>
+            </View>
+          ))}
+        </View>
+      )}
+
       {shown === 0 && (
         <View style={styles.hintCard}>
           <Sans style={styles.hintTitle}>{built.length === 0 ? 'Your town is waiting' : 'Nothing built in this period'}</Sans>
@@ -112,6 +128,7 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 12, alignItems: 'center' },
   mapArea: { flex: 1, justifyContent: 'center' },
+  stage: { paddingVertical: 26, paddingHorizontal: 4, borderRadius: 26, backgroundColor: '#23203a', borderWidth: 1.5, borderColor: soft.line },
   header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 8 },
   title: { color: colors.accent, fontSize: 16 },
   count: { color: soft.subtle, fontSize: 14, fontWeight: '600' },
@@ -119,6 +136,9 @@ const styles = StyleSheet.create({
   segItem: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 18 },
   segOn: { backgroundColor: colors.accent },
   segText: { fontSize: 14, color: soft.subtle, fontWeight: '600' },
+  summary: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', marginHorizontal: 8, marginBottom: 16, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 16, backgroundColor: soft.card },
+  summaryItem: { alignItems: 'center', gap: 6 },
+  summaryCount: { fontSize: 12, color: colors.text },
   hintCard: { alignSelf: 'stretch', marginHorizontal: 8, marginBottom: 16, padding: 16, borderRadius: 14, backgroundColor: soft.card, alignItems: 'center' },
   hintTitle: { fontSize: 15, fontWeight: '700' },
   hintText: { color: soft.subtle, fontSize: 13, marginTop: 6, textAlign: 'center' },

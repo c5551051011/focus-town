@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import { Pixel } from '../components/Pixel';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -8,7 +8,7 @@ import TimeWheel from '../components/TimeWheel';
 import SoundSheet from '../components/SoundSheet';
 import TagSheet from '../components/TagSheet';
 import FriendPicker from '../components/FriendPicker';
-import { Pill, PixelButton, Txt } from '../components/ui';
+import { Pill, PixelButton, Sans, Txt } from '../components/ui';
 import { TIME_VALUES, buildingFor } from '../lib/buildings';
 import { AmbientId, ambientLabel } from '../lib/ambient';
 import { Settings } from '../lib/settings';
@@ -44,18 +44,28 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
       <View style={styles.top}>
         <Txt style={styles.logo}>FOCUS TOWN</Txt>
         {dailyGoal > 0 ? (
-          <Txt style={[styles.goal, todayMinutes >= dailyGoal && { color: colors.gold }]}>
-            TODAY {Math.min(todayMinutes, dailyGoal)} / {dailyGoal} MIN
-          </Txt>
+          <View style={styles.goalPill}>
+            <View style={styles.goalTrack}>
+              <View style={[styles.goalFill, { width: `${Math.min(1, todayMinutes / dailyGoal) * 100}%` }, todayMinutes >= dailyGoal && { backgroundColor: colors.gold }]} />
+            </View>
+            <Sans style={[styles.goalText, todayMinutes >= dailyGoal && { color: colors.gold }]}>
+              {Math.min(todayMinutes, dailyGoal)}/{dailyGoal} min today
+            </Sans>
+          </View>
         ) : null}
       </View>
 
       <View style={styles.center}>
-        <Pixel name={b.id} size={170} />
-        <Txt style={styles.name}>{b.name}</Txt>
+        {/* 건물 미리보기: 둥근 받침 위에 올려 둔다 */}
+        <View style={styles.plate}>
+          <Pixel name={b.id} size={150} />
+        </View>
+        <Sans style={styles.name}>{b.name}</Sans>
 
-        <Pressable onPress={() => setSheet('time')} style={styles.timeBox}>
+        {/* 시간: 눌러서 바꾸는 둥근 버튼 */}
+        <Pressable onPress={() => setSheet('time')} style={({ pressed }) => [styles.timeBox, pressed && { opacity: 0.85 }]}>
           <Txt style={styles.time}>{minutes}:00</Txt>
+          <Sans style={styles.timeHint}>tap to change</Sans>
         </Pressable>
 
         {/* 집중 모드: 색이 다른 알약 버튼 */}
@@ -67,17 +77,19 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
         </View>
 
         <View style={styles.chips}>
-          <Chip onPress={() => setSheet('sound')} icon={<Icon name="bell" size={16} color={colors.dim} />} label={ambientLabel(ambient)} />
+          <Chip onPress={() => setSheet('sound')} icon={<Pixel name="speaker_on" size={20} style={{ tintColor: soft.subtle }} />} label={ambient === 'off' ? 'Sound off' : ambientLabel(ambient)} />
           <Chip
             onPress={() => setSheet('friends')}
-            icon={invited.length ? null : <Icon name="user" size={16} color={colors.dim} />}
-            label={invited.length ? '' : 'FRIENDS'}
+            icon={invited.length ? null : <Icon name="user" size={18} color={soft.subtle} />}
+            label={invited.length ? '' : 'Friends'}
             extra={invited.map((f) => <Avatar key={f.id} character={f} size={22} />)}
           />
         </View>
       </View>
 
-      <PixelButton label={invited.length ? `START WITH ${invited.length}` : 'START'} onPress={start} style={styles.start} />
+      <Pressable onPress={start} style={({ pressed }) => [styles.start, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }]}>
+        <Txt style={styles.startText}>{invited.length ? `START WITH ${invited.length}` : 'START'}</Txt>
+      </Pressable>
 
       {/* 시간을 탭하면 열리는 휠 */}
       <Modal visible={sheet === 'time'} transparent animationType="fade" onRequestClose={() => setSheet(null)}>
@@ -122,9 +134,9 @@ function Chip({ icon, label, color, extra, onPress }: { icon?: ReactNode; label:
       {icon}
       {extra ? <View style={styles.extra}>{extra}</View> : null}
       {label ? (
-        <Txt style={[styles.chipText, color ? { color } : null]} numberOfLines={1}>
+        <Sans style={[styles.chipText, color ? { color } : null]} numberOfLines={1}>
           {label}
-        </Txt>
+        </Sans>
       ) : null}
     </Pressable>
   );
@@ -134,17 +146,23 @@ const styles = StyleSheet.create({
   wrap: { flexGrow: 1, padding: 24 },
   top: { alignItems: 'center', paddingTop: 36 },
   logo: { color: colors.accent, fontSize: 14 },
-  goal: { color: colors.dim, fontSize: 8, marginTop: 12 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
-  name: { fontSize: 9, color: colors.dim, marginTop: 14 },
-  timeBox: { marginTop: 22, paddingBottom: 6, borderBottomWidth: 3, borderBottomColor: colors.panel },
-  time: { fontSize: 48, color: colors.gold },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 26 },
-  chips: { flexDirection: 'row', gap: 8, marginTop: 22, alignSelf: 'stretch' },
-  chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 6, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
-  chipText: { fontSize: 8, color: colors.text, flexShrink: 1 },
+  goalPill: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
+  goalTrack: { width: 64, height: 8, borderRadius: 4, backgroundColor: soft.sunken, overflow: 'hidden' },
+  goalFill: { height: '100%', borderRadius: 4, backgroundColor: colors.accent },
+  goalText: { color: soft.subtle, fontSize: 12 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
+  plate: { width: 220, height: 196, borderRadius: 30, backgroundColor: soft.card, borderWidth: 1.5, borderColor: soft.line, alignItems: 'center', justifyContent: 'center' },
+  name: { color: soft.subtle, fontSize: 13, marginTop: 14 },
+  timeBox: { marginTop: 14, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 28, borderRadius: 22, borderWidth: 2, borderColor: soft.line },
+  time: { fontSize: 44, lineHeight: 56, color: colors.gold },
+  timeHint: { color: soft.subtle, fontSize: 11, marginTop: 2 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 22 },
+  chips: { flexDirection: 'row', gap: 10, marginTop: 18, alignSelf: 'stretch' },
+  chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, paddingHorizontal: 8, borderRadius: 14, backgroundColor: soft.card },
+  chipText: { fontSize: 13, color: colors.text, flexShrink: 1 },
   extra: { flexDirection: 'row', gap: 2 },
-  start: { marginTop: 8 },
+  start: { marginTop: 8, paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
+  startText: { color: colors.bg, fontSize: 18 },
   dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
   dialBox: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 20 },
   dialName: { fontSize: 12, color: colors.text, textAlign: 'center', marginTop: 16, marginBottom: 18 },
