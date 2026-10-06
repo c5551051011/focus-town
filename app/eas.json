@@ -11,14 +11,16 @@
       },
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "ENABLE_SCREEN_TIME": "0"
+        "ENABLE_SCREEN_TIME": "0",
+        "EXPO_PUBLIC_ENABLE_SCREEN_TIME": "0"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "ENABLE_SCREEN_TIME": "0"
+        "ENABLE_SCREEN_TIME": "0",
+        "EXPO_PUBLIC_ENABLE_SCREEN_TIME": "0"
       }
     }
   }

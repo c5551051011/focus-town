@@ -20,7 +20,7 @@ const row = (names: SpriteName[], size: number) => (
   </View>
 );
 
-const SLIDES: Slide[] = [
+const ALL_SLIDES: Slide[] = [
   {
     title: 'BUILD YOUR TOWN',
     text: 'Focus for a while and a building rises in your very own town.',
@@ -71,6 +71,9 @@ const SLIDES: Slide[] = [
     art: <Pixel name="flame" size={140} />,
   },
 ];
+
+// 앱 차단 장은 기능이 켜져 있는 빌드에서만 보여준다
+const SLIDES = ALL_SLIDES.filter((s) => s.cta?.kind !== 'screentime' || screenTimeAvailable());
 
 export default function OnboardingScreen({ onFinish, onConsent }: { onFinish: (skipped: boolean) => void; onConsent?: (kind: Consent, agreed: boolean, enabled?: boolean) => void }) {
   const { width } = useWindowDimensions();

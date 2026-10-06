@@ -187,7 +187,7 @@ npx eas-cli build -p ios --profile preview
 
 ### 7.4 Screen Time(앱 차단) — Apple 승인이 먼저 필요
 - 구현: `app/modules/screen-time`(Swift, FamilyControls + ManagedSettings), `app/src/lib/screenTime.ts`, 설정 > Focus lock, 온보딩 "I'M IN". 집중 시작에 선택한 앱을 잠그고, 끝나거나 멈추거나 앱을 켤 때 풉니다.
-- **Apple 의 Family Controls 권한이 승인되어야** 실기기/TestFlight/App Store 에서 동작합니다. 승인 전에 권한을 앱에 넣으면 iOS 빌드 인증서 발급이 실패하므로, 권한은 환경변수 `ENABLE_SCREEN_TIME=1` 일 때만 넣습니다(`app/plugins/withScreenTime.js`, `app/eas.json` 의 env, 기본 "0").
+- **Apple 의 Family Controls 권한이 승인되어야** 실기기/TestFlight/App Store 에서 동작합니다. 승인 전에 권한을 앱에 넣으면 iOS 빌드 인증서 발급이 실패하므로, 권한은 환경변수 `ENABLE_SCREEN_TIME=1` 일 때만 넣습니다(`app/plugins/withScreenTime.js`, `app/eas.json` 의 env, 기본 "0"). 같은 이유로 **승인 전에는 설정/온보딩의 Screen Time 화면을 숨깁니다**(`EXPO_PUBLIC_ENABLE_SCREEN_TIME`). 승인 후에는 두 값을 모두 "1" 로 바꿉니다.
 - 승인 절차: ① Account Holder 가 https://developer.apple.com/contact/request/family-controls-distribution 에서 신청(번들 ID `com.jjinchoi.focustown`) ② 승인 후 `eas.json` 의 `ENABLE_SCREEN_TIME` 을 "1" 로 ③ iOS 재빌드(인증서 갱신 때 Apple 로그인 필요할 수 있음). 승인 전에는 설정의 스위치를 켜면 "Not available yet" 안내가 뜹니다.
 - 알려진 한계: 앱이 강제 종료되면 잠금이 남을 수 있어(다음에 앱을 켤 때 풀림) 필요하면 DeviceActivity 확장으로 종료 시각에 자동 해제 추가. Android 는 접근성/사용 통계 권한이 필요한 별도 구현이 필요해 미지원.
 

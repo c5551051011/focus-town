@@ -24,8 +24,12 @@ try {
 
 export type ScreenTimeState = 'unsupported' | 'notDetermined' | 'denied' | 'approved';
 
-// 이 기기/빌드에서 쓸 수 있는 기능인가 (iOS 이고 모듈이 들어 있음)
-export const screenTimeAvailable = () => !!native;
+// Apple 이 Family Controls 권한을 승인하기 전에는 이 기능을 숨긴다 (미완성 화면이 심사에서 문제가 되지 않게).
+// 승인 후 app/eas.json 의 ENABLE_SCREEN_TIME 과 EXPO_PUBLIC_ENABLE_SCREEN_TIME 을 둘 다 "1" 로 바꾸고 다시 빌드한다.
+const ENABLED = process.env.EXPO_PUBLIC_ENABLE_SCREEN_TIME === '1';
+
+// 이 기기/빌드에서 쓸 수 있는 기능인가 (iOS 이고 모듈이 들어 있고 켜져 있음)
+export const screenTimeAvailable = () => ENABLED && !!native;
 
 export function screenTimeState(): ScreenTimeState {
   if (!native) return 'unsupported';

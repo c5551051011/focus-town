@@ -102,17 +102,21 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
           {settings.reminderOn && <Row sub label="Reminder time" value={hhmm(settings.reminderHour, settings.reminderMinute)} onPress={() => setSheet('time')} />}
         </Card>
 
-        <SectionTitle>Focus lock</SectionTitle>
-        <Card>
-          <Row
-            icon="shield"
-            tint="#8be9fd"
-            label="Block distracting apps"
-            note={lockAvailable ? 'Locks the apps you pick while you focus.' : 'iPhone only for now.'}
-            right={<Switch on={settings.screenTimeBlock && lockAvailable} onPress={toggleLock} />}
-          />
-          {settings.screenTimeBlock && lockAvailable && <Row sub label="Apps to block" value={`${blockedCount} selected`} onPress={chooseApps} />}
-        </Card>
+        {lockAvailable && (
+          <>
+            <SectionTitle>Focus lock</SectionTitle>
+            <Card>
+              <Row
+                icon="shield"
+                tint="#8be9fd"
+                label="Block distracting apps"
+                note={lockAvailable ? 'Locks the apps you pick while you focus.' : 'iPhone only for now.'}
+                right={<Switch on={settings.screenTimeBlock && lockAvailable} onPress={toggleLock} />}
+              />
+              {settings.screenTimeBlock && lockAvailable && <Row sub label="Apps to block" value={`${blockedCount} selected`} onPress={chooseApps} />}
+            </Card>
+          </>
+        )}
 
         <SectionTitle>Sound & feel</SectionTitle>
         <Card>
