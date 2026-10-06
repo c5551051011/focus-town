@@ -36,6 +36,7 @@
             android:layout_height="wrap_content"
             android:maxLines="2"
             android:ellipsize="end"
+            android:textSize="13sp"
             android:textAppearance="@style/TextAppearance.Compat.Notification" />
     </LinearLayout>
 </LinearLayout>

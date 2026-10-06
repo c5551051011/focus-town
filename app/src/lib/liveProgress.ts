@@ -44,14 +44,14 @@ const enabled = () => prefs.liveProgress && (!!ios || !!android);
 
 // 카드에 번갈아 보여줄 응원 문구 (카드를 새로 그릴 때마다 하나를 고른다)
 const CHEERS = [
-  (b: string) => `Your ${b} is rising. Stay with it!`,
-  (b: string) => `Great focus! Every minute builds your ${b}.`,
-  (b: string) => `You're doing great. Keep the ${b} going!`,
+  (b: string) => `Tap tap tap! Your ${b} is growing.`,
+  (b: string) => `Your tiny builders are cheering for you!`,
+  (b: string) => `You're doing great. Keep going!`,
   (b: string) => `Quiet minds build tall towers. Keep going!`,
 ];
 const TEAM_CHEERS = [
-  (b: string) => `Building the ${b} together. Stay with your team!`,
-  (b: string) => `Your team is counting on you. Keep it up!`,
+  (b: string) => `Building the ${b} together. Go team!`,
+  (b: string) => `Your friends are building with you. Keep it up!`,
 ];
 let cheerIndex = 0;
 const cheer = (s: LiveSession) => {
@@ -71,8 +71,8 @@ function normalState(s: LiveSession) {
 
 function awayState(s: LiveSession, graceEndAt: number) {
   return s.kind === 'group'
-    ? { title: 'Focus Town · Your team needs you!', subtitle: 'Come back before the building takes damage. Every second away hurts.', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' }
-    : { title: 'Focus Town · Come back!', subtitle: 'Your building collapses when the timer reaches zero. Tap to return.', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' };
+    ? { title: 'Focus Town · Your team misses you!', subtitle: 'Your friends are still building. Hop back soon!', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' }
+    : { title: 'Focus Town · Psst, come back!', subtitle: 'Your tiny builders miss you! Hurry back!', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' };
 }
 
 function render(state: ReturnType<typeof normalState>, endAt: number, timeoutMs: number) {

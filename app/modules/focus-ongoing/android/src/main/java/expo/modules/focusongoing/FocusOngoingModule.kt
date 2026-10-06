@@ -1,5 +1,6 @@
 package expo.modules.focusongoing
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,7 +16,7 @@ import expo.modules.kotlin.modules.ModuleDefinition
 // 집중 중 알림 영역에 떠 있는 "진행 카드".
 // 큰 카운트다운(Chronometer)을 시스템이 직접 그려 주므로, 앱이 백그라운드에 있어도 시간이 계속 줄어든다.
 class FocusOngoingModule : Module() {
-  private val channelId = "focus_ongoing_v2"
+  private val channelId = "focus_ongoing_v3"
   private val notificationId = 4201
 
   private val context: Context
@@ -79,8 +80,10 @@ class FocusOngoingModule : Module() {
   private fun ensureChannel() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-      // 예전 버전(중요도 낮음)에서 만든 채널은 알림 목록 맨 아래 "무음" 칸에 묻혀서 지운다
-      if (manager.getNotificationChannel("focus_ongoing") != null) manager.deleteNotificationChannel("focus_ongoing")
+      // 예전 버전에서 만든 채널은 설정을 바꿀 수 없어서 지우고 새로 만든다
+      for (old in listOf("focus_ongoing", "focus_ongoing_v2")) {
+        if (manager.getNotificationChannel(old) != null) manager.deleteNotificationChannel(old)
+      }
       if (manager.getNotificationChannel(channelId) == null) {
         // 기본 중요도라 알림 목록 위쪽에 보이지만, 소리와 진동은 끈다
         val channel = NotificationChannel(channelId, "Focus session", NotificationManager.IMPORTANCE_DEFAULT)
@@ -88,6 +91,8 @@ class FocusOngoingModule : Module() {
         channel.setShowBadge(false)
         channel.setSound(null, null)
         channel.enableVibration(false)
+        // 잠금 화면에서도 내용 전체(카운트다운 포함)를 보여준다
+        channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         manager.createNotificationChannel(channel)
       }
     }
