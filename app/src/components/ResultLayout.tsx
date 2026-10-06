@@ -13,6 +13,7 @@ export default function ResultLayout({
   children,
   button,
   onPress,
+  secondary,
   onClose,
 }: {
   hero: ReactNode;
@@ -22,6 +23,7 @@ export default function ResultLayout({
   children?: ReactNode;
   button?: string; // 없으면 아래 버튼을 그리지 않는다
   onPress?: () => void;
+  secondary?: { label: string; onPress: () => void }; // 큰 버튼 아래의 보조 버튼 (예: 통화 패스를 쓰지 않고 넘어가기)
   onClose?: () => void; // 있으면 왼쪽 위에 X 버튼을 둔다 (아래 버튼 대신 쓰는 용도)
 }) {
   const { width } = useWindowDimensions();
@@ -51,6 +53,11 @@ export default function ResultLayout({
             <Txt style={styles.btnText}>{button}</Txt>
           </Pressable>
         ) : null}
+        {secondary ? (
+          <Pressable onPress={secondary.onPress} style={({ pressed }) => [styles.btn2, pressed && { opacity: 0.8 }]}>
+            <Txt style={styles.btn2Text}>{secondary.label}</Txt>
+          </Pressable>
+        ) : null}
       </View>
     </ScrollView>
     {onClose ? (
@@ -72,6 +79,8 @@ const styles = StyleSheet.create({
   msg: { color: colors.text, opacity: 0.92, textAlign: 'center' },
   btn: { paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   btnText: { color: colors.bg, fontSize: 16 },
+  btn2: { paddingVertical: 18, borderRadius: 18, backgroundColor: soft.card, alignItems: 'center' },
+  btn2Text: { color: soft.subtle, fontSize: 13 },
   close: { position: 'absolute', top: 10, left: 18, padding: 6 },
   closeText: { color: soft.subtle, fontSize: 34, lineHeight: 40, opacity: 0.85 },
 });
