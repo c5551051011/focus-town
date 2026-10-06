@@ -2,7 +2,8 @@ import { memo, useState } from 'react';
 import { Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { colors, soft } from '../theme';
 import { Pixel, SpriteName } from '../components/Pixel';
-import { Sans, Txt } from '../components/ui';
+import { Sans } from '../components/ui';
+import { ScreenTitle } from '../components/cards';
 import { BUILDINGS, buildingOf } from '../lib/buildings';
 import { Session } from '../lib/types';
 
@@ -74,12 +75,14 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.header}>
-        <Txt style={styles.title}>MY TOWN</Txt>
-        <Sans style={styles.count}>
-          {shown} {shown === 1 ? 'building' : 'buildings'}
-        </Sans>
-      </View>
+      <ScreenTitle
+        title="MY TOWN"
+        right={
+          <Sans style={styles.count}>
+            {shown} {shown === 1 ? 'building' : 'buildings'}
+          </Sans>
+        }
+      />
 
       {/* 기간 선택: 둥근 알약 모양 구간 선택 */}
       <View style={styles.seg}>
@@ -126,13 +129,11 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 12, alignItems: 'center' },
-  mapArea: { flex: 1, justifyContent: 'center' },
+  wrap: { flex: 1, paddingHorizontal: 20, alignItems: 'stretch' },
+  mapArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   stage: { paddingVertical: 12 },
-  header: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 8 },
-  title: { color: colors.accent, fontSize: 16 },
   count: { color: soft.subtle, fontSize: 14, fontWeight: '600' },
-  seg: { flexDirection: 'row', alignSelf: 'stretch', marginTop: 16, marginHorizontal: 8, padding: 4, borderRadius: 22, backgroundColor: soft.card },
+  seg: { flexDirection: 'row', alignSelf: 'stretch', marginTop: 4, padding: 4, borderRadius: 22, backgroundColor: soft.card },
   segItem: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 18 },
   segOn: { backgroundColor: colors.accent },
   segText: { fontSize: 14, color: soft.subtle, fontWeight: '600' },

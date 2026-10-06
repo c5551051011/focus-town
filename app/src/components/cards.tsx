@@ -36,11 +36,24 @@ export function ScreenHeader({ title, onBack }: { title: string; onBack: () => v
   );
 }
 
+// 모든 탭 화면의 맨 위 제목 줄: 높이와 위치가 같아서 탭을 옮겨도 제목이 같은 자리에 있다
+export const TITLE_HEIGHT = 56;
+export function ScreenTitle({ title, right, center }: { title: string; right?: ReactNode; center?: boolean }) {
+  return (
+    <View style={[styles.title, center ? { justifyContent: 'center' } : { justifyContent: 'space-between' }]}>
+      <Txt style={styles.titleText}>{title}</Txt>
+      {!center && right ? right : null}
+    </View>
+  );
+}
+
 export const statGrid = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 14 },
 });
 
 const styles = StyleSheet.create({
+  title: { height: TITLE_HEIGHT, flexDirection: 'row', alignItems: 'center' },
+  titleText: { color: colors.accent, fontSize: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center' },
   backArrow: { color: colors.accent, fontSize: 26, fontWeight: '700', lineHeight: 30 },

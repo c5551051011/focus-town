@@ -9,6 +9,7 @@ import SoundSheet from '../components/SoundSheet';
 import TagSheet from '../components/TagSheet';
 import FriendPicker from '../components/FriendPicker';
 import { Pill, Sans, Txt } from '../components/ui';
+import { ScreenTitle } from '../components/cards';
 import { TIME_VALUES, buildingFor } from '../lib/buildings';
 import { AmbientId, ambientLabel } from '../lib/ambient';
 import { Settings } from '../lib/settings';
@@ -42,7 +43,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
       <View style={styles.top}>
-        <Txt style={styles.logo}>FOCUS TOWN</Txt>
+        <ScreenTitle title="FOCUS TOWN" center />
         {dailyGoal > 0 ? (
           <View style={styles.goalPill}>
             <View style={styles.goalTrack}>
@@ -145,10 +146,9 @@ function Chip({ icon, label, color, extra, onPress }: { icon?: ReactNode; label:
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexGrow: 1, padding: 24 },
-  top: { alignItems: 'center', paddingTop: 36 },
-  logo: { color: colors.accent, fontSize: 14 },
-  goalPill: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
+  wrap: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 24 },
+  top: { alignItems: 'center' },
+  goalPill: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
   goalTrack: { width: 64, height: 8, borderRadius: 4, backgroundColor: soft.sunken, overflow: 'hidden' },
   goalFill: { height: '100%', borderRadius: 4, backgroundColor: colors.accent },
   goalText: { color: soft.subtle, fontSize: 12 },
@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
   timeBox: { marginTop: 10, alignItems: 'center', paddingVertical: 6, paddingHorizontal: 28 },
   time: { fontSize: 44, lineHeight: 56, color: colors.gold },
   timeHint: { color: soft.subtle, fontSize: 11, marginTop: 2 },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 22 },
-  chips: { flexDirection: 'row', gap: 10, marginTop: 18, alignSelf: 'stretch' },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 52 },
+  chips: { flexDirection: 'row', gap: 10, marginTop: 20, alignSelf: 'stretch' },
   chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, paddingHorizontal: 8, borderRadius: 14, backgroundColor: soft.card },
   chipText: { fontSize: 13, color: colors.text, flexShrink: 1 },
   extra: { flexDirection: 'row', gap: 2 },

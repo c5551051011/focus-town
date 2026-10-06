@@ -4,7 +4,7 @@ import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
 import { Pixel } from '../components/Pixel';
 import { Sans, Txt } from '../components/ui';
-import { SectionTitle, StatCard, statGrid } from '../components/cards';
+import { ScreenTitle, SectionTitle, StatCard, statGrid } from '../components/cards';
 import { Character } from '../lib/character';
 import { Social, isFriend } from '../lib/social';
 import { computeStats } from '../lib/stats';
@@ -33,12 +33,14 @@ export default function ProfileScreen({ character, social, hasAccount, sessions,
 
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.top}>
-        <Txt style={styles.title}>ME</Txt>
-        <Pressable onPress={onOpenSettings} hitSlop={12} style={styles.gear}>
-          <Icon name="gear" size={26} color={soft.subtle} />
-        </Pressable>
-      </View>
+      <ScreenTitle
+        title="ME"
+        right={
+          <Pressable onPress={onOpenSettings} hitSlop={12} style={styles.gear}>
+            <Icon name="gear" size={26} color={soft.subtle} />
+          </Pressable>
+        }
+      />
 
       {/* 프로필 카드 */}
       <View style={styles.hero}>
@@ -109,12 +111,10 @@ export default function ProfileScreen({ character, social, hasAccount, sessions,
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 20, paddingBottom: 48 },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  title: { color: colors.accent, fontSize: 16 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 48 },
   gear: { padding: 6, borderRadius: 18, backgroundColor: soft.card },
 
-  hero: { alignItems: 'center', backgroundColor: soft.card, borderRadius: 18, paddingVertical: 26, marginTop: 18 },
+  hero: { alignItems: 'center', backgroundColor: soft.card, borderRadius: 18, paddingVertical: 26, marginTop: 4 },
   name: { fontSize: 20, marginTop: 16 },
   editBtn: { marginTop: 16, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 18, borderWidth: 1.5, borderColor: soft.line },
   editText: { color: soft.subtle, fontSize: 13, fontWeight: '600' },

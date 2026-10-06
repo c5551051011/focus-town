@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 import { Pixel } from '../components/Pixel';
 import { Sans, Txt } from '../components/ui';
 import SessionTimeline from '../components/SessionTimeline';
-import { SectionTitle, StatCard, statGrid } from '../components/cards';
+import { ScreenTitle, SectionTitle, StatCard, statGrid } from '../components/cards';
 import { BUILDINGS, buildingOf } from '../lib/buildings';
 import { computeStats } from '../lib/stats';
 import { computeStreak, dayKey } from '../lib/streak';
@@ -24,7 +24,7 @@ export default function StatsScreen({ sessions, goal }: { sessions: Session[]; g
 
   return (
     <ScrollView contentContainerStyle={styles.wrap}>
-      <Txt style={styles.title}>STATS</Txt>
+      <ScreenTitle title="STATS" />
 
       <View style={styles.tabs}>
         {(['overview', 'history'] as const).map((v) => (
@@ -287,10 +287,9 @@ const LEVELS = [
 ];
 
 const styles = StyleSheet.create({
-  wrap: { padding: 20, paddingBottom: 48 },
-  title: { color: colors.accent, fontSize: 16, marginTop: 8 },
+  wrap: { paddingHorizontal: 20, paddingBottom: 48 },
 
-  tabs: { flexDirection: 'row', marginTop: 18, borderBottomWidth: 2, borderBottomColor: LINE },
+  tabs: { flexDirection: 'row', marginTop: 4, borderBottomWidth: 2, borderBottomColor: LINE },
   tab: { paddingVertical: 12, paddingHorizontal: 4, marginRight: 24, borderBottomWidth: 3, borderBottomColor: 'transparent', marginBottom: -2 },
   tabOn: { borderBottomColor: colors.accent },
   tabText: { fontSize: 15, color: SUBTLE, fontWeight: '600' },
