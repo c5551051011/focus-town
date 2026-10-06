@@ -110,7 +110,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
         }}
         onClose={() => setSheet(null)}
       />
-      <SoundSheet visible={sheet === 'sound'} selected={ambient} onSelect={(id) => update({ ambient: id })} onClose={() => setSheet(null)} />
+      <SoundSheet visible={sheet === 'sound'} tag={tag} selected={ambient} onSelect={(id) => update({ ambient: id })} onClose={() => setSheet(null)} />
     </ScrollView>
   );
 }
@@ -132,7 +132,7 @@ function Chip({ icon, label, color, extra, onPress }: { icon?: ReactNode; label:
 
 const styles = StyleSheet.create({
   wrap: { flexGrow: 1, padding: 24 },
-  top: { alignItems: 'center', paddingTop: 4 },
+  top: { alignItems: 'center', paddingTop: 36 },
   logo: { color: colors.accent, fontSize: 14 },
   goal: { color: colors.dim, fontSize: 8, marginTop: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AMBIENTS, AmbientId } from './ambient';
+import { AmbientId, isAmbientId } from './ambient';
 import { Character, isValidCharacter } from './character';
 import { VOLUME_VALUES, VolumeLevel, prefs } from './prefs';
 
@@ -39,7 +39,7 @@ export async function loadSettings(): Promise<Settings> {
     if (!raw) return DEFAULT_SETTINGS;
     const s = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } as Settings;
     // 삭제된 배경음이 저장돼 있으면 OFF로 되돌린다
-    if (!AMBIENTS.some((a) => a.id === s.ambient)) s.ambient = 'off';
+    if (!isAmbientId(s.ambient)) s.ambient = 'off';
     if (!isValidCharacter(s.character)) s.character = null;
     return s;
   } catch {

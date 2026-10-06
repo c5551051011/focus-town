@@ -1,0 +1,6 @@
+expo.modules.focusongoing
+id focus_text
+id focus_timer
+id focus_title
+layout focus_card
+layout focus_card_big

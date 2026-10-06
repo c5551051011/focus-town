@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 import { Txt } from './ui';
-import { AMBIENTS, AmbientId, startAmbient, stopAmbient } from '../lib/ambient';
+import { AmbientId, TRACKS, startAmbient, stopAmbient } from '../lib/ambient';
+import { PRESET_TAGS, tagColor } from '../lib/tags';
 
-// 배경 사운드 선택 시트. 각 줄의 PLAY 버튼으로 미리 들어볼 수 있다.
+// 배경 사운드 선택 시트: 지금 모드에 어울리는 곡을 맨 위에 보여주고, 나머지는 모드별로 묶어서 보여준다.
+// 각 줄의 PLAY 버튼으로 미리 들어볼 수 있다.
 export default function SoundSheet({
   visible,
+  tag,
   selected,
   onSelect,
   onClose,
 }: {
   visible: boolean;
+  tag: string;
   selected: AmbientId;
   onSelect: (id: AmbientId) => void;
   onClose: () => void;
@@ -34,36 +38,60 @@ export default function SoundSheet({
     }
   };
 
+  const recommended = TRACKS.filter((t) => t.modes.includes(tag));
+  const groups = PRESET_TAGS.map((m) => ({ mode: m, tracks: TRACKS.filter((t) => t.modes[0] === m && !recommended.includes(t)) })).filter((g) => g.tracks.length > 0);
+
+  const renderRow = (id: string, title: string, modes?: string[]) => {
+    const on = id === selected;
+    return (
+      <View key={id} style={[styles.row, on && styles.rowOn]}>
+        <Pressable
+          style={styles.main}
+          onPress={() => {
+            onSelect(id);
+            close();
+          }}
+        >
+          <Txt style={[styles.label, on && { color: colors.bg }]} numberOfLines={1}>{title}</Txt>
+          {modes ? (
+            <View style={styles.modes}>
+              {modes.map((m) => (
+                <Txt key={m} style={[styles.mode, { color: on ? colors.bg : tagColor(m) }]}>{m}</Txt>
+              ))}
+            </View>
+          ) : null}
+        </Pressable>
+        {id !== 'off' && (
+          <Pressable onPress={() => togglePreview(id)} style={[styles.play, playing === id && styles.playOn]} hitSlop={6}>
+            <Txt style={styles.playText}>{playing === id ? 'STOP' : 'PLAY'}</Txt>
+          </Pressable>
+        )}
+      </View>
+    );
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <Pressable style={styles.backdrop} onPress={close}>
         <Pressable style={styles.box} onPress={() => {}}>
           <Txt style={styles.title}>BACKGROUND SOUND</Txt>
-          <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ gap: 8 }}>
-            {AMBIENTS.map((a) => {
-              const on = a.id === selected;
-              return (
-                <View key={a.id} style={[styles.row, on && styles.rowOn]}>
-                  <Pressable
-                    style={styles.main}
-                    onPress={() => {
-                      onSelect(a.id);
-                      close();
-                    }}
-                  >
-                    <Txt style={[styles.label, on && { color: colors.bg }]}>{a.label}</Txt>
-                    {a.hint ? <Txt style={[styles.hint, on && { color: colors.bg }]}>{a.hint}</Txt> : null}
-                  </Pressable>
-                  {a.id !== 'off' && (
-                    <Pressable onPress={() => togglePreview(a.id)} style={[styles.play, playing === a.id && styles.playOn]} hitSlop={6}>
-                      <Txt style={styles.playText}>{playing === a.id ? 'STOP' : 'PLAY'}</Txt>
-                    </Pressable>
-                  )}
-                </View>
-              );
-            })}
+          <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 8 }}>
+            {renderRow('off', 'OFF')}
+
+            {recommended.length > 0 && (
+              <>
+                <Txt style={[styles.section, { color: tagColor(tag) }]}>FOR {tag}</Txt>
+                {recommended.map((t) => renderRow(t.id, t.title, t.modes))}
+              </>
+            )}
+
+            {groups.map((g) => (
+              <View key={g.mode} style={{ gap: 8 }}>
+                <Txt style={[styles.section, { color: tagColor(g.mode) }]}>{g.mode}</Txt>
+                {g.tracks.map((t) => renderRow(t.id, t.title, t.modes))}
+              </View>
+            ))}
           </ScrollView>
-          <Txt style={styles.tip}>Tap a name to select.</Txt>
         </Pressable>
       </Pressable>
     </Modal>
@@ -71,16 +99,17 @@ export default function SoundSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 16 },
   box: { backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line, padding: 16 },
   title: { color: colors.accent, fontSize: 12, marginBottom: 14 },
+  section: { fontSize: 9, marginTop: 12 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
   rowOn: { backgroundColor: colors.gold },
-  main: { flex: 1, padding: 14 },
-  label: { fontSize: 10 },
-  hint: { fontSize: 7, color: colors.dim, marginTop: 8 },
+  main: { flex: 1, padding: 12 },
+  label: { fontSize: 9, lineHeight: 14 },
+  modes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  mode: { fontSize: 6 },
   play: { marginRight: 10, paddingVertical: 10, paddingHorizontal: 10, backgroundColor: colors.bg, borderWidth: 3, borderColor: colors.line },
   playOn: { backgroundColor: colors.accent },
   playText: { fontSize: 8 },
-  tip: { color: colors.dim, fontSize: 7, marginTop: 14, textAlign: 'center' },
 });

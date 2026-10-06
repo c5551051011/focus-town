@@ -38,7 +38,7 @@ Focus Town turns focus time into a tiny pixel town.
 Pick how long you want to focus, press START, and a team of baby bear, cat and rabbit builders gets to work. Stay in the app until the timer ends and your building is complete. The longer you focus, the bigger the building: from a straw hut to a stone castle.
 
 HOW IT WORKS
-• Choose a time from 5 to 120 minutes and a focus mode (Study, Work, Rest, Exercise, or your own).
+• Choose a time from 5 to 120 minutes and a focus mode (Study, Reading, Work, Exercise, Rest, Sleep, or your own).
 • Watch your building rise floor by floor while you focus.
 • Leave the app for more than 15 seconds and the building collapses. Come back in time and all is well.
 • Finished buildings appear in your town. Keep going to fill the map.
@@ -48,7 +48,8 @@ FEATURES
 • Daily streaks, daily goals, and a calendar of your focus history
 • Optional daily reminder so you never forget your town
 • Weekly chart, focus time by mode, and a building collection
-• Calm lo-fi background music (free to preview), with an easy mute button
+• 16 calm lo-fi tracks sorted by mode (preview before you pick), with an easy mute button
+• A countdown card in your notification shade (Android) or Live Activity (iOS) while you are away
 • Retro 16-bit pixel art and chiptune sound effects
 • Hold-to-stop button so you never quit by accident
 • 5-second cancel window after you press START
@@ -81,7 +82,7 @@ First release! Build your pixel town while you focus.
 집중할 시간을 고르고 START를 누르면 아기 곰, 고양이, 토끼 일꾼들이 건물을 짓기 시작해요. 타이머가 끝날 때까지 앱을 벗어나지 않으면 건물이 완공돼요. 오래 집중할수록 더 큰 건물이 생겨요. 오두막부터 돌 성까지!
 
 이렇게 사용해요
-• 5분부터 120분까지 시간을 고르고, 집중 모드(공부, 일, 휴식, 운동, 직접 만든 모드)를 선택해요.
+• 5분부터 120분까지 시간을 고르고, 집중 모드(공부, 독서, 일, 운동, 휴식, 수면, 직접 만든 모드)를 선택해요.
 • 집중하는 동안 건물이 한 층씩 올라가요.
 • 앱을 15초 넘게 벗어나면 건물이 무너져요. 시간 안에 돌아오면 괜찮아요.
 • 완공한 건물은 내 마을에 놓여요. 계속 집중해서 지도를 채워 보세요.
@@ -91,7 +92,8 @@ First release! Build your pixel town while you focus.
 • 매일 이어 가는 스트릭, 일일 목표, 집중 기록 달력
 • 선택할 수 있는 하루 시작 알림
 • 주간 그래프, 모드별 집중 시간, 건물 도감
-• 잔잔한 로파이 배경음(미리 듣기 가능)과 간편한 음소거
+• 모드별로 분류한 로파이 배경음 16곡(미리 듣기 가능)과 간편한 음소거
+• 앱을 벗어나도 알림 영역(Android)이나 라이브 액티비티(iOS)에서 남은 시간 확인
 • 레트로 16비트 픽셀 아트와 칩튠 효과음
 • 꾹 눌러야 멈추는 정지 버튼으로 실수 방지
 • START 후 5초 동안 취소 가능

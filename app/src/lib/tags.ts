@@ -1,18 +1,20 @@
 import { colors } from '../theme';
 
 // 집중 모드(태그). 기본 4개 + 사용자가 추가한 태그
-export const PRESET_TAGS = ['STUDY', 'WORK', 'REST', 'EXERCISE'];
+export const PRESET_TAGS = ['STUDY', 'READING', 'WORK', 'EXERCISE', 'REST', 'SLEEP'];
 export const MAX_CUSTOM_TAGS = 8;
 export const MAX_TAG_LENGTH = 12;
 
 const PRESET_COLORS: Record<string, string> = {
   STUDY: '#8be9fd',
+  READING: '#ff9de2',
   WORK: '#bd93f9',
-  REST: '#7ee787',
   EXERCISE: '#ffb86c',
+  REST: '#7ee787',
+  SLEEP: '#9aa8ff',
 };
 // 직접 만든 태그는 이름으로 색을 정해서, 삭제/추가해도 색이 바뀌지 않는다
-const CUSTOM_COLORS = ['#ff79c6', '#f1fa8c', '#6be0c9', '#ff9d9d', '#9aa8ff', '#e6a8ff'];
+const CUSTOM_COLORS = ['#f1fa8c', '#6be0c9', '#ff9d9d', '#e6a8ff', '#c9d6ff', '#b0f0a0'];
 
 export function tagColor(tag: string | undefined): string {
   if (!tag) return colors.dim;
