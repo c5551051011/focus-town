@@ -220,7 +220,7 @@ npx eas-cli build -p ios --profile preview
 - [ ] iPhone 에 새 빌드 설치 → 라이브 액티비티와 친구/그룹 흐름 확인
 - [ ] Supabase: 이메일 템플릿(`{{ .Token }}`)과 Custom SMTP 설정 (로그인 코드가 오려면 필수)
 - [ ] Apple 에 Family Controls 권한 신청 (7.4)
-- [ ] 개인정보/약관의 `[CONTACT EMAIL]` 채우기 (개발자 이름은 JIN CHOI 로 채움), `SUPPORT_EMAIL`(`app/src/config.ts`) 설정, GitHub Pages(main /docs) 켜기
+- [ ] GitHub Pages(main /docs) 켜기
 
 **출시 준비**
 - [ ] 스토어 스크린샷(현재 화면으로) + 캡션 이미지

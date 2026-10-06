@@ -14,15 +14,15 @@
 | 지원 언어 | English (앱 UI). 스토어 설명은 영어 + 한국어 |
 | 개인정보 처리방침 URL | `https://c5551051011.github.io/towny/privacy.html` |
 | 이용약관 URL | `https://c5551051011.github.io/towny/terms.html` |
-| 지원 URL | `[ ]` (GitHub Pages 주소 `https://c5551051011.github.io/towny/` 사용 가능) |
-| 문의 이메일 | `[ ]` |
+| 지원 URL | https://c5551051011.github.io/towny/ |
+| 문의 이메일 | towny.admin@gmail.com |
 | 개발자/판매자 이름 | JIN CHOI |
 
 > 처리방침/약관 URL은 GitHub 저장소 Settings → Pages 에서 **Branch: main, Folder: /docs** 로 켜야 열립니다.
 
 ## 2. English listing
 
-**Name (≤30)**: `Towny`
+**Name (≤30)**: `Towny` — 이미 쓰이고 있어 등록이 안 되면 `Towny: Focus for Productivity`(29자) 또는 `Towny: Pixel Focus Timer`(24자)
 
 **Subtitle — App Store (≤30)**: `Pixel town focus timer`
 
@@ -168,7 +168,7 @@ Android 에뮬레이터 촬영: 에뮬레이터 우측 툴바의 카메라 아�
 ## 7. 출시 전 체크리스트
 
 - [ ] GitHub Pages 켜기 (main / docs) → 처리방침, 약관 URL 열리는지 확인
-- [ ] `docs/privacy.html`, `docs/terms.html` 의 `[DEVELOPER NAME]`, `[CONTACT EMAIL]` 값 채우기 (한/영 양쪽)
+- [x] `docs/privacy.html`, `docs/terms.html` 의 개발자 이름(JIN CHOI), 문의 이메일(towny.admin@gmail.com) 채움
 - [ ] `app/src/config.ts` 의 `SUPPORT_EMAIL` 채우기 (설정의 Send feedback 버튼이 나타남)
 - [ ] Sentry 프로젝트 생성 → DSN을 EAS 환경 변수 `EXPO_PUBLIC_SENTRY_DSN`으로 등록
 - [ ] PostHog 프로젝트 생성 → `EXPO_PUBLIC_POSTHOG_KEY` 등록 (유럽 서버면 `EXPO_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com`)
