@@ -126,3 +126,8 @@ const pill = StyleSheet.create({
   base: { borderWidth: 3, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: 'transparent' },
   text: { fontSize: 8 },
 });
+
+// 작은 글씨/숫자용 기본(시스템) 글꼴. 픽셀 폰트는 작은 크기에서 읽기 어려워서, 제목과 큰 숫자에만 쓰고 나머지는 이걸 쓴다.
+export function Sans({ style, ...rest }: TextProps) {
+  return <Text {...rest} style={[{ color: colors.text }, style as StyleProp<TextStyle>]} />;
+}
