@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { forgetPushToken } from './push';
 
 // 이메일 코드(OTP) 로그인. 이메일로 6자리 코드를 보내고, 입력하면 로그인된다. 비밀번호는 없다.
 export async function sendCode(email: string): Promise<string | null> {
@@ -39,6 +40,13 @@ export async function deleteAccount(): Promise<string | null> {
 }
 
 export async function signOut(): Promise<void> {
+  // 이 기기로 더는 팀원 알림이 오지 않도록 푸시 토큰을 지운다 (실패해도 로그아웃은 진행)
+  try {
+    await supabase.rpc('clear_push_token');
+    forgetPushToken();
+  } catch {
+    // ignore
+  }
   await supabase.auth.signOut();
 }
 

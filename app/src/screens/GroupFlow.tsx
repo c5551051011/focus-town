@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 import { useKeepAwake } from 'expo-keep-awake';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import Avatar from '../components/Avatar';
 import { Pixel } from '../components/Pixel';
-import SessionLayout from '../components/SessionLayout';
+import SessionLayout, { TeamBar } from '../components/SessionLayout';
+import ResultLayout from '../components/ResultLayout';
 import StopButton from '../components/StopButton';
 import { PixelButton, Txt } from '../components/ui';
 import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/ambient';
 import { buildingFor, tieredBuilding } from '../lib/buildings';
 import { Character } from '../lib/character';
 import { statusMessage } from '../lib/messages';
-import { RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, respondJoin } from '../lib/rooms';
+import { RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, nudgeAway, respondJoin } from '../lib/rooms';
+import { selection } from '../lib/haptics';
 import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
 import { startLive, stopLive } from '../lib/liveProgress';
@@ -171,14 +173,7 @@ export default function GroupFlow({ initial, myId, ambient, onRecord, onExit }: 
 // ───────────────────────── 하위 화면 ─────────────────────────
 
 function Notice({ title, text, icon, onOk, okLabel = 'OK' }: { title: string; text: string; icon?: React.ReactNode; onOk: () => void; okLabel?: string }) {
-  return (
-    <View style={styles.center}>
-      {icon}
-      <Txt style={styles.title}>{title}</Txt>
-      <Txt style={styles.text}>{text}</Txt>
-      <PixelButton label={okLabel} onPress={onOk} style={styles.fullBtn} />
-    </View>
-  );
+  return <ResultLayout hero={icon ?? <Pixel name="hammer" size={90} />} title={title} tone={icon ? 'bad' : 'neutral'} message={text} button={okLabel} onPress={onOk} />;
 }
 
 function MemberCard({ m, sub }: { m: RoomMember; sub?: string }) {
@@ -217,6 +212,8 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
   useKeepAwake();
   const { room, members } = state;
   const [muted, setMuted] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const base = buildingFor(room.minutes);
   const dur = state.durability_now;
   const progress = 1 - remainingMs / (room.minutes * 60 * 1000);
@@ -242,12 +239,30 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
   }, []);
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+  }, []);
 
-  const message = away
-    ? 'You are away!\nCome back quickly.'
-    : awayNames.length > 0
-      ? `${awayNames.join(', ')} ${awayNames.length > 1 ? 'are' : 'is'} away!\nThe building is taking damage.`
-      : statusMessage(progress, Math.floor(progress * room.minutes * 60), false);
+  const showToast = (text: string) => {
+    setToast(text);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  };
+  // 이탈한 팀원이 있을 때 화면을 탭하면 그 팀원에게 "돌아와요" 알림을 보낸다
+  const nudge = async () => {
+    selection();
+    const r = await nudgeAway(room.id);
+    if (!r.ok) showToast(r.error);
+    else showToast(r.data > 0 ? `Nudge sent to ${awayNames.join(', ')}!` : 'Just nudged!\nGive them a moment.');
+  };
+
+  const message = toast
+    ? toast
+    : away
+      ? 'You are away!\nCome back quickly.'
+      : awayNames.length > 0
+        ? `${awayNames.join(', ')} ${awayNames.length > 1 ? 'are' : 'is'} away!\nTap the screen to nudge.`
+        : statusMessage(progress, Math.floor(progress * room.minutes * 60), false);
 
   return (
     <SessionLayout
@@ -257,6 +272,8 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
       big={fmt(remainingMs)}
       message={message}
       warn={damaging}
+      onTap={awayNames.length > 0 ? nudge : undefined}
+      team={<TeamBar pct={dur} color={toneColor(dur)} />}
       topRight={
         ambient === 'off' ? null : (
           <Pressable
@@ -272,29 +289,24 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
         )
       }
       extra={
-        <View style={styles.durWrap}>
-          <View style={styles.durHead}>
-            <Txt style={styles.durLabel}>TEAM BUILDING</Txt>
-            <Txt style={[styles.durLabel, { color: toneColor(dur) }]}>{dur}%</Txt>
-          </View>
-          <View style={styles.durTrack}>
-            <View style={[styles.durFill, { width: `${dur}%`, backgroundColor: toneColor(dur) }]} />
-          </View>
-          {waitingFor.length > 0 ? <Txt style={styles.waiting}>WAITING FOR {waitingFor.join(', ')}</Txt> : null}
-          {request ? (
-            <View style={styles.request}>
-              <Txt style={styles.requestText}>{request.name} wants to join</Txt>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Pressable style={[styles.reqBtn, { backgroundColor: colors.accent }]} onPress={() => onVote(request.user_id, true)}>
-                  <Txt style={[styles.reqBtnText, { color: colors.bg }]}>ALLOW</Txt>
-                </Pressable>
-                <Pressable style={styles.reqBtn} onPress={() => onVote(request.user_id, false)}>
-                  <Txt style={styles.reqBtnText}>DENY</Txt>
-                </Pressable>
+        waitingFor.length > 0 || request ? (
+          <View style={styles.extra}>
+            {waitingFor.length > 0 ? <Txt style={styles.waiting}>WAITING FOR {waitingFor.join(', ')}</Txt> : null}
+            {request ? (
+              <View style={styles.request}>
+                <Txt style={styles.requestText}>{request.name} wants to join</Txt>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Pressable style={[styles.reqBtn, { backgroundColor: colors.accent }]} onPress={() => onVote(request.user_id, true)}>
+                    <Txt style={[styles.reqBtnText, { color: colors.bg }]}>ALLOW</Txt>
+                  </Pressable>
+                  <Pressable style={styles.reqBtn} onPress={() => onVote(request.user_id, false)}>
+                    <Txt style={styles.reqBtnText}>DENY</Txt>
+                  </Pressable>
+                </View>
               </View>
-            </View>
-          ) : null}
-        </View>
+            ) : null}
+          </View>
+        ) : null
       }
       bottom={<StopButton onStop={onLeave} />}
     />
@@ -308,64 +320,37 @@ function Result({ state, mine, onExit }: { state: RoomState; mine: RoomMember; o
   const dur = room.durability ?? state.durability_now;
   const participants = members.filter((m) => m.active_since);
   const title = finished ? 'COMPLETE!' : room.status === 'collapsed' ? 'COLLAPSED' : 'YOU WERE DROPPED';
+  const message = finished
+    ? `${building.name} added to your town.${building.id !== buildingFor(room.minutes).id ? '\nThe building was damaged, so it came out smaller.' : ''}`
+    : room.status === 'collapsed'
+      ? 'The team building fell apart.'
+      : 'Your team finished without you.';
   return (
-    <ScrollView contentContainerStyle={styles.lobby}>
-      <View style={{ alignItems: 'center' }}>
-        <Pixel name={finished ? building.id : 'ruins'} size={150} />
-        <Txt style={[styles.title, { color: finished ? colors.gold : colors.danger }]}>{title}</Txt>
-        <Txt style={styles.text}>
-          {finished
-            ? `${building.name} added to your town.${building.id !== buildingFor(room.minutes).id ? '\nThe building was damaged, so it came out smaller.' : ''}`
-            : room.status === 'collapsed'
-              ? 'The team building fell apart.'
-              : 'Your team finished without you.'}
-        </Txt>
-      </View>
-
-      <View style={styles.durWrap}>
-        <View style={styles.durHead}>
-          <Txt style={styles.durLabel}>TEAM BUILDING</Txt>
-          <Txt style={[styles.durLabel, { color: toneColor(dur) }]}>{dur}%</Txt>
-        </View>
-        <View style={styles.durTrack}>
-          <View style={[styles.durFill, { width: `${dur}%`, backgroundColor: toneColor(dur) }]} />
-        </View>
-      </View>
-
+    <ResultLayout hero={<Pixel name={finished ? building.id : 'ruins'} size={150} />} title={title} tone={finished ? 'good' : 'bad'} message={message} button="TO TOWN" onPress={onExit}>
+      <TeamBar pct={dur} color={toneColor(dur)} />
       <View style={styles.grid}>
         {participants.map((m) => (
           <MemberCard key={m.user_id} m={m} sub={m.status === 'active' ? (room.status === 'done' ? 'FINISHED' : 'WAS THERE') : 'DROPPED'} />
         ))}
       </View>
-      <PixelButton label="TO TOWN" onPress={onExit} style={styles.fullBtn} />
-    </ScrollView>
+    </ResultLayout>
   );
 }
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
-  lobby: { padding: 24, paddingBottom: 48, alignItems: 'stretch' },
   title: { color: colors.accent, fontSize: 18, marginTop: 22, textAlign: 'center' },
   text: { color: colors.dim, fontSize: 9, lineHeight: 17, textAlign: 'center', marginVertical: 16 },
   fullBtn: { alignSelf: 'stretch', marginTop: 14 },
-  label: { color: colors.dim, fontSize: 9, marginTop: 22, marginBottom: 8, textAlign: 'center' },
-  code: { color: colors.gold, fontSize: 36, textAlign: 'center', letterSpacing: 4 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 8 },
-  info: { color: colors.text, fontSize: 9, lineHeight: 16 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 4 },
-  card: { width: '47%', alignItems: 'center', paddingVertical: 14, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
-  cardName: { fontSize: 10, marginTop: 8, maxWidth: 130 },
-  cardSub: { fontSize: 7, color: colors.dim, marginTop: 6 },
-  hint: { color: colors.dim, fontSize: 7, lineHeight: 13, textAlign: 'center', marginTop: 18 },
   error: { color: colors.danger, fontSize: 8, lineHeight: 14, textAlign: 'center', marginTop: 12 },
-  durWrap: { alignSelf: 'stretch', marginTop: 12, paddingHorizontal: 10 },
-  durHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  durLabel: { fontSize: 8, color: colors.dim },
-  durTrack: { height: 14, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
-  durFill: { height: '100%' },
-  waiting: { color: colors.dim, fontSize: 7, marginTop: 10, textAlign: 'center' },
-  request: { marginTop: 12, padding: 10, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.gold, alignItems: 'center', gap: 10 },
-  requestText: { fontSize: 8 },
-  reqBtn: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 3, borderColor: colors.line, backgroundColor: colors.bg },
-  reqBtnText: { fontSize: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  card: { width: '47%', alignItems: 'center', paddingVertical: 14, backgroundColor: soft.card, borderRadius: 16 },
+  cardName: { fontSize: 10, marginTop: 8, maxWidth: 130 },
+  cardSub: { fontSize: 8, color: soft.subtle, marginTop: 6 },
+  extra: { alignSelf: 'stretch', marginTop: 4 },
+  waiting: { color: soft.subtle, fontSize: 9, marginTop: 8, textAlign: 'center' },
+  request: { marginTop: 8, padding: 14, backgroundColor: soft.card, borderRadius: 18, alignItems: 'center', gap: 12 },
+  requestText: { fontSize: 10 },
+  reqBtn: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: soft.sunken },
+  reqBtnText: { fontSize: 10 },
 });

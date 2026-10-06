@@ -4,6 +4,7 @@ import { signInGuest, useAuthSession } from './auth';
 import { Character } from './character';
 import { saveProfile } from './profile';
 import { Invite, myInvites } from './rooms';
+import { syncPushToken } from './push';
 import { Person, Social, isFriend, mySocial } from './social';
 
 // 계정 상태(게스트/이메일), 친구 목록, 받은 초대를 한 곳에서 관리한다.
@@ -44,11 +45,15 @@ export function useAccount(character: Character | null, ready: boolean) {
   // 상대가 나를 팔로우해도 보이도록: 앱이 열려 있는 동안 10초마다, 그리고 앱으로 돌아올 때 새로고침한다
   useEffect(() => {
     if (!userId) return;
+    syncPushToken(userId);
     const id = setInterval(() => {
       if (AppState.currentState === 'active') refreshSocial();
     }, 10000);
     const sub = AppState.addEventListener('change', (st) => {
-      if (st === 'active') refreshSocial();
+      if (st === 'active') {
+        refreshSocial();
+        syncPushToken(userId);
+      }
     });
     return () => {
       clearInterval(id);

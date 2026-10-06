@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { ReactNode, useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { colors, soft } from '../theme';
 import { SpriteName } from './Pixel';
 import ConstructionSite from './ConstructionSite';
 import { Txt } from './ui';
@@ -16,43 +16,91 @@ export default function SessionLayout({
   warn,
   topRight,
   workers,
+  team,
   extra,
+  onTap,
 }: {
   building: SpriteName;
   progress: number;
   big: string;
   message: string;
   bottom: ReactNode;
-  warn?: boolean;
+  warn?: boolean; // 켜지면 화면 전체가 붉게 깜빡인다
   topRight?: ReactNode;
   workers: Character[];
-  extra?: ReactNode; // 메시지 아래에 끼워 넣는 영역 (그룹: 내구성 바 등)
+  team?: ReactNode; // 전체 진행률 바로 아래에 붙는 영역 (그룹: 팀 빌딩 바)
+  extra?: ReactNode; // 메시지 아래에 끼워 넣는 영역
+  onTap?: () => void; // 화면 아무 데나 탭 (그룹: 이탈한 팀원에게 알림 보내기)
 }) {
   return (
-    <View style={[styles.wrap, warn && styles.warn]}>
+    <Pressable style={styles.wrap} onPress={onTap} disabled={!onTap}>
       <View style={styles.top}>{topRight}</View>
       <View style={styles.main}>
         <ConstructionSite building={building} progress={progress} workers={workers} />
         <Txt style={styles.big}>{big}</Txt>
-        <View style={styles.bar}>
-          <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+        <View style={styles.bars}>
+          <View style={styles.bar}>
+            <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+          </View>
+          {team}
         </View>
         <Txt style={styles.msg}>{message}</Txt>
         {extra}
       </View>
       <View style={styles.bottom}>{bottom}</View>
+      <RedFlash on={!!warn} />
+    </Pressable>
+  );
+}
+
+// 팀 빌딩(내구성) 바: 전체 진행률 바와 같은 폭·높이로 그 바로 아래에 둔다
+export function TeamBar({ pct, color, label = 'TEAM BUILDING' }: { pct: number; color: string; label?: string }) {
+  return (
+    <View style={styles.team}>
+      <View style={styles.teamHead}>
+        <Txt style={styles.teamLabel}>{label}</Txt>
+        <Txt style={[styles.teamLabel, { color }]}>{pct}%</Txt>
+      </View>
+      <View style={styles.bar}>
+        <View style={[styles.fill, { width: `${pct}%`, backgroundColor: color }]} />
+      </View>
     </View>
   );
 }
 
+// 화면 전체가 붉게 깜빡이는 경고 (테두리만 빨갛게 하던 것을 대신한다). 터치는 그대로 통과한다.
+function RedFlash({ on }: { on: boolean }) {
+  const [pulse] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (!on) {
+      pulse.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 550, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 550, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [on, pulse]);
+  if (!on) return null;
+  return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.flash, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.04, 0.34] }) }]} />;
+}
+
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24 },
-  warn: { borderWidth: 6, borderColor: colors.danger },
+  flash: { backgroundColor: colors.danger },
   top: { height: 52, alignItems: 'flex-end', justifyContent: 'center' },
   main: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   big: { fontSize: 36, marginTop: 12 },
-  bar: { width: '80%', height: 16, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line, marginVertical: 20 },
+  bars: { width: '80%', marginTop: 20 },
+  bar: { width: '100%', height: 16, backgroundColor: colors.panel, borderWidth: 3, borderColor: colors.line },
   fill: { height: '100%', backgroundColor: colors.accent },
-  msg: { color: colors.dim, fontSize: 9, lineHeight: 16, textAlign: 'center', minHeight: 32 },
+  team: { marginTop: 14 },
+  teamHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  teamLabel: { fontSize: 9, color: soft.subtle },
+  msg: { color: '#cfcbe6', fontSize: 12, lineHeight: 22, textAlign: 'center', minHeight: 66, marginTop: 22, paddingHorizontal: 4 },
   bottom: { height: 110, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 28 },
 });

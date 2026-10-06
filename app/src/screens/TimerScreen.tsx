@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 import { useKeepAwake } from 'expo-keep-awake';
-import { colors } from '../theme';
+import { colors, soft } from '../theme';
 import { Pixel } from '../components/Pixel';
 import SessionLayout from '../components/SessionLayout';
-import { PixelButton, Txt } from '../components/ui';
+import { Txt } from '../components/ui';
+import ResultLayout from '../components/ResultLayout';
 import StopButton from '../components/StopButton';
 import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/ambient';
 import { buildingFor } from '../lib/buildings';
@@ -75,15 +76,20 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
     const ok = phase === 'success';
     const goalHit = ok && goal > 0 && before < goal && before + minutes >= goal;
     return (
-      <View style={styles.center}>
-        <Pixel name={ok ? b.id : 'ruins'} size={160} />
-        <Txt style={[styles.big, { color: ok ? colors.gold : colors.danger }]}>{ok ? 'COMPLETE!' : 'COLLAPSED'}</Txt>
-        <Txt style={styles.msg}>
-          {ok ? `${b.name} added to your town.\n+${minutes} min` : endReason === 'gave_up' ? 'You stopped the session.\nTry again!' : 'You left the app too long.\nTry again!'}
-        </Txt>
-        {goalHit && <Txt style={styles.goal}>DAILY GOAL REACHED! ({goal} MIN)</Txt>}
-        <PixelButton label="TO TOWN" onPress={onDone} style={styles.btn} />
-      </View>
+      <ResultLayout
+        hero={<Pixel name={ok ? b.id : 'ruins'} size={150} />}
+        title={ok ? 'COMPLETE!' : 'COLLAPSED'}
+        tone={ok ? 'good' : 'bad'}
+        message={ok ? `${b.name} added to your town.\n+${minutes} min` : endReason === 'gave_up' ? 'You stopped the session.\nTry again!' : 'You left the app too long.\nTry again!'}
+        button="TO TOWN"
+        onPress={onDone}
+      >
+        {goalHit && (
+          <View style={styles.goalPill}>
+            <Txt style={styles.goal}>DAILY GOAL REACHED! ({goal} MIN)</Txt>
+          </View>
+        )}
+      </ResultLayout>
     );
   }
 
@@ -111,9 +117,6 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
 
 const styles = StyleSheet.create({
   mute: { padding: 4 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
-  goal: { color: colors.gold, fontSize: 10, marginTop: 6, textAlign: 'center' },
-  big: { fontSize: 20, marginTop: 20 },
-  msg: { color: colors.dim, fontSize: 9, lineHeight: 16, textAlign: 'center', marginVertical: 8 },
-  btn: { marginTop: 20, alignSelf: 'stretch' },
+  goalPill: { alignSelf: 'center', backgroundColor: soft.card, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 16 },
+  goal: { color: colors.gold, fontSize: 10, textAlign: 'center' },
 });

@@ -4,7 +4,7 @@
 
 ## 처음 한 번 설정하기
 
-1. **테이블 만들기**: Supabase 대시보드 → SQL Editor → `supabase/migrations/` 의 SQL 파일을 **번호 순서대로**(0001 → 0002 → 0003) 붙여 넣고 각각 Run. 이미 실행한 파일은 다시 실행하지 않아도 됩니다.
+1. **테이블 만들기**: Supabase 대시보드 → SQL Editor → `supabase/migrations/` 의 SQL 파일을 **번호 순서대로**(0001 → 0002 → 0003 → 0004) 붙여 넣고 각각 Run. 이미 실행한 파일은 다시 실행하지 않아도 됩니다.
 2. **게스트(이메일 없이) 로그인 켜기** — 지금 테스트에 필요한 설정입니다.
    Authentication → Sign In / Providers → **Allow anonymous sign-ins** 를 켭니다. 앱은 캐릭터를 만든 뒤 자동으로 게스트 계정을 만들어 친구/그룹을 쓸 수 있게 합니다. (게스트 계정은 그 기기에서만 유지되며, 로그아웃하면 복구할 수 없습니다.)
 3. **로그인 메일에 코드 넣기** (이메일로 기존 계정을 불러올 때 필요, 나중에 해도 됩니다) (앱은 이메일로 받은 6자리 코드로 로그인합니다):
@@ -25,6 +25,12 @@
 | `0001_profiles.sql` | 프로필(이름·캐릭터) 테이블, RLS, 계정 삭제 함수 |
 | `0002_rooms.sql` | 그룹 방 테이블과 규칙 함수(create/join/ready/start/late_join/respond_join/heartbeat/finish/leave), 초대 기록 |
 | `0003_social.sql` | 친구 코드, 팔로우(following/followers), 이름 검색, 친구 초대로 바로 시작하는 그룹(`create_room_with_invites`), 초대 수락/거절 |
+| `0004_nudge.sql` | 이탈한 팀원에게 "돌아와요" 푸시 보내기: `push_tokens`(RPC로만 접근), `set_push_token`, `clear_push_token`, `nudge_away` (같은 사람에게 20초에 한 번) |
+
+## 팀원 넛지 (0004)
+- 집중 중 팀원이 앱을 벗어나 있으면(10초 넘게 신호 없음) 다른 팀원이 화면을 탭해 "돌아와요" 알림을 보낼 수 있다. 같은 사람에게는 20초에 한 번만 간다.
+- 알림은 데이터베이스가 Expo 푸시 서비스(`exp.host`)로 직접 보낸다 (Supabase 의 `pg_net` 확장 사용, 기본 켜져 있음). 푸시 토큰은 `push_tokens` 테이블에 있고 다른 사람은 읽을 수 없다.
+- **실제 기기에 알림이 닿으려면** Android 는 Firebase(FCM) 설정이 필요하다: https://docs.expo.dev/push-notifications/fcm-credentials/ . 설정 전에는 넛지 버튼은 동작하지만 알림은 도착하지 않는다. iOS 는 EAS 가 APNs 키를 관리한다.
 
 ## 친구와 그룹 규칙 (0002, 0003)
 - **친구**: 이름 검색 또는 친구 코드(링크)로 팔로우. **서로 팔로우하면 친구**이고, 그룹 초대는 친구에게만 보낼 수 있다.

@@ -33,7 +33,8 @@ table{border-collapse:collapse;width:100%;font-size:.95rem}td,th{border:1px soli
 <tr><td>Supabase</td><td>Sign-in and storage of account/profile data (only if you create an account)</td></tr></table>
 <p>These providers process data on our behalf and may store it in the United States or the European Union.</p>
 <h2>5. Notifications</h2>
-<p>The app uses local notifications on your device to warn you when you leave the app during a session and, if you turn it on, to send a daily reminder at the time you choose. These are scheduled on your device; no push-notification token is collected.</p>
+<p>The app uses local notifications on your device to warn you when you leave the app during a session and, if you turn it on, to send a daily reminder at the time you choose. These are scheduled on your device.</p>
+<p>If you have an account and allow notifications, the app also stores a <b>push-notification token</b> for your device so that a teammate in a group session can send you a "come back" nudge when you have left the app. The token is delivered through Expo's push-notification service and is removed when you sign out or delete your account. Other users cannot see it.</p>
 <h2>6. Retention</h2>
 <p>Analytics and crash data are kept for up to 12 months and then deleted. Account and profile data are kept until you delete your account. Data on your device stays until you delete it.</p>
 <h2>7. Your choices and rights</h2>

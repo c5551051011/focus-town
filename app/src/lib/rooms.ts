@@ -109,6 +109,9 @@ export const finishRoom = (room: string) => call('finish_room', { p_room: room }
 export const leaveRoom = (room: string) => call<{ ok: boolean }>('leave_room', { p_room: room });
 export const getRoomState = (room: string) => call('get_room_state', { p_room: room });
 export const myOpenRoom = () => call<string | null>('my_open_room');
+// 이탈 중인 팀원에게 "돌아와요" 알림을 보낸다. 알림을 받은 사람 수를 돌려준다 (0 이면 이탈한 사람이 없거나 방금 보냈다).
+export const nudgeAway = (room: string) => call<number>('nudge_away', { p_room: room });
+export const setPushToken = (token: string) => call<null>('set_push_token', { p_token: token });
 
 // ── 시간 계산 ──
 // 서버 시각과 내 기기 시각의 차이 (응답을 받을 때마다 갱신)

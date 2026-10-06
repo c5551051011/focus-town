@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { selection } from '../lib/haptics';
-import { colors } from '../theme';
+import { soft } from '../theme';
 import SessionLayout from '../components/SessionLayout';
 import { Txt } from '../components/ui';
 import { buildingFor } from '../lib/buildings';
@@ -39,14 +39,15 @@ export default function CountdownScreen({ minutes, workers, onGo, onCancel }: { 
       big={String(Math.max(left, 0))}
       message={'Get ready...\nStarting soon!'}
       bottom={
-        <Txt style={styles.cancel} onPress={onCancel}>
-          CANCEL
-        </Txt>
+        <Pressable onPress={onCancel} style={({ pressed }) => [styles.cancel, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}>
+          <Txt style={styles.cancelText}>CANCEL</Txt>
+        </Pressable>
       }
     />
   );
 }
 
 const styles = StyleSheet.create({
-  cancel: { color: colors.text, fontSize: 12, paddingVertical: 14, paddingHorizontal: 28, borderWidth: 3, borderColor: 'rgba(255,255,255,0.35)', opacity: 0.8 },
+  cancel: { alignSelf: 'stretch', alignItems: 'center', paddingVertical: 18, borderRadius: 18, backgroundColor: soft.card },
+  cancelText: { fontSize: 13, color: soft.subtle },
 });
