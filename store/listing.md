@@ -8,7 +8,7 @@
 | 항목 | 값 |
 | :--- | :--- |
 | 앱 이름 | Focus Town |
-| 번들/패키지 ID | `com.focustown.app` (iOS/Android 동일) |
+| 번들/패키지 ID | `com.jjinchoi.focustown` (iOS/Android 동일) |
 | 카테고리 | Productivity (보조: Games > Casual 또는 Lifestyle) |
 | 가격 | 무료, 광고 없음, 인앱 결제 없음 |
 | 지원 언어 | English (앱 UI). 스토어 설명은 영어 + 한국어 |
