@@ -84,10 +84,10 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
             icon="target"
             tint="#8be9fd"
             label="Progress card"
-            note="Shows the countdown outside the app (lock screen or notification shade)."
+            note="Countdown on your lock screen."
             right={<Switch on={settings.liveProgress} onPress={() => onChange({ liveProgress: !settings.liveProgress })} />}
           />
-          <Row icon="bell" tint="#ffb86c" label="Away alerts" note="Warns you when you leave the app during a session." right={<Switch on={settings.notify} onPress={() => onChange({ notify: !settings.notify })} />} />
+          <Row icon="bell" tint="#ffb86c" label="Away alerts" note="Warns you when you leave the app." right={<Switch on={settings.notify} onPress={() => onChange({ notify: !settings.notify })} />} />
         </Card>
 
         <SectionTitle>Account</SectionTitle>

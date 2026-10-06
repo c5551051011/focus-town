@@ -130,7 +130,19 @@ const pill = StyleSheet.create({
   text: { fontSize: 8 },
 });
 
-// 작은 글씨/숫자용 기본(시스템) 글꼴. 픽셀 폰트는 작은 크기에서 읽기 어려워서, 제목과 큰 숫자에만 쓰고 나머지는 이걸 쓴다.
+// 카드 화면(Stats, ME, 설정, 타운, 친구)의 글씨.
+// 이 화면들은 "일반 글꼴로 디자인한 크기"를 그대로 쓰되, 픽셀 폰트는 글자 하나가 훨씬 넓어서 크기를 한 단계 낮춰 매핑한다.
+// (예: 16 → 12, 13 → 10, 28 → 21). 굵기는 픽셀 폰트에 없으므로 무시하고, 줄 높이는 글자 크기에 맞춰 다시 계산한다.
+const pixelSize = (fs: number) => (fs <= 10 ? 8 : fs <= 13 ? 10 : fs <= 15 ? 11 : fs <= 16 ? 12 : Math.round(fs * 0.75));
+
 export function Sans({ style, ...rest }: TextProps) {
-  return <Text {...rest} style={[{ color: colors.text }, style as StyleProp<TextStyle>]} />;
+  const flat = StyleSheet.flatten(style) ?? {};
+  const { fontSize, lineHeight, fontWeight: _weight, ...other } = flat as TextStyle;
+  const size = pixelSize(typeof fontSize === 'number' ? fontSize : 14);
+  return (
+    <Text
+      {...rest}
+      style={[{ color: colors.text, fontFamily: font }, other, { fontSize: size, lineHeight: Math.round(size * (lineHeight ? 1.7 : 1.6)) }]}
+    />
+  );
 }

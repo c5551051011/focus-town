@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
-import { colors, soft } from '../theme';
+import { colors, font, soft } from '../theme';
 import Icon from '../components/Icon';
 import PersonRow from '../components/PersonRow';
 import { Sans, Txt } from '../components/ui';
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 48 },
 
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: soft.card, borderRadius: 14, paddingHorizontal: 16 },
-  input: { flex: 1, color: colors.text, fontSize: 16, paddingVertical: 15 },
+  input: { flex: 1, color: colors.text, fontFamily: font, fontSize: 12, paddingVertical: 17 },
   clear: { color: soft.subtle, fontSize: 16 },
   hint: { color: colors.gold, fontSize: 13, marginTop: 10 },
   error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 10 },

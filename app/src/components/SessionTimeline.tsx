@@ -86,7 +86,7 @@ export default function SessionTimeline({ sessions, selected, onSelect }: { sess
   );
 }
 
-const LABEL_W = 76;
+const LABEL_W = 96;
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', height: ROW + 10, borderRadius: 8, paddingHorizontal: 2 },

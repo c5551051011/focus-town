@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   dexBoxOn: { borderWidth: 2, borderColor: LINE },
   badge: { position: 'absolute', right: -4, top: -6, minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeText: { color: colors.bg, fontSize: 12, fontWeight: '800' },
-  dexName: { color: SUBTLE, fontSize: 11, textAlign: 'center', marginTop: 8, lineHeight: 14 },
+  dexName: { color: SUBTLE, fontSize: 10, textAlign: 'center', marginTop: 8, lineHeight: 12 }, // 10 → 픽셀 8 (좁은 칸에 "Library"가 들어가도록)
 
   // 기록: 달력
   monthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
 
   friendRow: { gap: 16, paddingRight: 8 },
   friend: { alignItems: 'center', width: 68 },
-  friendName: { color: colors.text, fontSize: 12, marginTop: 8, maxWidth: 68 },
+  friendName: { color: colors.text, fontSize: 10, marginTop: 8, maxWidth: 68 },
   hintCard: { backgroundColor: soft.card, borderRadius: 14, padding: 16 },
   hintTitle: { fontSize: 15, fontWeight: '700' },
   hintText: { color: soft.subtle, fontSize: 13, lineHeight: 19, marginTop: 6 },
