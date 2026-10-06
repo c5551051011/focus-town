@@ -25,8 +25,8 @@ const SLIDES: Slide[] = [
     text: 'Focus for a while and a building rises in your very own town.',
     art: (
       <View style={{ alignItems: 'center' }}>
-        <Pixel name="house" size={170} />
-        <View style={{ marginTop: -26 }}>{row(['bear', 'cat', 'rabbit'], 60)}</View>
+        <Pixel name="house" size={130} />
+        <View style={{ marginTop: -20 }}>{row(['bear', 'cat', 'rabbit'], 46)}</View>
       </View>
     ),
   },
@@ -35,20 +35,20 @@ const SLIDES: Slide[] = [
     text: 'The longer you focus, the bigger the building you get.',
     art: (
       <View style={{ alignItems: 'center', gap: 14 }}>
-        {row(['hut', 'house', 'tower'], 76)}
-        {row(['library', 'castle'], 76)}
+        {row(['hut', 'house', 'tower'], 60)}
+        {row(['library', 'castle'], 60)}
       </View>
     ),
   },
   {
     title: 'STAY IN THE APP',
     text: 'Leave the app for more than 15 seconds and your building collapses. Come back in time and all is well.',
-    art: <Pixel name="ruins" size={180} />,
+    art: <Pixel name="ruins" size={140} />,
   },
   {
     title: 'GENTLE NUDGES',
     text: 'Allow notifications so we can warn you the moment you leave the app, and cheer you on each day.',
-    art: <Icon name="bell" size={150} color={colors.gold} />,
+    art: <Icon name="bell" size={110} color={colors.gold} />,
     cta: { label: 'ALLOW', kind: 'notifications' },
   },
   {
@@ -57,7 +57,7 @@ const SLIDES: Slide[] = [
     cta: { label: "I'M IN", kind: 'screentime' },
     art: (
       <View style={{ alignItems: 'center', gap: 14 }}>
-        <Icon name="shield" size={150} color={colors.accent} />
+        <Icon name="shield" size={110} color={colors.accent} />
         <Txt style={{ color: colors.gold, fontSize: 11 }}>COMING SOON</Txt>
       </View>
     ),
@@ -65,7 +65,7 @@ const SLIDES: Slide[] = [
   {
     title: 'GROW EVERY DAY',
     text: 'Focus a little each day to keep your streak alive and fill your town.',
-    art: <Pixel name="flame" size={180} />,
+    art: <Pixel name="flame" size={140} />,
   },
 ];
 
@@ -154,11 +154,11 @@ const styles = StyleSheet.create({
   slide: { justifyContent: 'space-between', paddingHorizontal: 28 },
   art: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 },
   // 그림 뒤에 깔리는 둥근 받침
-  halo: { minWidth: 280, minHeight: 280, borderRadius: 140, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  halo: { minWidth: 230, minHeight: 230, borderRadius: 115, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   copy: { paddingBottom: 22 },
-  title: { color: colors.accent, fontSize: 22, lineHeight: 34 },
+  title: { color: colors.accent, fontSize: 18, lineHeight: 28 },
   bar: { width: 44, height: 5, borderRadius: 3, backgroundColor: colors.gold, marginTop: 14 },
-  text: { color: colors.text, fontSize: 13, lineHeight: 26, marginTop: 18, opacity: 0.92 },
+  text: { color: colors.text, fontSize: 11, lineHeight: 22, marginTop: 14, opacity: 0.92 },
   bottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28, paddingBottom: 30, paddingTop: 10 },
   dots: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: soft.line },

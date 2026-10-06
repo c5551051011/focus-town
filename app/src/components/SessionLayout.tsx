@@ -44,11 +44,8 @@ export default function SessionLayout({
           </View>
           {team}
         </View>
-        {extra}
-      </View>
-      {/* 안내 글씨는 아래쪽(정지 버튼 바로 위)에 크게 둔다 */}
-      <View style={styles.msgBox}>
         <Txt style={styles.msg}>{message}</Txt>
+        {extra}
       </View>
       <View style={styles.bottom}>{bottom}</View>
       <RedFlash on={!!warn} />
@@ -122,7 +119,6 @@ const styles = StyleSheet.create({
   softLabel: { fontSize: 11, color: soft.subtle },
   softTrack: { height: 14, borderRadius: 7, backgroundColor: soft.sunken, overflow: 'hidden' },
   softFill: { height: '100%', borderRadius: 7 },
-  msgBox: { minHeight: 96, alignItems: 'center', justifyContent: 'center', paddingBottom: 6 },
-  msg: { color: colors.text, fontSize: 14, lineHeight: 26, textAlign: 'center', paddingHorizontal: 4, opacity: 0.92 },
+  msg: { color: '#cfcbe6', fontSize: 12, lineHeight: 22, textAlign: 'center', minHeight: 66, marginTop: 22, paddingHorizontal: 4 },
   bottom: { height: 110, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 28 },
 });
