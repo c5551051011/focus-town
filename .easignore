@@ -1,0 +1,9 @@
+# EAS 빌드 업로드에서 제외 (앱 빌드에 필요 없는 것들)
+screenshots/
+store/
+docs/
+backend/
+*.md
+app/android/
+app/ios/
+**/build/
