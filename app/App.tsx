@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, BackHandler, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { BackHandler, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PressStart2P_400Regular, useFonts } from '@expo-google-fonts/press-start-2p';
@@ -29,6 +29,7 @@ import { DEFAULT_SETTINGS, Settings, applyPrefs, loadSettings, saveSettings } fr
 import { TIME_VALUES } from './src/lib/buildings';
 import CallPassPrompt from './src/components/CallPassPrompt';
 import AuthSheet from './src/components/AuthSheet';
+import ConfirmSheet from './src/components/ConfirmSheet';
 import InviteBanner from './src/components/InviteBanner';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import TabBar, { TabId } from './src/components/TabBar';
@@ -72,6 +73,7 @@ export default function App() {
   const [editingCharacter, setEditingCharacter] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authReason, setAuthReason] = useState('');
+  const [notice, setNotice] = useState<{ title: string; text: string } | null>(null); // 앱 스타일 안내 창
   const authResolve = useRef<((id: string | null) => void) | null>(null);
   const askLoginRef = useRef<(reason: string) => Promise<string | null>>(() => Promise.resolve(null)); // 링크로 열렸을 때 최신 로그인 함수를 쓰기 위해
   const [group, setGroup] = useState<RoomState | null>(null); // 참여 중인 그룹 방
@@ -104,7 +106,7 @@ export default function App() {
           saveSessions(list);
           clearActive();
           track('session_fail', { minutes: rec.minutes, mode: modeOf(rec.tag), reason: 'app_closed' });
-          Alert.alert('Your last session collapsed', 'The app was closed for too long during your focus session.');
+          setNotice({ title: 'Your last session collapsed', text: 'The app was closed for too long during your focus session.' });
         }
       }
       setSessions(list);
@@ -236,11 +238,11 @@ export default function App() {
     if (!id || !settings.character) return setPending(null);
     if (!(await saveProfile(id, settings.character))) {
       setPending(null);
-      return Alert.alert('Connection problem', 'Could not reach the server. Check your connection and try again.');
+      return setNotice({ title: 'Connection problem', text: 'Could not reach the server. Check your connection and try again.' });
     }
     const r = await createRoomWithInvites(p.minutes, p.tag, p.invitees);
     setPending(null);
-    if (!r.ok) return Alert.alert('Could not start', r.error);
+    if (!r.ok) return setNotice({ title: 'Could not start', text: r.error });
     track('group_create', { minutes: p.minutes, mode: modeOf(p.tag), invited: p.invitees.length });
     setInvitees([]);
     setGroup(r.data);
@@ -252,7 +254,7 @@ export default function App() {
     setJoining(false);
     if (!r.ok) {
       inviteBox.dismiss(roomId);
-      return Alert.alert('Could not join', r.error);
+      return setNotice({ title: 'Could not join', text: r.error });
     }
     track('group_join', {});
     setGroup(r.data);
@@ -389,7 +391,7 @@ export default function App() {
               onSignOut={signOut}
               onDeleteAccount={async () => {
                 const err = await deleteAccount();
-                if (err) Alert.alert('Could not delete account', err);
+                if (err) setNotice({ title: 'Could not delete account', text: err });
               }}
             />
           ) : overlay?.type === 'add' ? (
@@ -454,6 +456,7 @@ export default function App() {
               <TabBar tab={tab} onChange={setTab} />
             </>
           )}
+          <ConfirmSheet visible={!!notice} title={notice?.title ?? ''} text={notice?.text ?? ''} confirmLabel="OK" cancelLabel={null} onConfirm={() => setNotice(null)} onCancel={() => setNotice(null)} />
           <AuthSheet visible={authOpen} reason={authReason} onClose={() => finishAuth(false)} onSignedIn={() => finishAuth(true)} />
         </SafeAreaView>
       </SafeAreaProvider>

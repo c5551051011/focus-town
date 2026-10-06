@@ -54,7 +54,7 @@ export default function ResultLayout({
       </View>
     </ScrollView>
     {onClose ? (
-      <Pressable onPress={onClose} hitSlop={12} style={styles.close}>
+      <Pressable onPress={onClose} hitSlop={14} style={styles.close}>
         <Txt style={styles.closeText}>X</Txt>
       </Pressable>
     ) : null}
@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
   msg: { color: colors.text, opacity: 0.92, textAlign: 'center' },
   btn: { paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   btnText: { color: colors.bg, fontSize: 16 },
-  close: { position: 'absolute', top: 12, left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: soft.card, alignItems: 'center', justifyContent: 'center' },
-  closeText: { color: soft.subtle, fontSize: 14 },
+  close: { position: 'absolute', top: 10, left: 18, padding: 6 },
+  closeText: { color: soft.subtle, fontSize: 34, lineHeight: 40, opacity: 0.85 },
 });

@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   chip: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 6, paddingHorizontal: 8, minHeight: 66, borderRadius: 14, backgroundColor: soft.card },
   chipText: { fontSize: 13, color: colors.text, flexShrink: 1 },
   extra: { flexDirection: 'row' },
-  start: { marginTop: 16, paddingVertical: 20, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
+  start: { marginTop: 16, paddingVertical: 14, borderRadius: 18, backgroundColor: colors.accent, alignItems: 'center' },
   startText: { color: colors.bg, fontSize: 18 },
   dialBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
   dialBox: { backgroundColor: soft.card, borderRadius: 24, padding: 22 },

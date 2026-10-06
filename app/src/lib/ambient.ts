@@ -18,9 +18,14 @@ export const TRACKS: Track[] = [
   // WORK — 가볍게 이어지는 칠합
   { id: 'kettle', title: 'Kettle Before Work', modes: ['WORK', 'STUDY'], file: require('../../assets/music/kettle-before-work.mp3') },
   { id: 'softgold', title: 'Soft Gold Sky', modes: ['WORK'], file: require('../../assets/music/soft-gold-sky.mp3') },
+  { id: 'clicks', title: 'Hour Between Clicks', modes: ['WORK', 'STUDY'], file: require('../../assets/music/hour-between-clicks.mp3') },
+  { id: 'cursor', title: 'Cursor After Midnight', modes: ['WORK'], file: require('../../assets/music/cursor-after-midnight.mp3') },
   // EXERCISE — 리듬감 있는 펑크/소울
   { id: 'bounce', title: 'Cassette Basement Bounce', modes: ['EXERCISE'], file: require('../../assets/music/cassette-basement-bounce.mp3') },
   { id: 'rink', title: 'Roller Rink Reverie', modes: ['EXERCISE'], file: require('../../assets/music/roller-rink-reverie.mp3') },
+  { id: 'groove86', title: 'Basement Groove 86', modes: ['EXERCISE'], file: require('../../assets/music/basement-groove-86.mp3') },
+  { id: 'sunsetgroove', title: 'Burnt Sunset Groove', modes: ['EXERCISE'], file: require('../../assets/music/burnt-sunset-groove.mp3') },
+  { id: 'curbside', title: 'Summer Curbside Glow', modes: ['EXERCISE', 'REST'], file: require('../../assets/music/summer-curbside-glow.mp3') },
   // REST — 쉬는 시간, 비와 그늘
   { id: 'lofi3', title: 'Brushstrokes and Rain', modes: ['REST', 'READING'], file: require('../../assets/music/brushstrokes-and-rain.mp3') },
   { id: 'hammock', title: 'Hammock in the Shade', modes: ['REST'], file: require('../../assets/music/hammock-in-the-shade.mp3') },

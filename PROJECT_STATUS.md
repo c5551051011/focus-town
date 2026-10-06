@@ -28,7 +28,7 @@
 | TOWN(마을) | 완료 | 8×8 아이소메트릭 땅, 기간 필터, 건물 수 요약 |
 | STATS | 완료 | 스트릭, 요약, 7일×24시간 타임라인, 달력 |
 | ME · 설정 | 완료 | 프로필, 팔로잉/팔로워, 친구, 설정, 계정 삭제 |
-| 배경 사운드 | 완료 | 21종(모드별 추천), 합성 싱잉볼 포함 |
+| 배경 사운드 | 완료 | 26종(모드별 추천), 합성 싱잉볼 포함 |
 | 화면 밖 진행 표시 | iOS 라이브 액티비티 · Android 알림 카드 | Android 확인 완료, **iOS 실기기 확인 대기** |
 | 분석/오류 수집 | 준비됨(키 없음) | PostHog + Sentry, 사용자가 끌 수 있음 |
 | 앱 차단(Screen Time) | iOS 코드 완료 · **Apple 승인 대기** | 설정에서 앱 고르기, 집중 중 잠금. Android 는 아직 없음 (아래 7.4) |
@@ -206,7 +206,7 @@ npx eas-cli build -p ios --profile preview
 - [ ] iPhone 에 새 빌드 설치 → 라이브 액티비티와 친구/그룹 흐름 확인
 - [ ] Supabase: 이메일 템플릿(`{{ .Token }}`)과 Custom SMTP 설정 (로그인 코드가 오려면 필수)
 - [ ] Apple 에 Family Controls 권한 신청 (7.4)
-- [ ] 개인정보/약관의 `[DEVELOPER NAME]`, `[CONTACT EMAIL]` 채우기, `SUPPORT_EMAIL`(`app/src/config.ts`) 설정, GitHub Pages(main /docs) 켜기
+- [ ] 개인정보/약관의 `[CONTACT EMAIL]` 채우기 (개발자 이름은 JIN CHOI 로 채움), `SUPPORT_EMAIL`(`app/src/config.ts`) 설정, GitHub Pages(main /docs) 켜기
 
 **출시 준비**
 - [ ] 스토어 스크린샷(현재 화면으로) + 캡션 이미지
@@ -237,7 +237,7 @@ npx eas-cli build -p ios --profile preview
 | 커밋 | 내용 |
 |---|---|
 | (초기) | 솔로 모드, 픽셀 아트, 시간 휠, 모드, 통계, 설정 |
-| ~ | Supabase 연동, 친구/그룹, 게스트 계정, 라이브 진행 카드, 사운드 21종 |
+| ~ | Supabase 연동, 친구/그룹, 게스트 계정, 라이브 진행 카드, 사운드 26종 |
 | `60b72b3` | FOCUS 정리, 온보딩 다듬기 |
 | `0cbd865` | 새 팔로워 자동 갱신, 안드로이드 뒤로 가기가 오버레이 닫기 |
 | `6c2cb61` | 팀원 넛지, 붉은 깜빡임, 팀 바 정렬, 결과/카운트다운/초대 배너 스타일 |

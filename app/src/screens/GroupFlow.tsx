@@ -342,6 +342,8 @@ function Result({ state, mine, onExit }: { state: RoomState; mine: RoomMember; o
       title={title}
       tone={finished ? 'good' : 'bad'}
       message={message}
+      button="TO TOWN"
+      onPress={onExit}
       onClose={onExit}
     >
       <TeamBar pct={dur} color={toneColor(dur)} style={{ marginTop: 0 }} />

@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: soft.sunken, borderRadius: 14 },
   rowOn: { backgroundColor: colors.gold },
   main: { flex: 1, paddingVertical: 16, paddingHorizontal: 14 },
-  label: { fontSize: 14, lineHeight: 20 },
+  label: { fontSize: 12, lineHeight: 18 },
   play: { marginRight: 10, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
   playOn: { backgroundColor: colors.accent },
   playText: { fontSize: 12, color: colors.text },

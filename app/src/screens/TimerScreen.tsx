@@ -91,6 +91,8 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
         title={ok ? 'TA-DA!' : 'OOPS!'}
         tone={ok ? 'good' : 'bad'}
         message={ok ? `${b.name} is built!\n+${minutes} min` : endReason === 'gave_up' ? "You stopped the session.\nLet's try again!" : "You wandered off too long.\nLet's try again!"}
+        button="TO TOWN"
+        onPress={onDone}
         onClose={onDone}
       >
         {goalHit && (

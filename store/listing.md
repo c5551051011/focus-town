@@ -16,7 +16,7 @@
 | 이용약관 URL | `https://c5551051011.github.io/focus-town/terms.html` |
 | 지원 URL | `[ ]` (GitHub Pages 주소 `https://c5551051011.github.io/focus-town/` 사용 가능) |
 | 문의 이메일 | `[ ]` |
-| 개발자/판매자 이름 | `[ ]` |
+| 개발자/판매자 이름 | JIN CHOI |
 
 > 처리방침/약관 URL은 GitHub 저장소 Settings → Pages 에서 **Branch: main, Folder: /docs** 로 켜야 열립니다.
 
