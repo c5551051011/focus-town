@@ -10,6 +10,7 @@ export type ActiveRecord = {
   tag: string;
   leftAt: number | null; // 앱이 백그라운드로 간 시각 (돌아오면 null)
   seenAt: number; // 앱이 화면에 떠 있는 동안 5초마다 갱신
+  lockedAt?: number | null; // 화면을 잠가서 백그라운드로 간 시각 (이때는 이탈로 치지 않는다)
 };
 
 const KEY = 'focus_town_active_v1';

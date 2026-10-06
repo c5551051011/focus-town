@@ -76,6 +76,13 @@
 
 ---
 
+**화면 잠금은 이탈이 아님 (배터리 절약)** — 집중 중에 폰 화면을 잠가 두어도 집중이 이어집니다.
+- Android: 네이티브 모듈(`focus-ongoing`)이 화면 꺼짐/잠금 해제 시각을 기록, 앱이 백그라운드로 가는 순간 화면이 꺼져 있으면 이탈로 치지 않음(경고 알림, 15초 카드 없음). 에뮬레이터에서 확인함(35초 잠금 후 집중 유지, 홈 버튼으로 나가면 예전처럼 이탈 처리).
+- iOS: 새 모듈 `lock-state`(Swift)가 시스템 잠금 알림(`com.apple.springboard.lockstate`)을 들음. **아이폰 실기기에서 아직 확인하지 못함** — TestFlight 에서 화면을 잠갔다 푸는 시험이 필요.
+- 복귀할 때는 "잠겨 있던 시간"을 뺀 값으로 판정, 잠금을 푼 뒤 다른 앱을 쓰다 오면 정상적으로 이탈 처리.
+- 그룹: 잠금을 서버에 알려(`set_locked`) 팀원 화면에 "자리 비움"이 뜨지 않음. 앱으로 돌아오면 자동 해제.
+- 잠가 둔 사이 집중이 끝나면 "All done! Come see your new building." 알림이 옴.
+
 ## 4. 게임 규칙
 
 **건물(집중 시간 기준)**: 오두막 0분 · 집 20분 · 타워 45분 · 도서관 70분 · 성 100분
@@ -133,9 +140,10 @@ docs/  store/               공개 문서, 스토어 자료
 | `0002_rooms.sql` | 그룹 방, 멤버, 투표, 초대, 내구성 계산, 하트비트, 종료 |
 | `0003_social.sql` | 친구 코드, 팔로우, 검색, 친구 초대로 시작, 초대 수락/거절 |
 | `0004_nudge.sql` | 푸시 토큰 보관(RPC로만 접근), `nudge_away` (20초 제한) |
+| `0005_lock.sql` | 화면 잠금 중인 멤버를 이탈/피해/넛지에서 제외 (`set_locked`, `locked_until`) |
 
 **해야 할 일 (대시보드에서 직접)**
-1. SQL Editor 에서 **`0004_nudge.sql` 실행** (0001~0003 은 이미 적용됨)
+1. SQL Editor 에서 **`0005_lock.sql` 실행** (0001~0004 는 이미 적용됨)
 2. Authentication → Sign In / Providers → **Allow anonymous sign-ins** 켜기 (게스트 계정, 켜 둔 상태로 테스트했음)
 3. (선택) 이메일 로그인용 템플릿에 `{{ .Token }}`, SMTP 설정
 4. 넛지 푸시를 실제로 받으려면 Android 는 **Firebase(FCM) 설정** — https://docs.expo.dev/push-notifications/fcm-credentials/ , iOS 는 EAS 가 APNs 키 관리

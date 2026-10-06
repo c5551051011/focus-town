@@ -6,6 +6,7 @@ import { cancelReturnWarning, scheduleAwayNotifications } from './notifications'
 import { patchActive } from './activeSession';
 import { isPassAvailable, consumePass } from './callPass';
 import { setLiveEnd, showAway, showBack, stopLive } from './liveProgress';
+import { LOCK_CHECK_MS, awayExcludingLock, isLockedNow } from './lockState';
 
 export const GRACE_SECONDS = 15;
 
@@ -26,6 +27,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
   const [endReason, setEndReason] = useState<EndReason | null>(null);
   const [awaySeconds, setAwaySeconds] = useState(0);
   const phaseRef = useRef<Phase>('running');
+  const lockedRef = useRef(false); // 화면 잠금 때문에 백그라운드로 간 상태
 
   const update = (p: Phase) => {
     phaseRef.current = p;
@@ -76,22 +78,43 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
       }
       if (state === 'background') {
         if (leftAt.current !== null) return;
-        leftAt.current = Date.now();
-        patchActive({ leftAt: leftAt.current });
+        const t = Date.now();
+        leftAt.current = t;
+        patchActive({ leftAt: t });
+        // 화면을 잠근 것(배터리 절약)은 이탈이 아니다. Android 는 백그라운드에서 JS 타이머가 멈추므로 먼저 바로 확인한다.
+        if (isLockedNow()) {
+          lockedRef.current = true;
+          patchActive({ leftAt: null, lockedAt: t, seenAt: t });
+          return; // leftAt 은 남겨 두어, 돌아왔을 때 잠겨 있던 시간을 뺀다
+        }
         update('warning');
         scheduleAwayNotifications(GRACE_SECONDS);
-        showAway(Date.now() + GRACE_SECONDS * 1000);
+        showAway(t + GRACE_SECONDS * 1000);
+        // iOS 는 잠금 신호가 조금 늦게 올 수 있어 잠시 뒤 한 번 더 확인한다. 잠긴 것이면 방금 켠 경고를 거둔다.
+        setTimeout(() => {
+          if (leftAt.current !== t || isOver() || !isLockedNow()) return;
+          lockedRef.current = true;
+          cancelReturnWarning();
+          showBack();
+          patchActive({ leftAt: null, lockedAt: t, seenAt: t });
+          update('running');
+        }, LOCK_CHECK_MS);
       } else if (state === 'active' && leftAt.current !== null) {
-        const away = Date.now() - leftAt.current;
+        const away = awayExcludingLock(leftAt.current, Date.now());
+        const wasLocked = lockedRef.current;
+        lockedRef.current = false;
         leftAt.current = null;
         cancelReturnWarning();
-        patchActive({ leftAt: null, seenAt: Date.now() });
+        patchActive({ leftAt: null, lockedAt: null, seenAt: Date.now() });
         if (away / 1000 <= GRACE_SECONDS) {
           update('running');
           showBack();
-          playSound('warn');
-          setRecovered(true);
-          setTimeout(() => setRecovered(false), 3000);
+          // 화면을 잠갔다가 바로 풀고 돌아온 것이면 조용히 이어간다 (경고음/붉은 깜빡임 없음)
+          if (!(wasLocked && away <= 3000)) {
+            playSound('warn');
+            setRecovered(true);
+            setTimeout(() => setRecovered(false), 3000);
+          }
         } else if (await isPassAvailable(away / 1000)) {
           awayMs.current = away;
           setAwaySeconds(Math.round(away / 1000));

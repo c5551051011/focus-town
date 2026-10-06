@@ -13,8 +13,12 @@ import { EndReason, useFocusSession } from '../lib/useFocusSession';
 import { statusMessage } from '../lib/messages';
 import { startLive, stopLive } from '../lib/liveProgress';
 import { blockApps, unblockApps } from '../lib/screenTime';
+import { cancelSessionEnd, scheduleSessionEnd } from '../lib/notifications';
 import CallPassPrompt from '../components/CallPassPrompt';
 import { Character } from '../lib/character';
+
+// 집중을 마쳤을 때 건네는 고생했다는 한마디 (매번 하나를 고른다)
+const CHEERS = ['Good job, you worked so hard!', 'You did great, nice work!', 'Well done, thanks for focusing!', 'You earned a break, great job!'];
 
 type Props = {
   minutes: number;
@@ -31,6 +35,7 @@ type Props = {
 export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goal, todayBefore, onEnded, onDone }: Props) {
   useKeepAwake();
   const { phase, remainingMs, recovered, endReason, awaySeconds, giveUp, acceptPass, declinePass } = useFocusSession(minutes, endAt);
+  const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)]);
   const [before] = useState(todayBefore); // 기록되기 전 오늘 집중 시간 (목표 달성 판정용)
   const b = buildingFor(minutes);
   const [muted, setMuted] = useState(false);
@@ -62,6 +67,18 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
     if (finished) stopAmbient();
   }, [finished]);
 
+  // 끝나는 시각에 완료 알림을 예약한다 (화면을 잠가 두었을 때를 위해). 앱에서 끝나거나 멈추면 취소한다.
+  useEffect(() => {
+    scheduleSessionEnd(endAt);
+    return () => {
+      cancelSessionEnd();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (finished) cancelSessionEnd();
+  }, [finished]);
+
   // 집중하는 동안 고른 앱을 잠근다 (끝나거나 멈추면 푼다)
   useEffect(() => {
     blockApps();
@@ -90,7 +107,7 @@ export default function TimerScreen({ minutes, endAt, tag, ambient, workers, goa
         hero={<Pixel name={ok ? b.id : 'ruins'} size={150} />}
         title={ok ? 'TA-DA!' : 'OOPS!'}
         tone={ok ? 'good' : 'bad'}
-        message={ok ? `${b.name} is built!\n+${minutes} min` : endReason === 'gave_up' ? "You stopped the session.\nLet's try again!" : "You wandered off too long.\nLet's try again!"}
+        message={ok ? `${cheer}\n${b.name} is built! (+${minutes} min)` : endReason === 'gave_up' ? "You stopped the session.\nLet's try again!" : "You wandered off too long.\nLet's try again!"}
         button="TO TOWN"
         onPress={onDone}
         onClose={onDone}

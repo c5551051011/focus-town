@@ -196,3 +196,19 @@ Settings > Account > Delete account.
 ```
 
 > 심사자가 이메일 코드를 받을 수 없을 때를 대비해 위 문구로 안내합니다. 반려되면 심사용 데모 계정(이메일+비밀번호 로그인)을 추가하는 방법이 있습니다.
+
+## 스크린샷 (App Store 6.9형: 1290×2796)
+
+원본 아이폰 캡처는 `screenshots/` 에 있고, 캡션을 넣어 규격에 맞춘 결과는 `store/screenshots/appstore-6.9/` 에 있습니다. (`python3 app/tools/gen_store_screenshots.py` 로 다시 만들 수 있고, 새 화면은 스크립트의 `SHOTS` 목록에 한 줄 추가하면 됩니다.)
+
+| 순서 | 파일 | 캡션 | 상태 |
+| :--- | :--- | :--- | :--- |
+| 1 | `1-focus-session.png` | BUILD WHILE YOU FOCUS | 사용 가능 |
+| 2 | `2-my-town.png` | BUILD YOUR OWN PIXEL TOWN | 사용 가능 |
+| 3 | `3-stats.png` | KEEP YOUR STREAK ALIVE | 사용 가능 |
+| 4 | `4-history.png` | SEE EVERY FOCUSED DAY | 사용 가능 |
+| 5 | `5-profile.png` | MAKE YOUR CHARACTER | 사용 가능 |
+| (추가) | FOCUS 시작 화면 | PICK A TIME, PRESS START | **다시 찍기**: 기존 캡처(`IMG_3789`)는 옛 이름 "FOCUS TOWN"이 보임 |
+| (추가) | 완료 화면 | TA-DA! | **다시 찍기**: 기존 캡처(`IMG_3797`)는 옛 문구 |
+
+> 새 빌드를 TestFlight 로 설치한 뒤 위 두 화면(FOCUS, 완료)을 다시 캡처해서 `screenshots/` 에 넣으면 추가해 드립니다. App Store 는 최소 1장, 최대 10장을 받습니다.

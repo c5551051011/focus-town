@@ -41,7 +41,8 @@
         "exclude": [
           "expo-live-activity",
           "focus-ongoing",
-          "screen-time"
+          "screen-time",
+          "lock-state"
         ],
         "listUnknownPackages": false
       }

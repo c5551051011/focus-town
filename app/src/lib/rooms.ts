@@ -105,6 +105,9 @@ export const startRoom = (room: string) => call('start_room', { p_room: room });
 export const lateJoin = (room: string) => call('late_join', { p_room: room });
 export const respondJoin = (room: string, joiner: string, allow: boolean) => call('respond_join', { p_room: room, p_joiner: joiner, p_allow: allow });
 export const heartbeat = (room: string, damage: number) => call('heartbeat', { p_room: room, p_damage_s: Math.round(damage) });
+// 화면을 잠갔음을 서버에 알린다 (잠겨 있는 동안은 이탈/피해로 계산하지 않는다). 해제는 앱으로 돌아와 보내는 heartbeat 가 한다.
+// 서버에 0005_lock.sql 이 아직 없으면 실패하지만, 앱은 그냥 넘어간다.
+export const setLocked = (room: string, locked: boolean) => call<null>('set_locked', { p_room: room, p_locked: locked });
 export const finishRoom = (room: string) => call('finish_room', { p_room: room });
 export const leaveRoom = (room: string) => call<{ ok: boolean }>('leave_room', { p_room: room });
 export const getRoomState = (room: string) => call('get_room_state', { p_room: room });

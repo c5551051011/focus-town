@@ -19,6 +19,7 @@ import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
 import { startLive, stopLive } from '../lib/liveProgress';
 import { blockApps, unblockApps } from '../lib/screenTime';
+import { cancelSessionEnd, scheduleSessionEnd } from '../lib/notifications';
 
 export type GroupRecord = {
   startedAt: number;
@@ -39,6 +40,8 @@ type Props = {
   onExit: () => void;
 };
 
+// 함께 마쳤을 때 건네는 고생했다는 한마디
+const TEAM_CHEERS = ['Great teamwork, thank you all!', 'You all worked so hard!', 'What a team, great job!'];
 const toCharacter = (m: RoomMember): Character => ({ name: m.name, species: m.species, color: m.color, hat: m.hat });
 const fmt = (ms: number) => {
   const sec = Math.max(0, Math.ceil(ms / 1000));
@@ -237,8 +240,12 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
   useEffect(() => {
     if (!room.started_at || !room.ends_at) return;
     const off = Date.parse(state.server_now) - Date.now();
+    scheduleSessionEnd(Date.parse(room.ends_at) - off); // 화면을 잠가 두었을 때를 위한 완료 알림
     startLive({ kind: 'group', tag: room.tag, buildingId: base.id, buildingName: base.name, startedAt: Date.parse(room.started_at) - off, endAt: Date.parse(room.ends_at) - off });
-    return () => stopLive();
+    return () => {
+      stopLive();
+      cancelSessionEnd();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -325,6 +332,7 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
 }
 
 function Result({ state, mine, onExit }: { state: RoomState; mine: RoomMember; onExit: () => void }) {
+  const [cheer] = useState(() => TEAM_CHEERS[Math.floor(Math.random() * TEAM_CHEERS.length)]);
   const { room, members } = state;
   const finished = room.status === 'done' && mine.status === 'active';
   const building = tieredBuilding(room.minutes, room.building_tier ?? 0);
@@ -332,7 +340,7 @@ function Result({ state, mine, onExit }: { state: RoomState; mine: RoomMember; o
   const participants = members.filter((m) => m.active_since);
   const title = finished ? 'TEAMWORK!' : room.status === 'collapsed' ? 'OH NO!' : 'WHOOPS!';
   const message = finished
-    ? `${building.name} is built!${building.id !== buildingFor(room.minutes).id ? '\nIt got a bit dented.' : ''}`
+    ? `${cheer}\n${building.name} is built!${building.id !== buildingFor(room.minutes).id ? '\nIt got a bit dented.' : ''}`
     : room.status === 'collapsed'
       ? "The building fell apart.\nLet's try again!"
       : 'They finished without you.\nThey built it for you!';

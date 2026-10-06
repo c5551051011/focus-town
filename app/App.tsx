@@ -94,9 +94,10 @@ export default function App() {
       // 앱이 강제 종료됐을 때 진행 중이던 세션이 남아 있으면: 짧게 벗어났다면 이어서, 오래됐다면 통화 패스 확인 또는 실패 처리
       const rec = await loadActive();
       if (rec) {
-        const away = (Date.now() - (rec.leftAt ?? rec.seenAt)) / 1000;
+        // 화면을 잠가 둔 사이 시스템이 앱을 정리한 경우에는 이탈로 치지 않는다
+        const away = rec.lockedAt ? 0 : (Date.now() - (rec.leftAt ?? rec.seenAt)) / 1000;
         if (away <= GRACE_SECONDS) {
-          patchActive({ leftAt: null, seenAt: Date.now() });
+          patchActive({ leftAt: null, lockedAt: null, seenAt: Date.now() });
           recorded.current = null;
           setActive({ minutes: rec.minutes, startedAt: rec.startedAt, endAt: rec.endAt, ambient: rec.ambient, tag: rec.tag });
         } else if (await isPassAvailable(away)) {

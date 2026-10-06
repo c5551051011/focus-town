@@ -70,6 +70,27 @@ export async function cancelReturnWarning() {
   } catch {}
 }
 
+// 집중이 끝나는 시각에 "완성됐어요" 알림을 예약한다. 화면을 잠가 두었거나 앱 밖에 있어도 끝난 걸 알 수 있다.
+// 앱이 열려 있는 채로 끝나면 화면이 직접 보여주므로, 약간(2초) 늦춰 예약하고 끝나는 순간 취소한다.
+const END_ID = 'session-end';
+export async function scheduleSessionEnd(endAtMs: number) {
+  if (!prefs.notify) return;
+  const seconds = Math.round((endAtMs - Date.now()) / 1000) + 2;
+  if (seconds < 5) return;
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: END_ID,
+      content: { title: 'Towny', body: 'All done! Come see your new building.' },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds },
+    });
+  } catch {}
+}
+export async function cancelSessionEnd() {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(END_ID);
+  } catch {}
+}
+
 // 하루 시작 알림: 앞으로 7일치를 개별 예약하고, 앱을 열 때마다 다시 맞춘다.
 // 오늘 이미 집중했으면 오늘 알림은 건너뛰고, 스트릭이 있으면 첫 알림에서 스트릭을 언급한다.
 export async function syncReminders(opts: { enabled: boolean; hour: number; minute: number; doneToday: boolean; streak: number }) {

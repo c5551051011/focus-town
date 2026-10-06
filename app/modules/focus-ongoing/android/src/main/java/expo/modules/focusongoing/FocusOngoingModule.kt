@@ -4,12 +4,17 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
+import android.os.PowerManager
 import android.os.SystemClock
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -22,8 +27,53 @@ class FocusOngoingModule : Module() {
   private val context: Context
     get() = appContext.reactContext ?: throw IllegalStateException("React context is not available")
 
+  // 화면이 꺼진 시각과 잠금을 푼 시각. 화면을 잠가 둔 것(배터리 절약)을 "앱을 떠난 것"과 구분하는 데 쓴다.
+  // 앱의 자바스크립트가 멈춰 있는 동안에도 이 기록은 남는다.
+  @Volatile private var screenOffAt = 0L
+  @Volatile private var unlockAt = 0L
+  private var screenReceiver: BroadcastReceiver? = null
+
   override fun definition() = ModuleDefinition {
     Name("FocusOngoing")
+
+    OnCreate {
+      val ctx = appContext.reactContext
+      if (ctx != null) {
+        val receiver = object : BroadcastReceiver() {
+          override fun onReceive(c: Context?, intent: Intent?) {
+            when (intent?.action) {
+              Intent.ACTION_SCREEN_OFF -> screenOffAt = System.currentTimeMillis()
+              Intent.ACTION_USER_PRESENT -> unlockAt = System.currentTimeMillis()
+            }
+          }
+        }
+        val filter = IntentFilter().apply {
+          addAction(Intent.ACTION_SCREEN_OFF)
+          addAction(Intent.ACTION_USER_PRESENT)
+        }
+        ContextCompat.registerReceiver(ctx, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        screenReceiver = receiver
+      }
+    }
+
+    OnDestroy {
+      try {
+        screenReceiver?.let { appContext.reactContext?.unregisterReceiver(it) }
+      } catch (e: Exception) {
+        // ignore
+      }
+      screenReceiver = null
+    }
+
+    // 화면이 지금 꺼져 있는지(locked), 마지막으로 꺼진 시각(lockedAt), 마지막으로 잠금을 푼 시각(unlockedAt)
+    Function("lockInfo") {
+      val power = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+      mapOf(
+        "locked" to !power.isInteractive,
+        "lockedAt" to screenOffAt.toDouble(),
+        "unlockedAt" to unlockAt.toDouble()
+      )
+    }
 
     // 카드를 띄우거나 갱신한다. endAtMs 까지 카운트다운하고, timeoutMs 뒤에는 시스템이 카드를 자동으로 지운다.
     // 알림 권한이 없으면 false.

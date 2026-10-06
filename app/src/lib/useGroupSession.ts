@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { cancelReturnWarning, scheduleAwayNotifications } from './notifications';
 import { showAway, showBack } from './liveProgress';
-import { DAMAGE_START_SEC, DROP_DAMAGE_SEC, RoomResult, RoomState, clockOffset, finishRoom, getRoomState, heartbeat, msUntilEnd } from './rooms';
+import { DAMAGE_START_SEC, DROP_DAMAGE_SEC, RoomResult, RoomState, clockOffset, finishRoom, getRoomState, heartbeat, msUntilEnd, setLocked } from './rooms';
+import { LOCK_CHECK_MS, awayExcludingLock, isLockedNow } from './lockState';
 
 // 그룹 방 상태를 서버와 맞추는 훅.
 //  - 대기실에서는 2초, 집중 중에는 4초마다 서버와 통신한다 (집중 중 통신은 "앱이 떠 있음" 신호도 겸한다)
@@ -78,18 +79,32 @@ export function useGroupSession(roomId: string, initial: RoomState, myId: string
       const active = s.room.status === 'running' && me()?.status === 'active';
       if (!active) return;
       if (st === 'background' && leftAt.current === null) {
-        leftAt.current = Date.now();
+        const t = Date.now();
+        leftAt.current = t;
+        // 화면을 잠근 것(배터리 절약)은 이탈이 아니다. Android 는 백그라운드에서 JS 타이머가 멈추므로 먼저 바로 확인한다.
+        if (isLockedNow()) {
+          setLocked(roomId, true); // 서버에도 알려서 팀원 화면에 "자리 비움"으로 보이지 않게 한다
+          return;
+        }
         setAway(true);
         scheduleAwayNotifications(DAMAGE_START_SEC, true);
-        showAway(Date.now() + DAMAGE_START_SEC * 1000);
+        showAway(t + DAMAGE_START_SEC * 1000);
+        // iOS 는 잠금 신호가 조금 늦게 올 수 있어 잠시 뒤 한 번 더 확인한다. 잠긴 것이면 방금 켠 경고를 거둔다.
+        setTimeout(() => {
+          if (leftAt.current !== t || !isLockedNow()) return;
+          setAway(false);
+          cancelReturnWarning();
+          showBack();
+          setLocked(roomId, true);
+        }, LOCK_CHECK_MS);
       } else if (st === 'active' && leftAt.current !== null) {
-        const sec = (Date.now() - leftAt.current) / 1000;
+        const sec = awayExcludingLock(leftAt.current, Date.now()) / 1000;
         leftAt.current = null;
         setAway(false);
         cancelReturnWarning();
         showBack();
         damage.current = Math.min(DROP_DAMAGE_SEC, damage.current + Math.max(0, Math.floor(sec - DAMAGE_START_SEC)));
-        sync();
+        sync(); // 하트비트가 서버의 잠금 표시도 풀어 준다
       }
     });
     return () => sub.remove();
