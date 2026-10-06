@@ -3,7 +3,8 @@ import { prefs } from './prefs';
 
 // 배경 음악: Open Lo-Fi(CC0) 음원을 집중 모드에 어울리게 분류했다. assets/music/LICENSE.md 참고.
 // modes: 이 곡이 어울리는 모드 (첫 번째가 대표 분류). 직접 만든 모드에는 분류가 없다.
-type Track = { id: string; title: string; modes: string[]; file: number };
+// kind: 음악이 아닌 소리의 종류(비, 종소리, 싱잉볼)를 표시한다.
+type Track = { id: string; title: string; modes: string[]; file: number; kind?: string };
 
 export const TRACKS: Track[] = [
   // STUDY — 조용히 몰입
@@ -24,13 +25,18 @@ export const TRACKS: Track[] = [
   { id: 'lofi3', title: 'Brushstrokes and Rain', modes: ['REST', 'READING'], file: require('../../assets/music/brushstrokes-and-rain.mp3') },
   { id: 'hammock', title: 'Hammock in the Shade', modes: ['REST'], file: require('../../assets/music/hammock-in-the-shade.mp3') },
   { id: 'petals', title: 'Petals After Rain', modes: ['REST', 'READING'], file: require('../../assets/music/petals-after-rain.mp3') },
-  // SLEEP — 잔잔한 앰비언트
+  // SLEEP — 잔잔한 앰비언트, 싱잉볼, 종소리, 빗소리
+  { id: 'bowl', title: 'Singing Bowl', modes: ['SLEEP', 'REST'], kind: 'SINGING BOWL', file: require('../../assets/music/singing-bowl.wav') },
+  { id: 'bells', title: 'Bells Before Sunrise', modes: ['SLEEP', 'REST'], kind: 'BELLS', file: require('../../assets/music/bells-before-sunrise.mp3') },
+  { id: 'temple', title: 'Temple at Dawn', modes: ['SLEEP', 'READING'], kind: 'BELLS', file: require('../../assets/music/temple-at-dawn.mp3') },
+  { id: 'storm', title: 'Storm Over Side Streets', modes: ['SLEEP', 'REST'], kind: 'RAIN', file: require('../../assets/music/storm-over-side-streets.mp3') },
+  { id: 'puddles', title: 'Sidewalk Puddles', modes: ['REST', 'SLEEP'], kind: 'RAIN', file: require('../../assets/music/sidewalk-puddles.mp3') },
   { id: 'lofi4', title: 'Almost Floating', modes: ['SLEEP', 'REST'], file: require('../../assets/music/almost-floating.mp3') },
   { id: 'weightless', title: 'Soft Weightless Hours', modes: ['SLEEP'], file: require('../../assets/music/soft-weightless-hours.mp3') },
   { id: 'lullaby', title: 'Satellite Lullaby', modes: ['SLEEP', 'REST'], file: require('../../assets/music/satellite-lullaby.mp3') },
 ];
 
-export const AMBIENTS = [{ id: 'off', label: 'OFF', hint: '' }, ...TRACKS.map((t) => ({ id: t.id, label: t.title, hint: t.modes.join(' · ') }))];
+export const AMBIENTS = [{ id: 'off', label: 'OFF', hint: '' }, ...TRACKS.map((t) => ({ id: t.id, label: t.title, hint: [t.kind, ...t.modes].filter(Boolean).join(' · ') }))];
 export type AmbientId = string;
 
 const byId = new Map(TRACKS.map((t) => [t.id, t]));

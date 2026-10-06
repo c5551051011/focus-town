@@ -41,6 +41,7 @@ class FocusOngoingModule : Module() {
         // 접힌 카드(제목 + 카운트다운)와 펼친 카드(+ 설명)
         val card = RemoteViews(context.packageName, R.layout.focus_card)
         card.setTextViewText(R.id.focus_title, title)
+        card.setTextViewText(R.id.focus_text, text)
         card.setChronometerCountDown(R.id.focus_timer, true)
         card.setChronometer(R.id.focus_timer, base, null, true)
         val cardBig = RemoteViews(context.packageName, R.layout.focus_card_big)

@@ -41,7 +41,7 @@ export default function SoundSheet({
   const recommended = TRACKS.filter((t) => t.modes.includes(tag));
   const groups = PRESET_TAGS.map((m) => ({ mode: m, tracks: TRACKS.filter((t) => t.modes[0] === m && !recommended.includes(t)) })).filter((g) => g.tracks.length > 0);
 
-  const renderRow = (id: string, title: string, modes?: string[]) => {
+  const renderRow = (id: string, title: string, modes?: string[], kind?: string) => {
     const on = id === selected;
     return (
       <View key={id} style={[styles.row, on && styles.rowOn]}>
@@ -55,6 +55,7 @@ export default function SoundSheet({
           <Txt style={[styles.label, on && { color: colors.bg }]} numberOfLines={1}>{title}</Txt>
           {modes ? (
             <View style={styles.modes}>
+              {kind ? <Txt style={[styles.mode, { color: on ? colors.bg : colors.gold }]}>{kind}</Txt> : null}
               {modes.map((m) => (
                 <Txt key={m} style={[styles.mode, { color: on ? colors.bg : tagColor(m) }]}>{m}</Txt>
               ))}
@@ -81,14 +82,14 @@ export default function SoundSheet({
             {recommended.length > 0 && (
               <>
                 <Txt style={[styles.section, { color: tagColor(tag) }]}>FOR {tag}</Txt>
-                {recommended.map((t) => renderRow(t.id, t.title, t.modes))}
+                {recommended.map((t) => renderRow(t.id, t.title, t.modes, t.kind))}
               </>
             )}
 
             {groups.map((g) => (
               <View key={g.mode} style={{ gap: 8 }}>
                 <Txt style={[styles.section, { color: tagColor(g.mode) }]}>{g.mode}</Txt>
-                {g.tracks.map((t) => renderRow(t.id, t.title, t.modes))}
+                {g.tracks.map((t) => renderRow(t.id, t.title, t.modes, t.kind))}
               </View>
             ))}
           </ScrollView>

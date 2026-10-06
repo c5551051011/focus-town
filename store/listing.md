@@ -48,7 +48,7 @@ FEATURES
 • Daily streaks, daily goals, and a calendar of your focus history
 • Optional daily reminder so you never forget your town
 • Weekly chart, focus time by mode, and a building collection
-• 16 calm lo-fi tracks sorted by mode (preview before you pick), with an easy mute button
+• 20+ calm tracks sorted by mode (lo-fi, singing bowl, bells, rain) (preview before you pick), with an easy mute button
 • A countdown card in your notification shade (Android) or Live Activity (iOS) while you are away
 • Retro 16-bit pixel art and chiptune sound effects
 • Hold-to-stop button so you never quit by accident
@@ -92,7 +92,7 @@ First release! Build your pixel town while you focus.
 • 매일 이어 가는 스트릭, 일일 목표, 집중 기록 달력
 • 선택할 수 있는 하루 시작 알림
 • 주간 그래프, 모드별 집중 시간, 건물 도감
-• 모드별로 분류한 로파이 배경음 16곡(미리 듣기 가능)과 간편한 음소거
+• 모드별로 분류한 배경음 20여 곡(로파이, 싱잉볼, 종소리, 빗소리)(미리 듣기 가능)과 간편한 음소거
 • 앱을 벗어나도 알림 영역(Android)이나 라이브 액티비티(iOS)에서 남은 시간 확인
 • 레트로 16비트 픽셀 아트와 칩튠 효과음
 • 꾹 눌러야 멈추는 정지 버튼으로 실수 방지

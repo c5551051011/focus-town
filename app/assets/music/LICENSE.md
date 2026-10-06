@@ -20,3 +20,9 @@ Tracks from the Open Lo-Fi collection (https://github.com/btahir/open-lofi), rel
 | almost-floating.mp3 | Almost Floating | SLEEP, REST |
 | soft-weightless-hours.mp3 | Soft Weightless Hours | SLEEP |
 | satellite-lullaby.mp3 | Satellite Lullaby | SLEEP, REST |
+| bells-before-sunrise.mp3 | Bells Before Sunrise | SLEEP, REST |
+| temple-at-dawn.mp3 | Temple at Dawn | SLEEP, READING |
+| storm-over-side-streets.mp3 | Storm Over Side Streets | SLEEP, REST |
+| sidewalk-puddles.mp3 | Sidewalk Puddles | REST, SLEEP |
+
+`singing-bowl.wav` is synthesized by `tools/gen_singing_bowl.py` (original work, no third-party content).

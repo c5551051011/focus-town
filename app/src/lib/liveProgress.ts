@@ -42,10 +42,27 @@ let activityId: string | undefined;
 
 const enabled = () => prefs.liveProgress && (!!ios || !!android);
 
+// 카드에 번갈아 보여줄 응원 문구 (카드를 새로 그릴 때마다 하나를 고른다)
+const CHEERS = [
+  (b: string) => `Your ${b} is rising. Stay with it!`,
+  (b: string) => `Great focus! Every minute builds your ${b}.`,
+  (b: string) => `You're doing great. Keep the ${b} going!`,
+  (b: string) => `Quiet minds build tall towers. Keep going!`,
+];
+const TEAM_CHEERS = [
+  (b: string) => `Building the ${b} together. Stay with your team!`,
+  (b: string) => `Your team is counting on you. Keep it up!`,
+];
+let cheerIndex = 0;
+const cheer = (s: LiveSession) => {
+  const list = s.kind === 'group' ? TEAM_CHEERS : CHEERS;
+  return list[cheerIndex++ % list.length](s.buildingName);
+};
+
 function normalState(s: LiveSession) {
   return {
-    title: s.kind === 'group' ? `Team focus · ${s.tag}` : `Focus Town · ${s.tag}`,
-    subtitle: `Building a ${s.buildingName}`,
+    title: s.kind === 'group' ? `Focus Town · Team · ${s.tag}` : `Focus Town · ${s.tag}`,
+    subtitle: cheer(s),
     progressBar: { date: s.endAt },
     imageName: `b_${s.buildingId}`,
     dynamicIslandImageName: `b_${s.buildingId}`,
@@ -54,8 +71,8 @@ function normalState(s: LiveSession) {
 
 function awayState(s: LiveSession, graceEndAt: number) {
   return s.kind === 'group'
-    ? { title: 'Your team needs you!', subtitle: 'Come back before the building takes damage', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' }
-    : { title: 'Come back!', subtitle: 'Your building collapses when this reaches zero', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' };
+    ? { title: 'Focus Town · Your team needs you!', subtitle: 'Come back before the building takes damage. Every second away hurts.', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' }
+    : { title: 'Focus Town · Come back!', subtitle: 'Your building collapses when the timer reaches zero. Tap to return.', progressBar: { date: graceEndAt }, imageName: 'b_ruins', dynamicIslandImageName: 'b_ruins' };
 }
 
 function render(state: ReturnType<typeof normalState>, endAt: number, timeoutMs: number) {

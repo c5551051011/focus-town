@@ -1,24 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 접힌 카드: 제목 + 큰 카운트다운 (접힌 알림은 높이가 약 64dp로 제한된다) -->
+<!-- 접힌 카드: [카운트다운]  앱 이름 · 모드 / 응원 메시지 (접힌 알림은 높이가 약 64dp로 제한된다) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/focus_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:ellipsize="end"
-        android:textAppearance="@style/TextAppearance.Compat.Notification.Title" />
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
 
     <!-- 시스템이 직접 그리는 카운트다운: 앱이 꺼져 있어도 계속 줄어든다 -->
     <Chronometer
         android:id="@+id/focus_timer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="26sp"
+        android:layout_marginEnd="14dp"
+        android:textSize="28sp"
         android:textStyle="bold"
         android:textAppearance="@style/TextAppearance.Compat.Notification" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/focus_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textAppearance="@style/TextAppearance.Compat.Notification.Title" />
+
+        <TextView
+            android:id="@+id/focus_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textAppearance="@style/TextAppearance.Compat.Notification" />
+    </LinearLayout>
 </LinearLayout>
