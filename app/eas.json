@@ -23,5 +23,12 @@
         "EXPO_PUBLIC_ENABLE_SCREEN_TIME": "0"
       }
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6819791122"
+      }
+    }
   }
 }
