@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import { cancelReturnWarning, scheduleAwayNotifications } from './notifications';
 import { showAway, showBack } from './liveProgress';
 import { DAMAGE_START_SEC, DROP_DAMAGE_SEC, RoomResult, RoomState, clockOffset, finishRoom, getRoomState, heartbeat, msUntilEnd, setLocked } from './rooms';
-import { awayExcludingLock, isLockSince, lockInfo } from './lockState';
+import { LOCK_CHECK_MS, awayExcludingLock, isLockSince, lockInfo } from './lockState';
 
 // 그룹 방 상태를 서버와 맞추는 훅.
 //  - 대기실에서는 2초, 집중 중에는 4초마다 서버와 통신한다 (집중 중 통신은 "앱이 떠 있음" 신호도 겸한다)
@@ -88,9 +88,13 @@ export function useGroupSession(roomId: string, initial: RoomState, myId: string
           lockedNow = true;
           setLocked(roomId, true); // 서버에도 알려서 팀원 화면에 "자리 비움"으로 보이지 않게 한다
         } else {
-          setAway(true);
-          scheduleAwayNotifications(DAMAGE_START_SEC, true);
-          showAway(t + DAMAGE_START_SEC * 1000);
+          // 잠근 것인지 잠깐 확인한 뒤에 경고와 카운트다운을 켠다 (잠근 직후에 카운트다운이 번쩍 보이지 않도록)
+          setTimeout(() => {
+            if (leftAt.current !== base || lockedNow) return;
+            setAway(true);
+            scheduleAwayNotifications(DAMAGE_START_SEC - 2, true);
+            showAway(t + DAMAGE_START_SEC * 1000);
+          }, LOCK_CHECK_MS);
         }
         // 돌아올 때까지 계속 확인한다. iOS 는 잠금 신호가 몇 초 늦게 올 수 있고, 잠금을 풀자마자 다른 앱을 열 수도 있다.
         const poll = setInterval(() => {

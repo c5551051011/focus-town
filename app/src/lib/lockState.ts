@@ -40,7 +40,7 @@ export function isLockSince(leftAt: number): boolean {
   return !!info && info.locked && info.lockedAt >= leftAt - SAME_EVENT_MS && info.lockedAt <= leftAt + LOCK_LATE_MS;
 }
 // 앱이 백그라운드로 간 뒤 잠금 여부를 확인하기까지 기다리는 시간
-export const LOCK_CHECK_MS = 900;
+export const LOCK_CHECK_MS = 1500;
 
 export const isLockedNow = (): boolean => lockInfo()?.locked === true;
 

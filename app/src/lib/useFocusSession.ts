@@ -6,7 +6,7 @@ import { cancelReturnWarning, scheduleAwayNotifications } from './notifications'
 import { patchActive } from './activeSession';
 import { isPassAvailable, consumePass } from './callPass';
 import { setLiveEnd, showAway, showBack, stopLive } from './liveProgress';
-import { awayExcludingLock, isLockSince, lockInfo } from './lockState';
+import { LOCK_CHECK_MS, awayExcludingLock, isLockSince, lockInfo } from './lockState';
 
 export const GRACE_SECONDS = 15;
 
@@ -87,9 +87,13 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
           lockedRef.current = true;
           patchActive({ leftAt: null, lockedAt: t, seenAt: t });
         } else {
-          update('warning');
-          scheduleAwayNotifications(GRACE_SECONDS);
-          showAway(t + GRACE_SECONDS * 1000);
+          // 잠근 것인지 잠깐 확인한 뒤에 경고와 카운트다운을 켠다 (잠근 직후에 카운트다운이 번쩍 보이지 않도록)
+          setTimeout(() => {
+            if (leftAt.current !== base || lockedRef.current || isOver()) return;
+            update('warning');
+            scheduleAwayNotifications(GRACE_SECONDS - 2);
+            showAway(t + GRACE_SECONDS * 1000);
+          }, LOCK_CHECK_MS);
         }
         // 돌아올 때까지 계속 확인한다. iOS 는 잠금 신호가 몇 초 늦게 올 수 있고, 잠금을 풀자마자 다른 앱을 열 수도 있다.
         const poll = setInterval(() => {
