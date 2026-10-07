@@ -13,8 +13,7 @@ import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/am
 import { buildingFor, tieredBuilding } from '../lib/buildings';
 import { Character } from '../lib/character';
 import { statusMessage } from '../lib/messages';
-import { DAMAGE_START_SEC, RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, nudgeAway, respondJoin } from '../lib/rooms';
-import { selection } from '../lib/haptics';
+import { DAMAGE_START_SEC, RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, respondJoin } from '../lib/rooms';
 import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
 import { startLive, stopLive } from '../lib/liveProgress';
@@ -221,8 +220,6 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
   useKeepAwake();
   const { room, members } = state;
   const [muted, setMuted] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const base = buildingFor(room.minutes);
   const dur = state.durability_now;
   const progress = 1 - remainingMs / (room.minutes * 60 * 1000);
@@ -257,30 +254,12 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
     blockApps();
     return unblockApps;
   }, []);
-  useEffect(() => () => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-  }, []);
 
-  const showToast = (text: string) => {
-    setToast(text);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2500);
-  };
-  // 이탈한 팀원이 있을 때 화면을 탭하면 그 팀원에게 "돌아와요" 알림을 보낸다
-  const nudge = async () => {
-    selection();
-    const r = await nudgeAway(room.id);
-    if (!r.ok) showToast(r.error);
-    else showToast(r.data > 0 ? `Nudge sent to ${awayNames.join(', ')}!` : 'Just nudged!\nGive them a moment.');
-  };
-
-  const message = toast
-    ? toast
-    : away
-      ? 'You are away!\nCome back quickly.'
-      : awayNames.length > 0
-        ? `${awayNames.join(', ')} ${awayNames.length > 1 ? 'are' : 'is'} away!\nSend a nudge to call them back.`
-        : statusMessage(progress, Math.floor(progress * room.minutes * 60), false);
+  const message = away
+    ? 'You are away!\nCome back quickly.'
+    : awayNames.length > 0
+      ? `${awayNames.join(', ')} ${awayNames.length > 1 ? 'are' : 'is'} away!`
+      : statusMessage(progress, Math.floor(progress * room.minutes * 60), false);
 
   return (
     <SessionLayout
@@ -290,7 +269,6 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
       big={fmt(remainingMs)}
       message={message}
       warn={damaging}
-      onTap={awayNames.length > 0 ? nudge : undefined}
       team={<TeamBar pct={dur} color={toneColor(dur)} />}
       topRight={
         ambient === 'off' ? null : (
@@ -307,13 +285,8 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
         )
       }
       extra={
-        waitingFor.length > 0 || request || (awayNames.length > 0 && !away) ? (
+        waitingFor.length > 0 || request ? (
           <View style={styles.extra}>
-            {awayNames.length > 0 && !away ? (
-              <Pressable onPress={nudge} style={({ pressed }) => [styles.nudgeBtn, pressed && { opacity: 0.85 }]}>
-                <Txt style={styles.nudgeText}>NUDGE {awayNames.length === 1 ? awayNames[0].toUpperCase() : 'THEM'}</Txt>
-              </Pressable>
-            ) : null}
             {waitingFor.length > 0 ? <Txt style={styles.waiting}>WAITING FOR {waitingFor.join(', ')}</Txt> : null}
             {request ? (
               <View style={styles.request}>
@@ -383,8 +356,6 @@ const styles = StyleSheet.create({
   waiting: { color: soft.subtle, fontSize: 9, marginTop: 8, textAlign: 'center' },
   request: { marginTop: 8, padding: 14, backgroundColor: soft.card, borderRadius: 18, alignItems: 'center', gap: 12 },
   requestText: { fontSize: 10 },
-  nudgeBtn: { alignSelf: 'center', marginBottom: 10, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 999, backgroundColor: colors.danger },
-  nudgeText: { fontSize: 11, color: colors.bg },
   reqBtn: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: soft.sunken },
   reqBtnText: { fontSize: 10 },
 });
