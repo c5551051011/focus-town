@@ -26,8 +26,8 @@
 
 **빌드/제출 현황** (확인은 `cd app && npx eas-cli build:list --limit 8`)
 - iOS production **4번**: 성공, App Store Connect 로 **제출됨**(처리 상태·TestFlight 확인 필요). 화면 잠금/새 문구/통화 패스 화면 이전 버전.
-- iOS production **5번**: 실패(Swift `notify_*` 컴파일 오류) → 공개 API 로 고쳐 `890f8ef` 로 커밋. **새 빌드 재시도 중**(업로드가 한 번 네트워크 오류로 실패해 다시 시작함. 빌드 목록에서 상태 확인).
-- Android preview APK: EAS 빌드 `e8566ee5-a625-4d4f-a1cb-1cb3125321d3` (대기열). 끝나면 빌드 페이지 링크/QR 로 설치.
+- iOS production **5번**: 실패(Swift `notify_*` 컴파일 오류) → 공개 API 로 고쳐 `890f8ef` 로 커밋. **새 빌드 시작 중**(업로드가 네트워크 오류(EPIPE)로 두 번 실패해 `.easignore` 로 업로드를 줄여 세 번째로 시도함. 빌드 목록에서 상태 확인, 또 실패하면 와이파이를 바꿔 직접 `npx eas-cli build -p ios --profile production` 실행).
+- Android preview APK: EAS 빌드 `e8566ee5-a625-4d4f-a1cb-1cb3125321d3` **성공**. 설치 파일: https://expo.dev/artifacts/eas/q-n58SUwlWMY2OxmnPb_drG8LO63L-fbEHzjtYWaxwA.apk (안드로이드 폰에서 열어 설치. "출처를 알 수 없는 앱" 허용 필요)
 
 **다음에 할 일 (순서)**
 1. Supabase SQL Editor 에서 `backend/supabase/migrations/0005_lock.sql` 실행 (그룹에서 화면 잠금을 이탈로 안 보게 함)
