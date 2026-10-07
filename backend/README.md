@@ -30,10 +30,11 @@
 | `0006_invite_push.sql` | 그룹 초대를 받으면 앱이 꺼져 있어도 푸시 |
 | `0007_faster_nudge.sql` | 이탈 판정 6초, 피해 시작 유예 30초 |
 | `0008_unique_names.sql` | 닉네임 유일(대소문자 무관) + `name_taken` |
+| `0009_enable_pg_net.sql` | 푸시 전송에 필요한 `pg_net` 확장 켜기 (꺼져 있으면 푸시가 조용히 실패) |
 
 ## 팀원 넛지 (0004)
 - 집중 중 팀원이 앱을 벗어나 있으면(10초 넘게 신호 없음) 다른 팀원이 화면을 탭해 "돌아와요" 알림을 보낼 수 있다. 같은 사람에게는 20초에 한 번만 간다.
-- 알림은 데이터베이스가 Expo 푸시 서비스(`exp.host`)로 직접 보낸다 (Supabase 의 `pg_net` 확장 사용, 기본 켜져 있음). 푸시 토큰은 `push_tokens` 테이블에 있고 다른 사람은 읽을 수 없다.
+- 알림은 데이터베이스가 Expo 푸시 서비스(`exp.host`)로 직접 보낸다 (Supabase 의 `pg_net` 확장 사용. **기본으로 켜져 있지 않을 수 있으니 `0009_enable_pg_net.sql` 로 켠다**). 푸시 토큰은 `push_tokens` 테이블에 있고 다른 사람은 읽을 수 없다.
 - **실제 기기에 알림이 닿으려면** Android 는 Firebase(FCM) 설정이 필요하다: https://docs.expo.dev/push-notifications/fcm-credentials/ . 설정 전에는 넛지 버튼은 동작하지만 알림은 도착하지 않는다. iOS 는 EAS 가 APNs 키를 관리한다.
 
 ## 친구와 그룹 규칙 (0002, 0003)

@@ -36,7 +36,7 @@
 - **EAS Update(OTA)**: `expo-updates` 설치, `app.json` 에 `runtimeVersion: fingerprint` + `updates.url`, `eas.json` 에 채널(`preview`/`production`). **이 설정이 들어간 빌드부터** JS 수정을 빌드 없이 배포할 수 있다: `cd app && npx eas-cli update --channel production --message "설명"`. 네이티브가 바뀌면(fingerprint 가 달라지면) 빌드를 새로 해야 한다.
 - 닉네임 추천/중복 검사, START 버튼 모양, 효과음 볼륨, 음악 미리듣기 아이콘은 빌드 12 에 이미 들어 있음.
 
-**Supabase SQL (모두 실행됨)**: 0005 lock, 0006 invite_push, 0007 faster_nudge, 0008 unique_names.
+**Supabase SQL**: 0005 lock, 0006 invite_push, 0007 faster_nudge, 0008 unique_names 는 실행됨. **`0009_enable_pg_net.sql` 은 실행 필요** — `pg_net` 이 꺼져 있어서 서버 푸시(초대/넛지)가 한 번도 안 갔음(`net._http_response` 가 없다는 오류로 확인).
 
 **이번에 바뀐 동작**
 - 진행바에 `PROGRESS NN%`. iOS 라이브 액티비티 진행바는 0에서 차오른다(`expo-live-activity` Swift 를 `app/patches/` 로 패치, `postinstall: patch-package`). 시작 시각은 `progressBar.progress` 에 실어 보낸다. Android 카드는 숫자 카운트다운만 있다.
@@ -45,7 +45,7 @@
 - 마을 지도: 여럿이 지은 그룹 건물은 완성 화면과 같은 겹친 모양(`TeamBuilding scale`)으로 놓는다. 세션에 `durability` 저장(이전 기록은 멀쩡한 모양).
 - 닉네임: 만들 때 `CozySeal45` 식 추천이 채워지고 "Suggest another name" 버튼, 저장 전 `name_taken` 으로 중복 검사, 서버 대소문자 무관 유일 인덱스(충돌 시 숫자 붙여 자동 저장 + 알림).
 
-**초대 푸시 진단**(앱이 꺼져 있을 때 안 오면): Supabase SQL Editor 에서 `select user_id, left(token, 30), updated_at from push_tokens;`(받는 사람 토큰이 있는지), `select created, status_code, content from net._http_response order by created desc limit 5;`(Expo 가 돌려준 응답. `InvalidCredentials`/`DeviceNotRegistered` 등이 나오면 iOS 푸시 자격 증명(APNs 키) 문제 → `cd app && npx eas-cli credentials -p ios` 에서 Push Notifications 키 설정). 토큰이 없으면 앱이 토큰을 못 받은 것(알림 권한/푸시 capability).
+**초대 푸시 진단**(0009 실행 후에도 앱이 꺼져 있을 때 안 오면): Supabase SQL Editor 에서 `select user_id, left(token, 30), updated_at from push_tokens;`(받는 사람 토큰이 있는지), `select created, status_code, content from net._http_response order by created desc limit 5;`(Expo 가 돌려준 응답. `InvalidCredentials`/`DeviceNotRegistered` 등이 나오면 iOS 푸시 자격 증명(APNs 키) 문제 → `cd app && npx eas-cli credentials -p ios` 에서 Push Notifications 키 설정). 토큰이 없으면 앱이 토큰을 못 받은 것(알림 권한/푸시 capability).
 
 **테스트해야 할 것 (사용자가 기기로)**: 음악 OFF 일 때 화면 잠금, 초대 속도(앱 열림/꺼짐), **앱이 꺼져 있을 때 초대 푸시가 도착하는지**(안 오면 아래 진단), 친구/그룹 전체 흐름, 새 빌드의 잠금 감지(잠그자마자 카운트다운이 뜨지 않는지, 잠금 직후 다른 앱을 열면 이탈로 세는지).
 
