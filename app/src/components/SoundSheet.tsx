@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
   rowOn: { backgroundColor: colors.gold },
   main: { flex: 1, paddingVertical: 16, paddingHorizontal: 14 },
   label: { fontSize: 12, lineHeight: 18 },
-  play: { marginRight: 10, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: soft.card },
-  playIcon: { marginLeft: 3, borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent' },
-  stopIcon: { width: 12, height: 12, borderRadius: 2 },
+  play: { marginRight: 14, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: soft.card },
+  playIcon: { marginLeft: 2, borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 9, borderTopColor: 'transparent', borderBottomColor: 'transparent' },
+  stopIcon: { width: 10, height: 10, borderRadius: 2 },
   playOn: { backgroundColor: colors.accent },
 });

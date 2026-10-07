@@ -118,7 +118,7 @@ export default function CharacterScreen({ initial, mode, onSave, onCancel, onSig
             const taken = name !== initial?.name && (await isNameTaken(name));
             setChecking(false);
             if (taken) {
-              setNameError('That name is already taken. Try another one!');
+              setNameError('That name is already taken.\nTry another one!');
               return;
             }
             onSave({ ...c, name });
