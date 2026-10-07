@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { prefs } from './prefs';
 
-// 집중하는 동안 고른 앱을 잠그는 기능 (iOS 스크린 타임). Android 는 아직 지원하지 않는다.
+// 집중하는 동안 고른 앱만 빼고 나머지를 모두 잠그는 기능 (iOS 스크린 타임). Android 는 아직 지원하지 않는다.
 // 네이티브 모듈(modules/screen-time)이 없거나 Apple 이 권한을 승인하지 않은 빌드에서는 조용히 "지원 안 함"이 된다.
 
 type Native = {
@@ -50,7 +50,7 @@ export function blockedAppCount(): number {
 
 export type SetupResult = { ok: boolean; reason?: 'unsupported' | 'denied' | 'unavailable'; count: number };
 
-// 허용을 받고(필요하면) 잠글 앱을 고르게 한다. 온보딩/설정에서 쓴다.
+// 허용을 받고(필요하면) 계속 쓸 수 있게 둘 앱을 고르게 한다. 온보딩/설정에서 쓴다.
 export async function setupScreenTime(): Promise<SetupResult> {
   if (!native) return { ok: false, reason: 'unsupported', count: 0 };
   try {
@@ -68,7 +68,7 @@ export async function setupScreenTime(): Promise<SetupResult> {
   }
 }
 
-// 잠글 앱을 다시 고른다 (허용이 이미 된 경우)
+// 허용할 앱을 다시 고른다 (허용이 이미 된 경우)
 export async function pickBlockedApps(): Promise<number> {
   try {
     return (await native?.pickApps()) ?? 0;
@@ -77,7 +77,7 @@ export async function pickBlockedApps(): Promise<number> {
   }
 }
 
-// 집중이 시작되면 호출: 설정이 켜져 있고 허용되어 있고 고른 앱이 있을 때만 잠근다
+// 집중이 시작되면 호출: 설정이 켜져 있고 허용되어 있고 허용할 앱을 골랐을 때만 잠근다
 export function blockApps(): void {
   if (!native || !prefs.screenTime) return;
   try {

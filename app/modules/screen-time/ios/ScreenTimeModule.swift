@@ -4,10 +4,10 @@ import ManagedSettings
 import SwiftUI
 import UIKit
 
-// 집중 세션 동안 사용자가 고른 앱을 잠그는 모듈 (iOS Screen Time: FamilyControls + ManagedSettings).
+// 집중 세션 동안 사용자가 허용한 앱만 빼고 나머지 모든 앱·웹사이트를 잠그는 모듈 (iOS Screen Time: FamilyControls + ManagedSettings).
 //  - requestAuthorization: 시스템의 "스크린 타임 접근" 허용 창을 띄운다
-//  - pickApps: 시스템 앱 선택 화면(FamilyActivityPicker)을 열고, 고른 앱을 저장한다
-//  - block / unblock: 저장된 앱을 잠그거나 푼다 (잠긴 앱을 열면 시스템 차단 화면이 뜬다)
+//  - pickApps: 시스템 앱 선택 화면(FamilyActivityPicker)을 열고, 고른 앱(= 허용할 앱)을 저장한다. Towny 와 전화는 고르지 않아도 항상 허용
+//  - block / unblock: 허용한 앱을 뺀 나머지를 잠그거나 푼다 (잠긴 앱을 열면 시스템 차단 화면이 뜬다)
 // Apple 이 "Family Controls" 권한을 승인한 빌드에서만 동작한다. 그렇지 않으면 requestAuthorization 이 오류로 끝난다.
 
 private let selectionKey = "focus_town.screen_time.selection"
@@ -24,6 +24,13 @@ private func saveSelection(_ selection: FamilyActivitySelection) {
   if let data = try? PropertyListEncoder().encode(selection) {
     UserDefaults.standard.set(data, forKey: selectionKey)
   }
+}
+
+// 항상 허용하는 앱: Towny 자신(잠기면 풀 수 없다)과 전화. 번들 ID 로 시스템 토큰을 만든다.
+private let alwaysAllowedBundleIds: [String] = [Bundle.main.bundleIdentifier ?? "app.towny.mobile", "com.apple.mobilephone"]
+
+private func alwaysAllowedTokens() -> Set<ApplicationToken> {
+  return Set(alwaysAllowedBundleIds.compactMap { Application(bundleIdentifier: $0).token })
 }
 
 private func selectionCount(_ selection: FamilyActivitySelection) -> Int {
@@ -47,7 +54,7 @@ private struct PickerScreen: View {
   var body: some View {
     NavigationStack {
       FamilyActivityPicker(selection: $selection)
-        .navigationTitle("Apps to block")
+        .navigationTitle("Apps to allow")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .navigationBarLeading) {
@@ -111,13 +118,14 @@ public class ScreenTimeModule: Module {
       return selectionCount(loadSelection())
     }
 
-    // 저장된 앱을 잠근다. 잠글 것이 없으면 false
+    // 허용한 앱 + 항상 허용 앱(Towny, 전화)을 뺀 모든 앱과 웹사이트를 잠근다.
+    // Towny 토큰을 못 만들면 Towny 까지 잠겨 풀 수 없게 될 수 있으므로 잠그지 않는다(false).
     Function("block") { () -> Bool in
       let selection = loadSelection()
-      if selectionCount(selection) == 0 { return false }
-      self.store.shield.applications = selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
-      self.store.shield.applicationCategories = selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
-      self.store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+      let always = alwaysAllowedTokens()
+      guard let own = Bundle.main.bundleIdentifier, Application(bundleIdentifier: own).token != nil else { return false }
+      self.store.shield.applicationCategories = .all(except: selection.applicationTokens.union(always))
+      self.store.shield.webDomainCategories = .all(except: selection.webDomainTokens)
       return true
     }
 

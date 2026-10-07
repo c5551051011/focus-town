@@ -77,7 +77,7 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
       run: onSignOut,
     },
     delete: { title: 'Delete your account?', text: 'Your account, profile and friends will be permanently deleted. Records on this device stay until you reset them.', ok: 'Delete', cancel: 'Cancel', destructive: true, run: onDeleteAccount },
-    st_denied: { title: 'Screen Time is off', text: "Allow Screen Time for Towny in your phone's Settings to lock apps while you focus.", ok: 'Open settings', cancel: 'Not now', destructive: false, run: () => Linking.openSettings().catch(() => {}) },
+    st_denied: { title: 'Screen Time is off', text: "Allow Screen Time for Towny in your phone's Settings to lock other apps while you focus.", ok: 'Open settings', cancel: 'Not now', destructive: false, run: () => Linking.openSettings().catch(() => {}) },
     st_unavailable: {
       title: Platform.OS === 'ios' ? 'Not available yet' : 'Coming to Android',
       text: Platform.OS === 'ios' ? "Locking apps needs Apple's approval for Screen Time, which this version doesn't have yet. It will switch on in a future update." : 'Locking apps while you focus is iPhone-only for now.',
@@ -109,11 +109,11 @@ export default function SettingsScreen({ settings, onChange, onBack, onReset, on
               <Row
                 icon="shield"
                 tint="#8be9fd"
-                label="Block distracting apps"
-                note={lockAvailable ? 'Locks the apps you pick while you focus.' : 'iPhone only for now.'}
+                label="Lock all other apps"
+                note={lockAvailable ? 'Locks every app except the ones you allow while you focus. Towny and Phone are always allowed.' : 'iPhone only for now.'}
                 right={<Switch on={settings.screenTimeBlock && lockAvailable} onPress={toggleLock} />}
               />
-              {settings.screenTimeBlock && lockAvailable && <Row sub label="Apps to block" value={`${blockedCount} selected`} onPress={chooseApps} />}
+              {settings.screenTimeBlock && lockAvailable && <Row sub label="Apps to allow" value={`${blockedCount} allowed`} onPress={chooseApps} />}
             </Card>
           </>
         )}

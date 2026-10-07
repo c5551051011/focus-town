@@ -55,7 +55,7 @@ const ALL_SLIDES: Slide[] = [
   {
     title: 'BLOCK DISTRACTIONS',
     text: screenTimeAvailable()
-      ? 'Lock the apps that distract you while you focus. Say yes and pick them now.'
+      ? 'Lock every app except the ones you allow while you focus. Say yes and pick the apps to keep. Towny and Phone are always allowed.'
       : 'Blocking distracting apps is coming soon. Say yes and we will turn it on when it is ready.',
     cta: { label: "I'M IN", kind: 'screentime' },
     art: (
