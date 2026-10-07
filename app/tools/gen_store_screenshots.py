@@ -1,6 +1,7 @@
 # 아이폰에서 찍은 화면(screenshots/*.PNG)을 App Store 6.9형 규격(1290x2796)으로 가공한다.
 # 위쪽에 캡션을 넣고, 그 아래에 둥근 모서리의 화면을 놓는다.
 # 사용: python3 app/tools/gen_store_screenshots.py   (결과: store/screenshots/appstore-6.9/*.png)
+#       IPAD=1 python3 app/tools/gen_store_screenshots.py   (iPad 13형 2064x2752)
 import glob
 import os
 from PIL import Image, ImageDraw, ImageFont
@@ -8,10 +9,13 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 FONT = glob.glob(os.path.join(ROOT, 'app/node_modules/@expo-google-fonts/press-start-2p/400Regular/*.ttf'))[0]
 RAW = os.path.join(ROOT, 'screenshots')
-OUT = os.path.join(ROOT, 'store/screenshots/appstore-6.9')
+# IPAD=1 python3 app/tools/gen_store_screenshots.py  → iPad 13형(2064x2752), 결과: store/screenshots/appstore-ipad-13
+IPAD = os.environ.get('IPAD') == '1'
+OUT = os.path.join(ROOT, 'store/screenshots/appstore-ipad-13' if IPAD else 'store/screenshots/appstore-6.9')
 os.makedirs(OUT, exist_ok=True)
 
-W, H = 1290, 2796
+W, H = (2064, 2752) if IPAD else (1290, 2796)
+PW = 1050 if IPAD else 1070  # 화면(폰 캡처)을 놓는 너비
 BG, PINK, GOLD, SHADOW, LINE = (30, 28, 42), (255, 121, 198), (241, 250, 140), (15, 14, 23), (55, 51, 92)
 
 # (원본 파일, 출력 이름, 캡션 두 줄). 새 빌드로 다시 찍은 화면은 아래에 추가한다.
@@ -41,7 +45,7 @@ def build(src, name, lines):
     d = ImageDraw.Draw(img)
     caption(d, lines)
     shot = Image.open(os.path.join(RAW, src)).convert('RGB')
-    pw = 1070
+    pw = PW
     ph = round(shot.height * pw / shot.width)
     shot = shot.resize((pw, ph), Image.LANCZOS)
     x, y = (W - pw) // 2, H - ph - 56
