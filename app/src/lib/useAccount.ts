@@ -69,10 +69,15 @@ export function useInvites(userId: string | null, enabled: boolean) {
       if (alive && r.ok) setInvites(r.data);
     };
     load();
-    const id = setInterval(load, 6000);
+    const id = setInterval(load, 2500);
+    // 앱으로 돌아오면(푸시 알림을 눌러 들어온 경우 등) 기다리지 않고 바로 확인한다
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') load();
+    });
     return () => {
       alive = false;
       clearInterval(id);
+      sub.remove();
     };
   }, [userId, enabled]);
 

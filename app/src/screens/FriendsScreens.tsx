@@ -75,7 +75,7 @@ export function AddFriendsScreen({ social, initialQuery, onBack, onChanged }: Co
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Name, or paste a link"
+            placeholder="Name or link"
             placeholderTextColor={soft.subtle}
             autoCapitalize="none"
             autoCorrect={false}
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 48 },
 
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: soft.card, borderRadius: 14, paddingHorizontal: 16 },
-  input: { flex: 1, color: colors.text, fontFamily: font, fontSize: 12, paddingVertical: 17 },
+  input: { flex: 1, color: colors.text, fontFamily: font, fontSize: 10, paddingVertical: 17 },
   clear: { color: soft.subtle, fontSize: 16 },
   hint: { color: colors.gold, fontSize: 13, marginTop: 10 },
   error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 10 },
