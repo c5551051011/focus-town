@@ -7,3 +7,4 @@
 - Mac 에 Xcode 가 없어 Swift 는 EAS 빌드로만 컴파일 확인된다. Swift 를 고칠 때는 특히 조심한다.
 - 다른 대화가 같은 `main` 에 커밋한다. 작업 전 `git status`, 커밋은 자기 파일만, push 전 `git pull --rebase`.
 - Android 에뮬레이터는 `Pixel_3a_API_34`(포트 5558)만 쓴다. 5554/5556 은 사용자가 쓴다.
+- **비공개 API/시스템 신호 금지**: 화면 잠금 감지에 `com.apple.springboard.*` 같은 Darwin 알림을 쓰면 App Store 업로드가 거절된다(ITMS-90699, 빌드 13). 공개 API 만 쓴다.

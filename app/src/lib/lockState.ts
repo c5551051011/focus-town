@@ -39,8 +39,9 @@ export function isLockSince(leftAt: number): boolean {
   const info = lockInfo();
   return !!info && info.locked && info.lockedAt >= leftAt - SAME_EVENT_MS && info.lockedAt <= leftAt + LOCK_LATE_MS;
 }
-// 앱이 백그라운드로 간 뒤 잠금 여부를 확인하기까지 기다리는 시간
-export const LOCK_CHECK_MS = 1500;
+// 앱이 백그라운드로 간 뒤, 잠금인지 확인하고 나서 이탈 경고를 켜기까지 기다리는 시간.
+// Android 는 화면 꺼짐을 바로 알지만, iOS 는 공개 알림(protectedData)이 잠근 뒤 몇 초 늦게 와서 더 기다려야 잠근 직후에 카운트다운이 뜨지 않는다.
+export const LOCK_CHECK_MS = Platform.OS === 'ios' ? 8000 : 1500;
 
 export const isLockedNow = (): boolean => lockInfo()?.locked === true;
 

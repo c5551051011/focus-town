@@ -91,7 +91,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
           setTimeout(() => {
             if (leftAt.current !== base || lockedRef.current || isOver()) return;
             update('warning');
-            scheduleAwayNotifications(GRACE_SECONDS - 2);
+            scheduleAwayNotifications(Math.max(6, GRACE_SECONDS - Math.round(LOCK_CHECK_MS / 1000)));
             showAway(t + GRACE_SECONDS * 1000);
           }, LOCK_CHECK_MS);
         }

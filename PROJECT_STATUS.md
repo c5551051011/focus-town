@@ -32,7 +32,7 @@
 **⚠ 빌드는 사용자 승인 후에만** (EAS 무료 빌드 횟수 한정). 빌드·제출·push 는 사용자가 시킬 때만 한다. 규칙은 루트 `CLAUDE.md`.
 
 **아직 빌드에 안 들어간 변경 (다음 빌드에 한 번에)**
-- **iOS 잠금 감지(Swift, 네이티브)**: `modules/lock-state`. 잠그는 순간 시스템 신호(`com.apple.springboard.lockcomplete`)로 즉시 잠금을 알고, `lockstate` 로 풀림도 안다. 백그라운드로 간 뒤 1.5초(`LOCK_CHECK_MS`) 동안 잠금을 확인한 뒤에만 이탈 경고/카운트다운을 켠다. 잠금 후 15초 안에 다시 잠그면 유지, 풀고 다른 앱으로 가면 풀린 시각부터 15초(솔로)/30초(그룹)를 센다. 빌드 11/12 의 `reconcile()` 오판(잠그고 15초 뒤 "풀렸다"고 봄)도 고쳐짐. **기기에서 최신 iOS 로 확인 필요**(비공개 신호라 안 오면 공개 알림으로 대체, 심사에서 문제되면 제거).
+- **iOS 잠금 감지(Swift, 네이티브)**: `modules/lock-state`. **빌드 13 은 심사 업로드에서 거절됨(ITMS-90699: 기기 잠금 알림을 들으면 안 됨)** — 비공개 시스템 신호(`com.apple.springboard.lockcomplete`/`lockstate`)를 넣었기 때문. 지금 코드는 **공개 API 만** 쓴다(`protectedDataWillBecomeUnavailable`/`DidBecomeAvailable` 알림 + `isProtectedDataAvailable`). 공개 알림은 잠근 뒤 몇 초 늦게 와서, 백그라운드로 간 뒤 iOS 는 **8초**(`LOCK_CHECK_MS`) 동안 잠금을 확인한 뒤에만 이탈 경고/카운트다운을 켠다(Android 는 1.5초). 잠그고 10초 안에 풀면 iOS 가 풀림 알림을 안 줘서 잠금이 아니라 "그냥 이탈"로 센다(올바른 결과). **빌드 13 은 App Store 심사에 못 쓰므로 새 빌드가 필요.**
 - **EAS Update(OTA)**: `expo-updates` 설치, `app.json` 에 `runtimeVersion: fingerprint` + `updates.url`, `eas.json` 에 채널(`preview`/`production`). **이 설정이 들어간 빌드부터** JS 수정을 빌드 없이 배포할 수 있다: `cd app && npx eas-cli update --channel production --message "설명"`. 네이티브가 바뀌면(fingerprint 가 달라지면) 빌드를 새로 해야 한다.
 - 닉네임 추천/중복 검사, START 버튼 모양, 효과음 볼륨, 음악 미리듣기 아이콘은 빌드 12 에 이미 들어 있음.
 

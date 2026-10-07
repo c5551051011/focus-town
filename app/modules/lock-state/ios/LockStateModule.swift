@@ -22,7 +22,6 @@ public class LockStateModule: Module {
     OnDestroy {
       for o in self.observers { NotificationCenter.default.removeObserver(o) }
       self.observers = []
-      CFNotificationCenterRemoveEveryObserver(CFNotificationCenterGetDarwinNotifyCenter(), Unmanaged.passUnretained(self).toOpaque())
     }
 
     // 지금 잠겨 있는지(locked), 마지막으로 잠긴 시각(lockedAt), 마지막으로 풀린 시각(unlockedAt) (밀리초)
@@ -51,7 +50,7 @@ public class LockStateModule: Module {
 
   private func startListening() {
     let center = NotificationCenter.default
-    // "곧 잠김" 알림은 화면을 잠근 뒤 10초쯤 지나서 온다. 이미 더 일찍 잠김을 알았다면 시각을 덮어쓰지 않는다.
+    // "곧 잠김" 알림은 화면을 잠근 뒤 몇 초 늦게 온다. 이미 잠김을 알고 있다면 시각을 덮어쓰지 않는다.
     let willLock = center.addObserver(forName: UIApplication.protectedDataWillBecomeUnavailableNotification, object: nil, queue: .main) { [weak self] _ in
       self?.markLocked()
     }
@@ -66,41 +65,6 @@ public class LockStateModule: Module {
       self.unlockedAt = Date().timeIntervalSince1970 * 1000
     }
     observers = [willLock, didUnlock, active]
-
-    // 화면을 잠그는 순간 SpringBoard 가 보내는 시스템 신호. 위의 공개 알림보다 훨씬 빨라서 잠근 직후에 바로 잠금으로 알 수 있다.
-    CFNotificationCenterAddObserver(
-      CFNotificationCenterGetDarwinNotifyCenter(),
-      Unmanaged.passUnretained(self).toOpaque(),
-      { (_, observer, _, _, _) in
-        guard let observer = observer else { return }
-        Unmanaged<LockStateModule>.fromOpaque(observer).takeUnretainedValue().markLocked()
-      },
-      "com.apple.springboard.lockcomplete" as CFString,
-      nil,
-      .deliverImmediately
-    )
-
-    // 잠금 상태가 바뀔 때마다 오는 신호. 잠글 때도 오지만 잠김 직후 짧은 시간 안에 오는 것은 같은 일로 보고 무시한다.
-    // 그 뒤에 또 오면 풀린 것이다. (잠근 지 10초 안에 풀면 iOS 의 "풀림" 알림은 오지 않아서 이 신호가 필요하다)
-    CFNotificationCenterAddObserver(
-      CFNotificationCenterGetDarwinNotifyCenter(),
-      Unmanaged.passUnretained(self).toOpaque(),
-      { (_, observer, _, _, _) in
-        guard let observer = observer else { return }
-        Unmanaged<LockStateModule>.fromOpaque(observer).takeUnretainedValue().markMaybeUnlocked()
-      },
-      "com.apple.springboard.lockstate" as CFString,
-      nil,
-      .deliverImmediately
-    )
-  }
-
-  fileprivate func markMaybeUnlocked() {
-    let now = Date().timeIntervalSince1970 * 1000
-    if locked && now - lockedAt > 1500 {
-      locked = false
-      unlockedAt = now
-    }
   }
 
   fileprivate func markLocked() {

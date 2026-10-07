@@ -92,7 +92,7 @@ export function useGroupSession(roomId: string, initial: RoomState, myId: string
           setTimeout(() => {
             if (leftAt.current !== base || lockedNow) return;
             setAway(true);
-            scheduleAwayNotifications(DAMAGE_START_SEC - 2, true);
+            scheduleAwayNotifications(Math.max(6, DAMAGE_START_SEC - Math.round(LOCK_CHECK_MS / 1000)), true);
             showAway(t + DAMAGE_START_SEC * 1000);
           }, LOCK_CHECK_MS);
         }
