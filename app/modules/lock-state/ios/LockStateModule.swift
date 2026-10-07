@@ -35,8 +35,9 @@ public class LockStateModule: Module {
     }
   }
 
-  // 알림을 놓쳤을 수 있으니 현재 상태를 직접 확인해 맞춘다.
-  // 잠겼는데 알림이 안 왔다면 지금을 잠긴 시각으로 본다. (풀림은 "곧 잠김" 알림 직후와 헷갈리지 않도록 잠긴 지 15초가 지난 뒤에만 맞춘다)
+  // "잠김" 알림을 놓쳤을 수 있으니 현재 상태를 직접 확인해 맞춘다. 잠겼는데 알림이 안 왔다면 지금을 잠긴 시각으로 본다.
+  // 풀림은 여기서 판단하지 않는다: 잠겨 있어도 이 값이 true 로 남는 기기가 있어, 잠금 중에 "풀렸다"고 잘못 볼 수 있다.
+  // 풀림은 iOS 의 protectedDataDidBecomeAvailable 알림으로만 안다.
   private func reconcile() {
     var available = true
     if Thread.isMainThread {
@@ -48,9 +49,6 @@ public class LockStateModule: Module {
     if !available && !locked {
       locked = true
       lockedAt = now
-    } else if available && locked && now - lockedAt > 15000 {
-      locked = false
-      unlockedAt = now
     }
   }
 
