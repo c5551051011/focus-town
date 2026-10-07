@@ -262,7 +262,7 @@ export default function App() {
   };
 
   const recordGroup = (g: GroupRecord) => {
-    const next = [...sessions, { id: `g-${g.startedAt}`, startedAt: g.startedAt, minutes: g.minutes, success: g.success, tag: g.tag, group: true, building: g.building, members: g.members }];
+    const next = [...sessions, { id: `g-${g.startedAt}`, startedAt: g.startedAt, minutes: g.minutes, success: g.success, tag: g.tag, group: true, building: g.building, members: g.members, durability: g.durability }];
     setSessions(next);
     saveSessions(next);
     track(g.success ? 'group_complete' : 'group_fail', { minutes: g.minutes, members: g.members, durability: g.durability, reason: g.reason });

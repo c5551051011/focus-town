@@ -126,7 +126,7 @@ export const elapsedSec = (s: RoomState, offset: number) => (s.room.started_at ?
 // 늦은 참여를 바로 할 수 있는 남은 시간(초). 0이면 전원 허용이 필요하다.
 export const lateJoinLeftSec = (s: RoomState, offset: number) => Math.max(0, s.room.late_join_seconds - elapsedSec(s, offset));
 
-export const DAMAGE_START_SEC = 15; // 이 시간까지는 피해 없음 (유예)
+export const DAMAGE_START_SEC = 30; // 이 시간까지는 피해 없음 (유예). 서버(0007)의 값과 같아야 한다
 export const DROP_DAMAGE_SEC = 45; // 초과 이탈이 이 값에 이르면 탈락
 
 export function durabilityTone(pct: number): 'good' | 'warn' | 'bad' {

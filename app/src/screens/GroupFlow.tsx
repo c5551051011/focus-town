@@ -13,7 +13,7 @@ import { AmbientId, setAmbientMuted, startAmbient, stopAmbient } from '../lib/am
 import { buildingFor, tieredBuilding } from '../lib/buildings';
 import { Character } from '../lib/character';
 import { statusMessage } from '../lib/messages';
-import { RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, nudgeAway, respondJoin } from '../lib/rooms';
+import { DAMAGE_START_SEC, RoomMember, RoomState, durabilityTone, lateJoinLeftSec, lateJoin, leaveRoom, nudgeAway, respondJoin } from '../lib/rooms';
 import { selection } from '../lib/haptics';
 import { useGroupSession } from '../lib/useGroupSession';
 import { playSound } from '../lib/sounds';
@@ -228,7 +228,7 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
   const progress = 1 - remainingMs / (room.minutes * 60 * 1000);
   const crew = members.filter((m) => m.status === 'active').map(toCharacter);
   const awayNames = members.filter((m) => m.status === 'active' && m.away_s > 0 && m.user_id !== myId).map((m) => m.name);
-  const damaging = members.some((m) => m.status === 'active' && m.away_s > 15);
+  const damaging = members.some((m) => m.status === 'active' && m.away_s > DAMAGE_START_SEC);
   const waitingFor = state.invites.filter((i) => i.status === 'pending').map((i) => i.name);
   const request = members.find((m) => m.status === 'pending' && m.my_vote === null && mine.status === 'active');
 
@@ -279,7 +279,7 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
     : away
       ? 'You are away!\nCome back quickly.'
       : awayNames.length > 0
-        ? `${awayNames.join(', ')} ${awayNames.length > 1 ? 'are' : 'is'} away!\nTap the screen to nudge.`
+        ? `${awayNames.join(', ')} ${awayNames.length > 1 ? 'are' : 'is'} away!\nSend a nudge to call them back.`
         : statusMessage(progress, Math.floor(progress * room.minutes * 60), false);
 
   return (
@@ -307,8 +307,13 @@ function Running({ state, mine, myId, remainingMs, away, ambient, onVote, onLeav
         )
       }
       extra={
-        waitingFor.length > 0 || request ? (
+        waitingFor.length > 0 || request || (awayNames.length > 0 && !away) ? (
           <View style={styles.extra}>
+            {awayNames.length > 0 && !away ? (
+              <Pressable onPress={nudge} style={({ pressed }) => [styles.nudgeBtn, pressed && { opacity: 0.85 }]}>
+                <Txt style={styles.nudgeText}>NUDGE {awayNames.length === 1 ? awayNames[0].toUpperCase() : 'THEM'}</Txt>
+              </Pressable>
+            ) : null}
             {waitingFor.length > 0 ? <Txt style={styles.waiting}>WAITING FOR {waitingFor.join(', ')}</Txt> : null}
             {request ? (
               <View style={styles.request}>
@@ -378,6 +383,8 @@ const styles = StyleSheet.create({
   waiting: { color: soft.subtle, fontSize: 9, marginTop: 8, textAlign: 'center' },
   request: { marginTop: 8, padding: 14, backgroundColor: soft.card, borderRadius: 18, alignItems: 'center', gap: 12 },
   requestText: { fontSize: 10 },
+  nudgeBtn: { alignSelf: 'center', marginBottom: 10, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 999, backgroundColor: colors.danger },
+  nudgeText: { fontSize: 11, color: colors.bg },
   reqBtn: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: soft.sunken },
   reqBtnText: { fontSize: 10 },
 });

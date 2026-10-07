@@ -4,6 +4,7 @@ import { colors, soft } from '../theme';
 import { Pixel, SpriteName } from '../components/Pixel';
 import { Sans } from '../components/ui';
 import { ScreenTitle } from '../components/cards';
+import TeamBuilding, { TEAM_H, TEAM_MAIN_SIZE, TEAM_W } from '../components/TeamBuilding';
 import { BUILDINGS, buildingOf } from '../lib/buildings';
 import { Session } from '../lib/types';
 
@@ -40,14 +41,24 @@ function periodStart(p: Period): number {
   return p === 'ALL' ? 0 : d.getTime();
 }
 
-const Tile = memo(function Tile({ building, w, left, top }: { building?: SpriteName; w: number; left: number; top: number }) {
+type Placed = { id: SpriteName; members: number; durability: number };
+
+const Tile = memo(function Tile({ placed, w, left, top }: { placed?: Placed; w: number; left: number; top: number }) {
   const h = w * 0.75;
   const bs = w * 0.8;
+  // 여럿이 함께 지은 건물은 완성 화면과 같은 모양(겹쳐 선 건물들, 내구성에 따라 기운 모양)으로 놓는다
+  const team = placed && placed.members > 1;
+  const k = bs / TEAM_MAIN_SIZE;
   return (
     <View style={{ position: 'absolute', left, top, width: w, height: h }}>
       <Image source={GRASS} style={{ width: w, height: h }} />
-      {building && (
-        <Pixel name={building} size={bs} style={{ position: 'absolute', left: (w - bs) / 2, top: w * 0.31 - bs }} />
+      {placed && !team && (
+        <Pixel name={placed.id} size={bs} style={{ position: 'absolute', left: (w - bs) / 2, top: w * 0.31 - bs }} />
+      )}
+      {placed && team && (
+        <View style={{ position: 'absolute', left: (w - TEAM_W) / 2, top: w * 0.31 + 16 * k - TEAM_H, width: TEAM_W, height: TEAM_H }}>
+          <TeamBuilding building={placed.id} members={placed.members} durability={placed.durability} scale={k} ground={false} />
+        </View>
       )}
     </View>
   );
@@ -60,13 +71,13 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
 
   // 땅은 처음부터 전부 깔려 있다. 건물 자리는 "전체 기록" 순서로 정해져서, 기간을 바꿔도 건물이 움직이지 않는다
   const built = sessions.filter((s) => s.success).sort((a, b) => a.startedAt - b.startedAt);
-  const onTile = new Map<number, SpriteName>();
+  const onTile = new Map<number, Placed>();
   const counts: Record<string, number> = {};
   let shown = 0;
   built.forEach((s, i) => {
     if (s.startedAt < period.start) return;
     const id = buildingOf(s).id;
-    onTile.set(SLOTS[i % SLOTS.length], id);
+    onTile.set(SLOTS[i % SLOTS.length], { id, members: s.group ? (s.members ?? 1) : 1, durability: s.durability ?? 100 });
     counts[id] = (counts[id] ?? 0) + 1;
     shown++;
   });
@@ -98,7 +109,7 @@ export default function TownScreen({ sessions }: { sessions: Session[] }) {
         {DRAW_ORDER.map((idx) => (
           <Tile
             key={idx}
-            building={onTile.get(idx)}
+            placed={onTile.get(idx)}
             w={w}
             left={((col(idx) - row(idx) + (SIZE - 1)) * w) / 2}
             top={((row(idx) + col(idx)) * w) / 4}

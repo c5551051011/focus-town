@@ -1,0 +1,42 @@
+diff --git a/node_modules/expo-live-activity/ios-files/Date+toTimerInterval.swift b/node_modules/expo-live-activity/ios-files/Date+toTimerInterval.swift
+index 3571bc8..50547f8 100644
+--- a/node_modules/expo-live-activity/ios-files/Date+toTimerInterval.swift
++++ b/node_modules/expo-live-activity/ios-files/Date+toTimerInterval.swift
+@@ -1,7 +1,13 @@
+ import SwiftUI
+ 
+ extension Date {
+-  static func toTimerInterval(miliseconds: Double) -> ClosedRange<Self> {
+-    now ... max(now, Date(timeIntervalSince1970: miliseconds / 1000))
++  // startMiliseconds 가 있으면 그 시각부터 끝 시각까지의 구간(진행바가 0에서 차오른다), 없으면 지금부터 끝까지
++  static func toTimerInterval(miliseconds: Double, startMiliseconds: Double? = nil) -> ClosedRange<Self> {
++    let end = Date(timeIntervalSince1970: miliseconds / 1000)
++    if let start = startMiliseconds {
++      let from = Date(timeIntervalSince1970: start / 1000)
++      return min(from, end) ... end
++    }
++    return now ... max(now, end)
+   }
+ }
+diff --git a/node_modules/expo-live-activity/ios-files/LiveActivityView.swift b/node_modules/expo-live-activity/ios-files/LiveActivityView.swift
+index 1a00e92..33b85a0 100644
+--- a/node_modules/expo-live-activity/ios-files/LiveActivityView.swift
++++ b/node_modules/expo-live-activity/ios-files/LiveActivityView.swift
+@@ -209,7 +209,7 @@ import WidgetKit
+ 
+             if effectiveStretch {
+               if let date = contentState.timerEndDateInMilliseconds {
+-                ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date))
++                ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date, startMiliseconds: contentState.progress), countsDown: contentState.progress == nil)
+                   .tint(progressViewTint)
+                   .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
+               } else if let progress = contentState.progress {
+@@ -230,7 +230,7 @@ import WidgetKit
+ 
+         if !effectiveStretch {
+           if let date = contentState.timerEndDateInMilliseconds {
+-            ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date))
++            ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date, startMiliseconds: contentState.progress), countsDown: contentState.progress == nil)
+               .tint(progressViewTint)
+               .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
+           } else if let progress = contentState.progress {

@@ -47,7 +47,7 @@ export function useGroupSession(roomId: string, initial: RoomState, myId: string
       if (AppState.currentState === 'active' && leftAt.current === null) await sync();
       const status = stateRef.current.room.status;
       if (!alive || status === 'done' || status === 'collapsed' || status === 'closed') return;
-      timer = setTimeout(loop, status === 'lobby' ? 2000 : 4000);
+      timer = setTimeout(loop, status === 'lobby' ? 2000 : 2500);
     };
     timer = setTimeout(loop, 1500);
     return () => {

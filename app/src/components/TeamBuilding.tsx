@@ -2,8 +2,12 @@ import { StyleSheet, View } from 'react-native';
 import { Pixel, SpriteName } from './Pixel';
 import { BUILDINGS } from '../lib/buildings';
 
-const W = 230;
-const H = 200;
+export const TEAM_W = 230;
+export const TEAM_H = 200;
+const W = TEAM_W;
+const H = TEAM_H;
+// 가장 큰 건물(주 건물)의 기본 크기. 마을 지도에서 한 칸 건물 크기에 맞춰 줄일 때의 기준이다
+export const TEAM_MAIN_SIZE = 150;
 
 // 자리(slot): 가운데 기준 x, 바닥에서의 높이 b, 크기 s, main = 이번 팀이 지은 건물(아니면 한 단계 작은 이웃 건물)
 // 뒤쪽 줄이 먼저 그려지고 앞쪽 줄이 그 위에 겹친다.
@@ -29,7 +33,7 @@ const LAYOUTS: Record<number, Slot[]> = {
 
 // 함께 지은 건물: 참여한 인원만큼 건물이 한 덩어리로 모여 있다.
 // 내구성이 낮을수록 건물들이 기울고, 눌리고, 땅으로 꺼지고, 40% 아래에서는 한 채가 폐허가 된다.
-export default function TeamBuilding({ building, members, durability }: { building: SpriteName; members: number; durability: number }) {
+export default function TeamBuilding({ building, members, durability, scale = 1, ground = true }: { building: SpriteName; members: number; durability: number; scale?: number; ground?: boolean }) {
   const n = Math.max(1, Math.min(4, members));
   const slots = LAYOUTS[n];
   const t = Math.max(0, Math.min(1, (100 - durability) / 100)); // 0 = 멀쩡, 1 = 무너짐
@@ -39,8 +43,8 @@ export default function TeamBuilding({ building, members, durability }: { buildi
   const ruinIndex = durability < 40 ? slots.findIndex((s) => !s.main) : -1;
 
   return (
-    <View style={styles.box}>
-      <View style={styles.ground} />
+    <View style={[styles.box, scale !== 1 && { transformOrigin: '50% 100%', transform: [{ scale }] }]}>
+      {ground ? <View style={styles.ground} /> : null}
       {slots.map((s, i) => {
         const sign = i % 2 === 0 ? -1 : 1;
         const f = 0.6 + (((i * 37) % 10) / 10) * 0.4; // 건물마다 조금씩 다르게

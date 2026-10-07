@@ -39,6 +39,10 @@ export default function SessionLayout({
         <ConstructionSite building={building} progress={progress} workers={workers} />
         <Txt style={styles.big}>{big}</Txt>
         <View style={styles.bars}>
+          <View style={styles.teamHead}>
+            <Txt style={styles.teamLabel}>PROGRESS</Txt>
+            <Txt style={[styles.teamLabel, { color: colors.accent }]}>{Math.floor(Math.max(0, Math.min(1, progress)) * 100)}%</Txt>
+          </View>
           <View style={styles.bar}>
             <View style={[styles.fill, { width: `${progress * 100}%` }]} />
           </View>

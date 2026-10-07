@@ -26,11 +26,31 @@ public class LockStateModule: Module {
 
     // 지금 잠겨 있는지(locked), 마지막으로 잠긴 시각(lockedAt), 마지막으로 풀린 시각(unlockedAt) (밀리초)
     Function("lockInfo") { () -> [String: Any] in
+      self.reconcile()
       return [
         "locked": self.locked,
         "lockedAt": self.lockedAt,
         "unlockedAt": self.unlockedAt
       ]
+    }
+  }
+
+  // 알림을 놓쳤을 수 있으니 현재 상태를 직접 확인해 맞춘다.
+  // 잠겼는데 알림이 안 왔다면 지금을 잠긴 시각으로 본다. (풀림은 "곧 잠김" 알림 직후와 헷갈리지 않도록 잠긴 지 15초가 지난 뒤에만 맞춘다)
+  private func reconcile() {
+    var available = true
+    if Thread.isMainThread {
+      available = UIApplication.shared.isProtectedDataAvailable
+    } else {
+      DispatchQueue.main.sync { available = UIApplication.shared.isProtectedDataAvailable }
+    }
+    let now = Date().timeIntervalSince1970 * 1000
+    if !available && !locked {
+      locked = true
+      lockedAt = now
+    } else if available && locked && now - lockedAt > 15000 {
+      locked = false
+      unlockedAt = now
     }
   }
 

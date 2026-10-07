@@ -63,7 +63,8 @@ function normalState(s: LiveSession) {
   return {
     title: s.kind === 'group' ? `Towny · Team · ${s.tag}` : `Towny · ${s.tag}`,
     subtitle: cheer(s),
-    progressBar: { date: s.endAt },
+    // date = 끝나는 시각, progress = 시작 시각(밀리초). 패치한 라이브 액티비티가 시작~끝 구간을 0에서부터 채운다 (patches/expo-live-activity)
+    progressBar: { date: s.endAt, progress: s.startedAt } as unknown as { date: number },
     imageName: `b_${s.buildingId}`,
     dynamicIslandImageName: `b_${s.buildingId}`,
   };
