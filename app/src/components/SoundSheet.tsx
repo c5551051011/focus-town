@@ -56,7 +56,7 @@ export default function SoundSheet({
         </Pressable>
         {id !== 'off' && (
           <Pressable onPress={() => togglePreview(id)} style={[styles.play, playing === id && styles.playOn]} hitSlop={6}>
-            <Sans style={[styles.playText, playing === id && { color: colors.bg }]}>{playing === id ? 'Stop' : 'Play'}</Sans>
+            {playing === id ? <View style={[styles.stopIcon, { backgroundColor: colors.bg }]} /> : <View style={[styles.playIcon, { borderLeftColor: colors.text }]} />}
           </Pressable>
         )}
       </View>
@@ -100,7 +100,8 @@ const styles = StyleSheet.create({
   rowOn: { backgroundColor: colors.gold },
   main: { flex: 1, paddingVertical: 16, paddingHorizontal: 14 },
   label: { fontSize: 12, lineHeight: 18 },
-  play: { marginRight: 10, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 16, backgroundColor: soft.card },
+  play: { marginRight: 10, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: soft.card },
+  playIcon: { marginLeft: 3, borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent' },
+  stopIcon: { width: 12, height: 12, borderRadius: 2 },
   playOn: { backgroundColor: colors.accent },
-  playText: { fontSize: 12, color: colors.text },
 });
