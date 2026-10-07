@@ -8,7 +8,7 @@ import { isPassAvailable, consumePass } from './callPass';
 import { setLiveEnd, showAway, showBack, stopLive } from './liveProgress';
 import { LOCK_CHECK_MS, awayExcludingLock, isLockSince, lockInfo } from './lockState';
 
-export const GRACE_SECONDS = 15;
+export const GRACE_SECONDS = 30;
 
 export type Phase = 'running' | 'warning' | 'callPrompt' | 'success' | 'collapsed';
 export type EndReason = 'completed' | 'left_app' | 'gave_up' | 'app_closed';

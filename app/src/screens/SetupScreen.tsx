@@ -43,7 +43,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
   const [needNotif, setNeedNotif] = useState(false);
   const start = async () => {
     const granted = await requestNotificationPermission();
-    // 알림이 꺼져 있으면 이탈 경고(알림, 15초 카운트다운 카드)가 뜨지 않는다는 걸 한 번 알려준다
+    // 알림이 꺼져 있으면 이탈 경고(알림, 카운트다운 카드)가 뜨지 않는다는 걸 한 번 알려준다
     if (!granted && settings.notify && !notifNagged) {
       notifNagged = true;
       setNeedNotif(true);
@@ -148,7 +148,7 @@ export default function SetupScreen({ todayMinutes, settings, onChange: update, 
       <ConfirmSheet
         visible={needNotif}
         title="Notifications are off"
-        text="Without notifications you won't get a warning when you leave the app. Turn them on to get the 15-second come-back alert."
+        text="Without notifications you won't get a warning when you leave the app. Turn them on to get the come-back alert."
         confirmLabel="Open settings"
         cancelLabel="Start anyway"
         onConfirm={() => {

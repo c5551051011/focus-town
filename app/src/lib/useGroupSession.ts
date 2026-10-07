@@ -7,7 +7,7 @@ import { LOCK_CHECK_MS, awayExcludingLock, isLockSince, lockInfo } from './lockS
 
 // 그룹 방 상태를 서버와 맞추는 훅.
 //  - 대기실에서는 2초, 집중 중에는 4초마다 서버와 통신한다 (집중 중 통신은 "앱이 떠 있음" 신호도 겸한다)
-//  - 앱을 벗어났다 돌아오면 15초를 넘긴 만큼을 내 "초과 이탈"로 정산해 서버에 올린다
+//  - 앱을 벗어났다 돌아오면 유예 시간(30초)을 넘긴 만큼을 내 "초과 이탈"로 정산해 서버에 올린다
 //  - 시간이 끝나면 finish_room 을 호출해 결과를 확정한다
 export function useGroupSession(roomId: string, initial: RoomState, myId: string) {
   const [state, setState] = useState<RoomState>(initial);
@@ -72,7 +72,7 @@ export function useGroupSession(roomId: string, initial: RoomState, myId: string
     return () => clearInterval(id);
   }, [apply, roomId]);
 
-  // 앱을 벗어났다 돌아오면 15초를 넘긴 만큼 정산
+  // 앱을 벗어났다 돌아오면 유예 시간을 넘긴 만큼 정산
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => {
       const s = stateRef.current;

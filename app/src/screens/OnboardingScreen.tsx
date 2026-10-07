@@ -43,7 +43,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     title: 'STAY IN THE APP',
-    text: 'Leave the app for more than 15 seconds and your building collapses. Come back in time and all is well.',
+    text: 'Leave the app for more than 30 seconds and your building collapses. Come back in time and all is well.',
     art: <Pixel name="ruins" size={140} />,
   },
   {

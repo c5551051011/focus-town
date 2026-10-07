@@ -40,7 +40,7 @@ Pick how long you want to focus, press START, and a team of baby bear, cat and r
 HOW IT WORKS
 • Choose a time from 5 to 120 minutes and a focus mode (Study, Reading, Work, Exercise, Rest, Sleep, or your own).
 • Watch your building rise floor by floor while you focus.
-• Leave the app for more than 15 seconds and the building collapses. Come back in time and all is well.
+• Leave the app for more than 30 seconds and the building collapses. Come back in time and all is well.
 • Finished buildings appear in your town. Keep going to fill the map.
 
 FEATURES
@@ -84,7 +84,7 @@ First release! Build your pixel town while you focus.
 이렇게 사용해요
 • 5분부터 120분까지 시간을 고르고, 집중 모드(공부, 독서, 일, 운동, 휴식, 수면, 직접 만든 모드)를 선택해요.
 • 집중하는 동안 건물이 한 층씩 올라가요.
-• 앱을 15초 넘게 벗어나면 건물이 무너져요. 시간 안에 돌아오면 괜찮아요.
+• 앱을 30초 넘게 벗어나면 건물이 무너져요. 시간 안에 돌아오면 괜찮아요.
 • 완공한 건물은 내 마을에 놓여요. 계속 집중해서 지도를 채워 보세요.
 
 주요 기능
