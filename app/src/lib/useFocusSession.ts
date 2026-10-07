@@ -6,7 +6,7 @@ import { cancelReturnWarning, scheduleAwayNotifications } from './notifications'
 import { patchActive } from './activeSession';
 import { isPassAvailable, consumePass } from './callPass';
 import { setLiveEnd, showAway, showBack, stopLive } from './liveProgress';
-import { awayExcludingLock, isLockSince } from './lockState';
+import { awayExcludingLock, isLockSince, lockInfo } from './lockState';
 
 export const GRACE_SECONDS = 15;
 
@@ -82,28 +82,41 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
         leftAt.current = t;
         patchActive({ leftAt: t });
         // 화면을 잠근 것(배터리 절약)은 이탈이 아니다. Android 는 백그라운드에서 JS 타이머가 멈추므로 먼저 바로 확인한다.
-        if (isLockSince(t)) {
+        let base = t; // 이탈이 (다시) 시작된 시각. 잠금을 풀고 다른 앱으로 가면 풀린 시각부터 다시 센다
+        if (isLockSince(base)) {
           lockedRef.current = true;
           patchActive({ leftAt: null, lockedAt: t, seenAt: t });
-          return; // leftAt 은 남겨 두어, 돌아왔을 때 잠겨 있던 시간을 뺀다
+        } else {
+          update('warning');
+          scheduleAwayNotifications(GRACE_SECONDS);
+          showAway(t + GRACE_SECONDS * 1000);
         }
-        update('warning');
-        scheduleAwayNotifications(GRACE_SECONDS);
-        showAway(t + GRACE_SECONDS * 1000);
-        // iOS 는 잠금 신호가 몇 초 늦게 올 수 있어, 경고 시간 동안 계속 확인한다. 잠긴 것이면 켜 둔 경고를 거둔다.
-        const startedAt = Date.now();
+        // 돌아올 때까지 계속 확인한다. iOS 는 잠금 신호가 몇 초 늦게 올 수 있고, 잠금을 풀자마자 다른 앱을 열 수도 있다.
         const poll = setInterval(() => {
-          if (leftAt.current !== t || isOver() || lockedRef.current || Date.now() - startedAt > (GRACE_SECONDS + 15) * 1000) {
+          if (leftAt.current !== base || isOver()) {
             clearInterval(poll);
             return;
           }
-          if (!isLockSince(t)) return;
-          clearInterval(poll);
-          lockedRef.current = true;
-          cancelReturnWarning();
-          showBack();
-          patchActive({ leftAt: null, lockedAt: t, seenAt: t });
-          update('running');
+          const info = lockInfo();
+          if (!info) return;
+          if (!lockedRef.current) {
+            if (!isLockSince(base)) return;
+            // 잠긴 것: 켜 둔 경고를 거둔다
+            lockedRef.current = true;
+            cancelReturnWarning();
+            showBack();
+            patchActive({ leftAt: null, lockedAt: base, seenAt: Date.now() });
+            update('running');
+          } else if (!info.locked && info.unlockedAt > info.lockedAt) {
+            // 잠금이 풀렸는데 아직 앱으로 돌아오지 않았다 = 다른 앱을 쓰는 중. 풀린 시각부터 이탈로 센다
+            lockedRef.current = false;
+            base = info.unlockedAt;
+            leftAt.current = base;
+            patchActive({ leftAt: base, lockedAt: null });
+            update('warning');
+            scheduleAwayNotifications(GRACE_SECONDS);
+            showAway(base + GRACE_SECONDS * 1000);
+          }
         }, 500);
       } else if (state === 'active' && leftAt.current !== null) {
         const away = awayExcludingLock(leftAt.current, Date.now());
