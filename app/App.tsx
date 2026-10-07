@@ -145,7 +145,13 @@ export default function App() {
     (async () => {
       const remote = await fetchProfile(userId);
       if (remote) updateSettings({ character: remote });
-      else if (settings.character) await saveProfile(userId, settings.character);
+      else if (settings.character) {
+        const r = await saveProfile(userId, settings.character);
+        if (r.renamed) {
+          updateSettings({ character: { ...settings.character, name: r.name } });
+          setNotice({ title: 'Name changed', text: `The name you picked was taken, so you are now ${r.name}. You can change it in your profile.` });
+        }
+      }
       account.refreshSocial();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,7 +189,11 @@ export default function App() {
 
   const saveCharacter = (c: Character) => {
     updateSettings({ character: c });
-    if (userId) saveProfile(userId, c);
+    if (userId) {
+      saveProfile(userId, c).then((r) => {
+        if (r.renamed) updateSettings({ character: { ...c, name: r.name } });
+      });
+    }
     setEditingCharacter(false);
   };
 
@@ -237,7 +247,7 @@ export default function App() {
   const startGroup = async (p: Pending) => {
     const id = await needAccount();
     if (!id || !settings.character) return setPending(null);
-    if (!(await saveProfile(id, settings.character))) {
+    if (!(await saveProfile(id, settings.character)).ok) {
       setPending(null);
       return setNotice({ title: 'Connection problem', text: 'Could not reach the server. Check your connection and try again.' });
     }

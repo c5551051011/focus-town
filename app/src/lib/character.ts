@@ -26,3 +26,16 @@ export function isValidCharacter(c: unknown): c is Character {
     (HAT_IDS as readonly string[]).includes(x.hat)
   );
 }
+
+// 추천 닉네임: 형용사 + 명사 + 숫자 두 자리 (최대 10자). 예: CozyFox42
+const ADJECTIVES = ['Cozy', 'Calm', 'Neat', 'Bold', 'Busy', 'Kind', 'Warm', 'Wise', 'Snug', 'Tiny', 'Swift', 'Brave', 'Happy', 'Lucky', 'Sunny', 'Quiet'];
+const NOUNS = ['Fox', 'Bear', 'Owl', 'Cat', 'Pup', 'Hen', 'Cub', 'Moss', 'Pine', 'Brick', 'Hut', 'Bee', 'Seal', 'Duck', 'Mole', 'Deer'];
+
+export function suggestName(): string {
+  const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
+  for (let i = 0; i < 20; i++) {
+    const base = pick(ADJECTIVES) + pick(NOUNS);
+    if (base.length <= MAX_NAME_LENGTH - 2) return base + String(Math.floor(Math.random() * 90) + 10);
+  }
+  return pick(ADJECTIVES) + pick(['Fox', 'Cat', 'Owl']) + String(Math.floor(Math.random() * 90) + 10);
+}

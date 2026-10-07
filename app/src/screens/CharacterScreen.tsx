@@ -5,7 +5,8 @@ import Avatar from '../components/Avatar';
 import { Sans, Txt } from '../components/ui';
 import { ScreenHeader, SectionTitle, TITLE_HEIGHT } from '../components/cards';
 import { COLOR_HEX, COLOR_IDS, HAT_IDS, SPECIES } from '../lib/characterAssets';
-import { Character, DEFAULT_CHARACTER, MAX_NAME_LENGTH, cleanName } from '../lib/character';
+import { Character, DEFAULT_CHARACTER, MAX_NAME_LENGTH, cleanName, suggestName } from '../lib/character';
+import { isNameTaken } from '../lib/profile';
 import { selection } from '../lib/haptics';
 
 type Props = {
@@ -18,9 +19,11 @@ type Props = {
 
 // 이름과 캐릭터(동물 · 색 · 모자)를 정하는 화면
 export default function CharacterScreen({ initial, mode, onSave, onCancel, onSignIn }: Props) {
-  const [c, setC] = useState<Character>(initial ?? DEFAULT_CHARACTER);
+  const [c, setC] = useState<Character>(initial ?? { ...DEFAULT_CHARACTER, name: suggestName() });
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
   const [bob] = useState(() => new Animated.Value(0));
-  const valid = c.name.trim().length > 0;
+  const valid = c.name.trim().length > 0 && !checking;
   const set = (patch: Partial<Character>) => {
     selection();
     setC((prev) => ({ ...prev, ...patch }));
@@ -57,13 +60,28 @@ export default function CharacterScreen({ initial, mode, onSave, onCancel, onSig
 
         <TextInput
           value={c.name}
-          onChangeText={(t) => setC((p) => ({ ...p, name: cleanName(t) }))}
+          onChangeText={(t) => {
+            setNameError(null);
+            setC((p) => ({ ...p, name: cleanName(t) }));
+          }}
           placeholder="Your name"
           placeholderTextColor={soft.subtle}
           maxLength={MAX_NAME_LENGTH}
           style={styles.input}
           autoCorrect={false}
         />
+        {nameError ? <Sans style={styles.nameError}>{nameError}</Sans> : null}
+        <Pressable
+          onPress={() => {
+            selection();
+            setNameError(null);
+            setC((p) => ({ ...p, name: suggestName() }));
+          }}
+          hitSlop={10}
+          style={styles.shuffle}
+        >
+          <Sans style={styles.shuffleText}>Suggest another name</Sans>
+        </Pressable>
 
         <SectionTitle>Animal</SectionTitle>
         <View style={styles.row}>
@@ -92,7 +110,21 @@ export default function CharacterScreen({ initial, mode, onSave, onCancel, onSig
           ))}
         </View>
 
-        <Pressable onPress={() => valid && onSave({ ...c, name: c.name.trim() })} style={[styles.save, !valid && { opacity: 0.4 }]}>
+        <Pressable
+          onPress={async () => {
+            if (!valid) return;
+            const name = c.name.trim();
+            setChecking(true);
+            const taken = name !== initial?.name && (await isNameTaken(name));
+            setChecking(false);
+            if (taken) {
+              setNameError('That name is already taken. Try another one!');
+              return;
+            }
+            onSave({ ...c, name });
+          }}
+          style={[styles.save, !valid && { opacity: 0.4 }]}
+        >
           <Txt style={styles.saveText}>{mode === 'create' ? "LET'S GO" : 'SAVE'}</Txt>
         </Pressable>
         {mode === 'create' && onSignIn ? (
@@ -112,6 +144,9 @@ const styles = StyleSheet.create({
   createTitleText: { color: colors.accent, fontSize: 14 },
   preview: { alignItems: 'center', paddingVertical: 26, marginTop: 4, marginBottom: 14, borderRadius: 20, backgroundColor: soft.card },
   input: { fontFamily: font, fontSize: 14, color: colors.text, textAlign: 'center', backgroundColor: soft.card, borderRadius: 14, paddingVertical: 16 },
+  nameError: { color: colors.danger, fontSize: 12, textAlign: 'center', marginTop: 10 },
+  shuffle: { alignSelf: 'center', marginTop: 12 },
+  shuffleText: { color: soft.subtle, fontSize: 12, textDecorationLine: 'underline' },
   row: { flexDirection: 'row', gap: 10 },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   cell: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: soft.card, borderRadius: 16, borderWidth: 2, borderColor: 'transparent' },
