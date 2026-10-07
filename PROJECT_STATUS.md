@@ -1,6 +1,6 @@
 # Towny (타우니) 프로젝트 현황
 
-> 갱신: 2026-10-06 · 저장소: https://github.com/c5551051011/towny (브랜치 `main`)
+> 갱신: 2026-10-07 · 저장소: https://github.com/c5551051011/towny (브랜치 `main`)
 > 이 문서는 "지금까지 무엇이 만들어졌고, 어떻게 돌리고, 무엇이 남았는지"를 한 곳에 정리한 것입니다.
 > 기획 원문은 `focus_town_final.md`(한국어 기획서), 서버 설정은 `backend/README.md`, 기기 테스트 항목은 `TESTING_TODO.md` 에 있습니다.
 
@@ -22,23 +22,43 @@
 
 ## 다음 대화로 이어가기 (2026-10-07 기준)
 
-**코드 상태**: `main` 최신 커밋 `890f8ef` 이후. 앱 이름 Towny, 번들 ID `app.towny.mobile`, 저장소 `github.com/c5551051011/towny`.
+**코드 상태**: `main`. 앱 이름 Towny, 번들 ID `app.towny.mobile`, 저장소 `github.com/c5551051011/towny`. 확인은 `git log --oneline -15`.
 
-**빌드/제출 현황** (확인은 `cd app && npx eas-cli build:list --limit 8`)
-- iOS production **4번**: 성공, App Store Connect 로 **제출됨**(처리 상태·TestFlight 확인 필요). 화면 잠금/새 문구/통화 패스 화면 이전 버전.
-- iOS production **5번**: 실패(Swift `notify_*` 컴파일 오류) → 공개 API 로 고쳐 `890f8ef` 로 커밋. **새 빌드 시작 중**(업로드가 네트워크 오류(EPIPE)로 두 번 실패해 `.easignore` 로 업로드를 줄여 세 번째로 시도함. 빌드 목록에서 상태 확인, 또 실패하면 와이파이를 바꿔 직접 `npx eas-cli build -p ios --profile production` 실행).
-- Android preview APK: EAS 빌드 `e8566ee5-a625-4d4f-a1cb-1cb3125321d3` **성공**. 설치 파일: https://expo.dev/artifacts/eas/q-n58SUwlWMY2OxmnPb_drG8LO63L-fbEHzjtYWaxwA.apk (안드로이드 폰에서 열어 설치. "출처를 알 수 없는 앱" 허용 필요)
+**빌드/제출 현황** (확인은 `cd app && npx eas-cli build:list --limit 8`, 제출은 `npx eas-cli submit:list --platform ios --limit 4`)
+- iOS production **10 / 11 / 12번**: 모두 빌드 성공, App Store Connect(TestFlight) 제출됨. 12번은 다른 대화에서 시작된 빌드(11 이후 JS 수정까지 포함). **잠금 감지 수정(아래)은 12번에 없다** — 다음 빌드가 필요.
+- 제출은 `app/eas.json` 의 `submit.production.ios.ascAppId`(6819791122) 덕분에 질문·로그인 없이 `npx eas-cli submit -p ios --latest --non-interactive` 로 된다.
+- Android preview APK: EAS 빌드 `e8566ee5-a625-4d4f-a1cb-1cb3125321d3` (설치 파일: https://expo.dev/artifacts/eas/q-n58SUwlWMY2OxmnPb_drG8LO63L-fbEHzjtYWaxwA.apk)
+
+**⚠ 빌드는 사용자 승인 후에만** (EAS 무료 빌드 횟수 한정). 빌드·제출·push 는 사용자가 시킬 때만 한다. 규칙은 루트 `CLAUDE.md`.
+
+**아직 빌드에 안 들어간 변경 (다음 빌드에 한 번에)**
+- **iOS 잠금 감지(Swift, 네이티브)**: `modules/lock-state`. 잠그는 순간 시스템 신호(`com.apple.springboard.lockcomplete`)로 즉시 잠금을 알고, `lockstate` 로 풀림도 안다. 백그라운드로 간 뒤 1.5초(`LOCK_CHECK_MS`) 동안 잠금을 확인한 뒤에만 이탈 경고/카운트다운을 켠다. 잠금 후 15초 안에 다시 잠그면 유지, 풀고 다른 앱으로 가면 풀린 시각부터 15초(솔로)/30초(그룹)를 센다. 빌드 11/12 의 `reconcile()` 오판(잠그고 15초 뒤 "풀렸다"고 봄)도 고쳐짐. **기기에서 최신 iOS 로 확인 필요**(비공개 신호라 안 오면 공개 알림으로 대체, 심사에서 문제되면 제거).
+- **EAS Update(OTA)**: `expo-updates` 설치, `app.json` 에 `runtimeVersion: fingerprint` + `updates.url`, `eas.json` 에 채널(`preview`/`production`). **이 설정이 들어간 빌드부터** JS 수정을 빌드 없이 배포할 수 있다: `cd app && npx eas-cli update --channel production --message "설명"`. 네이티브가 바뀌면(fingerprint 가 달라지면) 빌드를 새로 해야 한다.
+- 닉네임 추천/중복 검사, START 버튼 모양, 효과음 볼륨, 음악 미리듣기 아이콘은 빌드 12 에 이미 들어 있음.
+
+**Supabase SQL (모두 실행됨)**: 0005 lock, 0006 invite_push, 0007 faster_nudge, 0008 unique_names.
+
+**이번에 바뀐 동작**
+- 진행바에 `PROGRESS NN%`. iOS 라이브 액티비티 진행바는 0에서 차오른다(`expo-live-activity` Swift 를 `app/patches/` 로 패치, `postinstall: patch-package`). 시작 시각은 `progressBar.progress` 에 실어 보낸다. Android 카드는 숫자 카운트다운만 있다.
+- 그룹: 이탈 판정 6초(서버 0007), 하트비트 2.5초, 피해 시작 유예 **30초**(`DAMAGE_START_SEC`, 서버와 같아야 함). 이탈 팀원이 있으면 **NUDGE 버튼**. 솔로 유예는 그대로 15초.
+- 초대: 앱이 열려 있으면 2.5초마다 확인 + 앱으로 돌아오면 즉시, 앱이 꺼져 있으면 서버가 푸시(0006 트리거).
+- 마을 지도: 여럿이 지은 그룹 건물은 완성 화면과 같은 겹친 모양(`TeamBuilding scale`)으로 놓는다. 세션에 `durability` 저장(이전 기록은 멀쩡한 모양).
+- 닉네임: 만들 때 `CozySeal45` 식 추천이 채워지고 "Suggest another name" 버튼, 저장 전 `name_taken` 으로 중복 검사, 서버 대소문자 무관 유일 인덱스(충돌 시 숫자 붙여 자동 저장 + 알림).
+
+**테스트해야 할 것 (사용자가 기기로)**: 음악 OFF 일 때 화면 잠금, 초대 속도(앱 열림/꺼짐), 넛지 알림 도착 시간, 친구/그룹 전체 흐름, 새 빌드의 잠금 감지(잠그자마자 카운트다운이 뜨지 않는지, 잠금 직후 다른 앱을 열면 이탈로 세는지).
 
 **다음에 할 일 (순서)**
-1. Supabase SQL Editor 에서 `backend/supabase/migrations/0005_lock.sql` 실행 (그룹에서 화면 잠금을 이탈로 안 보게 함)
-2. 새 iOS 빌드가 성공하면 `cd app && npx eas-cli submit -p ios --latest` (EAS 가 Apple 로그인을 물을 수 있음 → 사용자가 직접 입력). 이미 올라간 4번보다 최신
-3. TestFlight 로 아이폰에 설치해서 확인: 라이브 액티비티, **화면 잠금(암호 필요)**, 이메일 로그인 코드(스팸함 포함), 친구/그룹, 알림 권한
-4. 스크린샷 다시 찍기: FOCUS 시작 화면(제목 TOWNY), 완료 화면(새 문구) → `screenshots/` 에 넣으면 `python3 app/tools/gen_store_screenshots.py` 의 `SHOTS` 에 추가해 생성
-5. App Store Connect 에서 앱 정보·스크린샷·App Privacy·연령 등급 입력, 심사 메모(`store/listing.md` 맨 아래) 붙이고 Submit for Review
-6. Apple 에 Family Controls(Screen Time) 권한 신청 → 승인 후 `eas.json` 의 `ENABLE_SCREEN_TIME` 과 `EXPO_PUBLIC_ENABLE_SCREEN_TIME` 을 "1" 로 (7.4)
-7. 소셜 로그인(Apple + 구글 + 카카오)은 제출 이후 단계
+1. 변경이 더 모이면 승인받고 iOS 빌드 → 제출 → TestFlight 확인(위 테스트 목록)
+2. 스크린샷 다시 찍기(FOCUS 시작 화면, 완료 화면 새 문구) → `store/` 자료 갱신
+3. App Store Connect 심사 제출(정보·스크린샷·App Privacy·연령 등급은 입력됨, 심사 메모는 `store/listing.md` 맨 아래)
+4. Apple 에 Family Controls(Screen Time) 권한 신청 → 승인 후 `eas.json` 의 `ENABLE_SCREEN_TIME` 과 `EXPO_PUBLIC_ENABLE_SCREEN_TIME` 을 "1" 로 (7.4). 지금은 꺼져 있어 설정의 "Focus lock" 항목이 안 보이는 것이 정상.
+5. 소셜 로그인(Apple + 구글 + 카카오)은 제출 이후 단계
 
-**작업 방식 메모**: 사용자는 한국어 답변·단계별 안내를 선호하고, Apple 로그인(비밀번호/2단계)은 직접 입력해야 함. Mac 에 Xcode 가 없어 Swift 는 EAS 빌드로만 컴파일 확인. Android 시험은 세 번째 에뮬레이터(`Pixel_3a_API_34`, 포트 5558; 화면이 검게 나오면 `adb shell input keyevent KEYCODE_WAKEUP`)로 하고, 사용자가 쓰는 5554/5556 은 건드리지 않음. EAS 무료 빌드 횟수가 한정되어 있으니 변경을 묶어서 빌드.
+**업로드 용량**: EAS 업로드가 약 165MB. 음악 mp3(`app/assets/music`, 약 86MB)가 작업 폴더와 `.git` 에 한 번씩 들어 있어서다. `.easignore` 로는 못 줄이고, 줄이려면 mp3 를 낮은 비트레이트로 다시 인코딩해야 한다(음질 trade-off).
+
+**작업 방식 메모**: 사용자는 한국어 답변·단계별 안내를 선호하고, Apple 로그인(비밀번호/2단계)은 직접 입력해야 함(제출은 API 키 등록으로 이제 불필요). Mac 에 Xcode 가 없어 Swift 는 EAS 빌드로만 컴파일 확인. Android 시험은 세 번째 에뮬레이터(`Pixel_3a_API_34`, 포트 5558; 화면이 검게 나오면 `adb shell input keyevent KEYCODE_WAKEUP`)로 하고, 사용자가 쓰는 5554/5556 은 건드리지 않음. 로컬 `app/android` 는 예전 패키지명(`com.jjinchoi.focustown`)이라 에뮬레이터 앱은 그 이름으로 설치된다. 에뮬레이터 빌드 산출물(`modules/focus-ongoing/android/build/`)은 이제 git 에서 제외됨.
+
+---
 
 ## 1. 한 줄 소개
 집중하는 동안 귀여운 **픽셀 건물**이 지어지고, 끝나면 나만의 **마을**에 쌓이는 모바일(iOS/Android) 집중 타이머 게임. 친구와 함께 집중하면 **한 건물을 같이 짓고**, 누군가 앱을 벗어나면 건물이 상합니다.
@@ -115,7 +135,7 @@
 
 **그룹**
 - 초대는 **서로 팔로우하는 친구**끼리만. 방장이 시작하면 즉시 진행(READY 대기 없음), 최대 4명.
-- 이탈 15초 유예 후 초과 시간만큼 팀 내구성이 **초당 약 1.67%** 감소, 한 명의 초과 이탈이 **45초면 탈락**.
+- 이탈 **30초** 유예 후 초과 시간만큼 팀 내구성이 **초당 약 1.67%** 감소, 한 명의 초과 이탈이 **45초면 탈락**.
 - 결과 건물: 내구성 70%↑ 원래 건물 / 40~69% 한 단계 작게 / 40%↓ 오두막 / 0% 붕괴.
 - 늦은 참여: 시작 후 **3분 안 자유 참여**, 이후엔 현재 참여자 **전원 허용** 필요.
 - 넛지: 이탈 중(10초 넘게 신호 없음)인 팀원에게 푸시, 같은 사람에게 20초에 한 번.
@@ -161,9 +181,12 @@ docs/  store/               공개 문서, 스토어 자료
 | `0003_social.sql` | 친구 코드, 팔로우, 검색, 친구 초대로 시작, 초대 수락/거절 |
 | `0004_nudge.sql` | 푸시 토큰 보관(RPC로만 접근), `nudge_away` (20초 제한) |
 | `0005_lock.sql` | 화면 잠금 중인 멤버를 이탈/피해/넛지에서 제외 (`set_locked`, `locked_until`) |
+| `0006_invite_push.sql` | 그룹 초대를 받으면 앱이 꺼져 있어도 푸시 (`room_invites` insert 트리거) |
+| `0007_faster_nudge.sql` | 이탈 판정 10→6초, 피해 시작 유예 15→30초 (`_room_state`, `nudge_away`) |
+| `0008_unique_names.sql` | 닉네임 대소문자 무관 유일 인덱스 + `name_taken` (기존 중복은 숫자를 붙여 정리) |
 
 **해야 할 일 (대시보드에서 직접)**
-1. SQL Editor 에서 **`0005_lock.sql` 실행** (0001~0004 는 이미 적용됨)
+1. SQL Editor 에서 `0001`~`0008` 을 순서대로 실행 (모두 적용됨)
 2. Authentication → Sign In / Providers → **Allow anonymous sign-ins** 켜기 (게스트 계정, 켜 둔 상태로 테스트했음)
 3. (선택) 이메일 로그인용 템플릿에 `{{ .Token }}`, SMTP 설정
 4. 넛지 푸시를 실제로 받으려면 Android 는 **Firebase(FCM) 설정** — https://docs.expo.dev/push-notifications/fcm-credentials/ , iOS 는 EAS 가 APNs 키 관리

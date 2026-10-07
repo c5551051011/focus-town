@@ -56,6 +56,12 @@
       }
     },
     "owner": "c5551051011",
-    "scheme": "towny"
+    "scheme": "towny",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c296444f-7329-4ac2-95cc-eda53e42d7ee"
+    }
   }
 }

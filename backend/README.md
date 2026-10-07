@@ -27,6 +27,9 @@
 | `0003_social.sql` | 친구 코드, 팔로우(following/followers), 이름 검색, 친구 초대로 바로 시작하는 그룹(`create_room_with_invites`), 초대 수락/거절 |
 | `0004_nudge.sql` | 이탈한 팀원에게 "돌아와요" 푸시 보내기: `push_tokens`(RPC로만 접근), `set_push_token`, `clear_push_token`, `nudge_away` (같은 사람에게 20초에 한 번) |
 | `0005_lock.sql` | 화면을 잠가 둔 사람은 "자리 비움"으로 보지 않음: `room_members.locked_until`, `set_locked`, 이탈/내구성 계산과 넛지에서 제외, 앱으로 돌아와 heartbeat 를 보내면 해제 |
+| `0006_invite_push.sql` | 그룹 초대를 받으면 앱이 꺼져 있어도 푸시 |
+| `0007_faster_nudge.sql` | 이탈 판정 6초, 피해 시작 유예 30초 |
+| `0008_unique_names.sql` | 닉네임 유일(대소문자 무관) + `name_taken` |
 
 ## 팀원 넛지 (0004)
 - 집중 중 팀원이 앱을 벗어나 있으면(10초 넘게 신호 없음) 다른 팀원이 화면을 탭해 "돌아와요" 알림을 보낼 수 있다. 같은 사람에게는 20초에 한 번만 간다.

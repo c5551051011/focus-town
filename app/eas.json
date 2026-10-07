@@ -13,7 +13,8 @@
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
         "ENABLE_SCREEN_TIME": "0",
         "EXPO_PUBLIC_ENABLE_SCREEN_TIME": "0"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
@@ -21,7 +22,8 @@
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
         "ENABLE_SCREEN_TIME": "0",
         "EXPO_PUBLIC_ENABLE_SCREEN_TIME": "0"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
