@@ -14,7 +14,7 @@ const players: Partial<Record<SoundName, AudioPlayer>> = {};
 export function playSound(name: SoundName) {
   if (!prefs.sfx) return;
   try {
-    setAudioModeAsync({ playsInSilentMode: true });
+    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true });
     const player = (players[name] ??= createAudioPlayer(SOURCES[name]));
     player.seekTo(0);
     player.play();

@@ -11,6 +11,7 @@
       "bundleIdentifier": "app.towny.mobile",
       "infoPlist": {
         "NSSupportsLiveActivities": true,
+        "UIBackgroundModes": ["audio"],
         "NSSupportsLiveActivitiesFrequentUpdates": false,
         "ITSAppUsesNonExemptEncryption": false
       },

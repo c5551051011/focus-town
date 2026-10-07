@@ -58,7 +58,7 @@ export function startAmbient(id: AmbientId) {
   const track = byId.get(id);
   if (!track) return;
   try {
-    setAudioModeAsync({ playsInSilentMode: true });
+    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true });
     const player = createAudioPlayer(track.file);
     player.loop = true;
     player.volume = prefs.volume;

@@ -6,7 +6,7 @@ import { cancelReturnWarning, scheduleAwayNotifications } from './notifications'
 import { patchActive } from './activeSession';
 import { isPassAvailable, consumePass } from './callPass';
 import { setLiveEnd, showAway, showBack, stopLive } from './liveProgress';
-import { LOCK_CHECK_MS, awayExcludingLock, isLockedNow } from './lockState';
+import { awayExcludingLock, isLockSince } from './lockState';
 
 export const GRACE_SECONDS = 15;
 
@@ -82,7 +82,7 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
         leftAt.current = t;
         patchActive({ leftAt: t });
         // 화면을 잠근 것(배터리 절약)은 이탈이 아니다. Android 는 백그라운드에서 JS 타이머가 멈추므로 먼저 바로 확인한다.
-        if (isLockedNow()) {
+        if (isLockSince(t)) {
           lockedRef.current = true;
           patchActive({ leftAt: null, lockedAt: t, seenAt: t });
           return; // leftAt 은 남겨 두어, 돌아왔을 때 잠겨 있던 시간을 뺀다
@@ -90,15 +90,21 @@ export function useFocusSession(minutes: number, initialEndAt: number) {
         update('warning');
         scheduleAwayNotifications(GRACE_SECONDS);
         showAway(t + GRACE_SECONDS * 1000);
-        // iOS 는 잠금 신호가 조금 늦게 올 수 있어 잠시 뒤 한 번 더 확인한다. 잠긴 것이면 방금 켠 경고를 거둔다.
-        setTimeout(() => {
-          if (leftAt.current !== t || isOver() || !isLockedNow()) return;
+        // iOS 는 잠금 신호가 몇 초 늦게 올 수 있어, 경고 시간 동안 계속 확인한다. 잠긴 것이면 켜 둔 경고를 거둔다.
+        const startedAt = Date.now();
+        const poll = setInterval(() => {
+          if (leftAt.current !== t || isOver() || lockedRef.current || Date.now() - startedAt > (GRACE_SECONDS + 15) * 1000) {
+            clearInterval(poll);
+            return;
+          }
+          if (!isLockSince(t)) return;
+          clearInterval(poll);
           lockedRef.current = true;
           cancelReturnWarning();
           showBack();
           patchActive({ leftAt: null, lockedAt: t, seenAt: t });
           update('running');
-        }, LOCK_CHECK_MS);
+        }, 500);
       } else if (state === 'active' && leftAt.current !== null) {
         const away = awayExcludingLock(leftAt.current, Date.now());
         const wasLocked = lockedRef.current;
